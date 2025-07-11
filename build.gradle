@@ -34,3 +34,26 @@ run {
             "--add-modules", "javafx.controls,javafx.fxml"
     ]
 }
+
+sourceSets {
+    main {
+        java.srcDirs = ['src/main/java']
+    }
+    updater {
+        java.srcDirs = ['src/updater/java']
+    }
+}
+
+configurations {
+    updaterImplementation.extendsFrom implementation
+}
+
+task updaterJar(type: Jar) {
+    archiveBaseName = 'updater'
+    from sourceSets.updater.output
+    manifest {
+        attributes 'Main-Class': 'updater.Updater'
+    }
+}
+
+build.dependsOn updaterJar
