@@ -94,9 +94,9 @@ public class PDFGenerator {
         cs.showText("Predávajúci:");
         cs.newLine();
         cs.setFont(fontRegular, 10);
-        cs.showText(farnost.getNazov());
+        cs.showText("Názov:" + farnost.getNazov());
         cs.newLine();
-        cs.showText(farnost.getSidlo());
+        cs.showText("Sídlo" + farnost.getSidlo());
         cs.newLine();
         cs.showText("IČO: " + farnost.getIco());
         cs.newLine();
@@ -114,9 +114,9 @@ public class PDFGenerator {
         cs.showText("Odberateľ:");
         cs.newLine();
         cs.setFont(fontRegular, 10);
-        cs.showText(faktura.getOdberatelMeno());
+        cs.showText("Názov" + faktura.getOdberatelMeno());
         cs.newLine();
-        cs.showText(faktura.getOdberatelAdresa());
+        cs.showText("Sídlo" + faktura.getOdberatelAdresa());
         cs.newLine();
         cs.showText("Dátum vystavenia: " + faktura.getDatum().format(DateTimeFormatter.ISO_LOCAL_DATE));
         cs.endText();
