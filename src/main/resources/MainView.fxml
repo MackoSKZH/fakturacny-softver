@@ -15,7 +15,7 @@
                 <Insets top="10" right="10" bottom="10" left="10"/>
             </padding>
 
-            <Label text="Fakturačný softvér – Farnosť SPM"
+            <Label text="Fakturačný softvér"
                    style="-fx-font-size: 18; -fx-font-weight: bold;"/>
             <Pane HBox.hgrow="ALWAYS"/>
             <Button text="Údaje farnosti"
