@@ -118,6 +118,43 @@ public class PDFGenerator {
         cs.newLine();
         cs.showText("Sídlo" + faktura.getOdberatelAdresa());
         cs.newLine();
+
+        if (faktura.getOdberatelIco() != null && !faktura.getOdberatelIco().isBlank())
+            cs.showText("IČO: " + faktura.getOdberatelIco());
+        cs.newLine();
+
+        if (faktura.getOdberatelDic() != null && !faktura.getOdberatelDic().isBlank())
+            cs.showText("DIČ: " + faktura.getOdberatelDic());
+        cs.newLine();
+
+        if (faktura.getOdberatelIcdph() != null && !faktura.getOdberatelIcdph().isBlank())
+            cs.showText("IČ DPH: " + faktura.getOdberatelIcdph());
+        cs.newLine();
+
+        if (faktura.getOdberatelTelefon() != null && !faktura.getOdberatelTelefon().isBlank())
+            cs.showText("Telefón: " + faktura.getOdberatelTelefon());
+        cs.newLine();
+
+        if (faktura.getOdberatelEmail() != null && !faktura.getOdberatelEmail().isBlank())
+            cs.showText("Email: " + faktura.getOdberatelEmail());
+        cs.newLine();
+
+        if (faktura.getBankaNazov() != null && !faktura.getBankaNazov().isBlank())
+            cs.showText("Banka: " + faktura.getBankaNazov());
+        cs.newLine();
+
+        if (faktura.getBankaIban() != null && !faktura.getBankaIban().isBlank())
+            cs.showText("IBAN: " + faktura.getBankaIban());
+        cs.newLine();
+
+        if (faktura.getBankaSwift() != null && !faktura.getBankaSwift().isBlank())
+            cs.showText("BIC/SWIFT: " + faktura.getBankaSwift());
+        cs.newLine();
+
+        if (faktura.getVariabilnySymbol() != null && !faktura.getVariabilnySymbol().isBlank())
+            cs.showText("Variabilný symbol: " + faktura.getVariabilnySymbol());
+        cs.newLine();
+        cs.newLine();
         cs.showText("Dátum vystavenia: " + faktura.getDatum().format(DateTimeFormatter.ISO_LOCAL_DATE));
         cs.endText();
 
