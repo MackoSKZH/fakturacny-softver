@@ -9,7 +9,7 @@ public class Updater {
     public static void main(String[] args) {
         try {
             System.out.println("Sťahujem aktualizáciu...");
-            URL zipUrl = new URL("https://tvojweb.sk/update/FakturaUpdate.zip");
+            URL zipUrl = new URL("https://web.sk/update/FakturaUpdate.zip");
             Path zipPath = Files.createTempFile("update", ".zip");
 
             try (InputStream in = zipUrl.openStream()) {
