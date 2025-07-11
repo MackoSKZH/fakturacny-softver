@@ -48,7 +48,6 @@ public class PDFGenerator {
     private static void generateAndSavePdf(FakturaData faktura, FarnostData farnost, File file) {
         try (PDDocument doc = new PDDocument()) {
 
-            // Načítaj fonty
             InputStream regularStream = PDFGenerator.class.getResourceAsStream("/fonts/NotoSans-Regular.ttf");
             InputStream boldStream = PDFGenerator.class.getResourceAsStream("/fonts/NotoSans-Bold.ttf");
 
@@ -73,92 +72,118 @@ public class PDFGenerator {
                                     PDType0Font fontRegular, PDType0Font fontBold) throws IOException {
         float margin = 50;
         float y = PDRectangle.A4.getHeight() - margin;
+        float startX = margin;
+        float width = PDRectangle.A4.getWidth() - 2 * margin;
+        float rowHeight = 18;
+
         cs.setLeading(14f);
 
+        // Nadpis
         cs.beginText();
-        cs.setFont(fontBold, 12);
-        cs.newLineAtOffset(margin, y);
+        cs.setFont(fontBold, 14);
+        cs.newLineAtOffset(startX, y);
+        cs.showText("Faktúra – daňový doklad");
+        cs.endText();
+
+        y -= 30;
+
+        // Predávajúci (Farnost)
+        cs.beginText();
+        cs.setFont(fontBold, 11);
+        cs.newLineAtOffset(startX, y);
+        cs.showText("Predávajúci:");
+        cs.newLine();
+        cs.setFont(fontRegular, 10);
         cs.showText(farnost.getNazov());
         cs.newLine();
-
-        cs.setFont(fontRegular, 10);
-        cs.showText("Sídlo: " + farnost.getSidlo());
+        cs.showText(farnost.getSidlo());
         cs.newLine();
-        cs.showText("IČO: " + farnost.getIco() + "   DIČ: " + farnost.getDic());
+        cs.showText("IČO: " + farnost.getIco());
+        cs.newLine();
+        cs.showText("DIČ: " + farnost.getDic());
         cs.newLine();
         cs.showText("Kontakt: " + farnost.getKontakt());
-        cs.newLine();
-        cs.newLine();
+        cs.endText();
 
+        y -= 100;
+
+        // Odberateľ
+        cs.beginText();
         cs.setFont(fontBold, 11);
+        cs.newLineAtOffset(startX, y);
         cs.showText("Odberateľ:");
         cs.newLine();
-
         cs.setFont(fontRegular, 10);
         cs.showText(faktura.getOdberatelMeno());
         cs.newLine();
         cs.showText(faktura.getOdberatelAdresa());
         cs.newLine();
-        cs.newLine();
         cs.showText("Dátum vystavenia: " + faktura.getDatum().format(DateTimeFormatter.ISO_LOCAL_DATE));
         cs.endText();
 
-        float tableStartY = y - 160;
-        float x = margin;
+        y -= 90;
+
+        // Tabuľka hlavička
+        float tableX = startX;
+        float[] colWidths = {150, 60, 60, 60, 60, 60}; // Popis, MJ, Cena, Základ, DPH, Spolu
+        String[] headers = {"Popis", "Množ.", "Cena", "Základ", "DPH", "Spolu"};
+
+        float tableY = y;
+        float currentX;
 
         // Hlavička tabuľky
-        cs.beginText();
-        cs.setFont(fontBold, 9);
-        cs.newLineAtOffset(x, tableStartY);
-        cs.showText(String.format("%-25s %5s %10s %6s %10s %10s %10s",
-                "Popis", "MJ", "Cena", "DPH", "Bez DPH", "DPH", "S DPH"));
-        cs.endText();
-
-        // Telo tabuľky
-        float rowY = tableStartY - 14;
-        for (FakturaData.Item item : faktura.getPolozky()) {
-            double bezDPH = item.getZaklad();
-            double dph = item.getDph();
-            double sDPH = item.getCenaSDph();
-
+        currentX = tableX;
+        for (int i = 0; i < headers.length; i++) {
+            cs.addRect(currentX, tableY, colWidths[i], rowHeight);
             cs.beginText();
-            cs.setFont(fontRegular, 9);
-            cs.newLineAtOffset(x, rowY);
-            cs.showText(String.format("%-25s %5d %10.2f %6s %10.2f %10.2f %10.2f",
-                    item.getPopis(), item.getMnozstvo(), item.getCena(), "23%", bezDPH, dph, sDPH));
+            cs.setFont(fontBold, 9);
+            cs.newLineAtOffset(currentX + 2, tableY + 5);
+            cs.showText(headers[i]);
             cs.endText();
-            rowY -= 14;
+            currentX += colWidths[i];
         }
 
-        rowY -= 20;
+        cs.stroke();
 
-        // Zhrnutie DPH
+        // Riadky s položkami
+        float contentY = tableY - rowHeight;
+        for (FakturaData.Item item : faktura.getPolozky()) {
+            currentX = tableX;
+            String[] values = {
+                    item.getPopis(),
+                    String.valueOf(item.getMnozstvo()),
+                    String.format("%.2f", item.getCena()),
+                    String.format("%.2f", item.getZaklad()),
+                    String.format("%.2f", item.getDph()),
+                    String.format("%.2f", item.getCenaSDph())
+            };
+
+            for (int i = 0; i < values.length; i++) {
+                cs.addRect(currentX, contentY, colWidths[i], rowHeight);
+                cs.beginText();
+                cs.setFont(fontRegular, 9);
+                cs.newLineAtOffset(currentX + 2, contentY + 5);
+                cs.showText(values[i]);
+                cs.endText();
+                currentX += colWidths[i];
+            }
+
+            contentY -= rowHeight;
+        }
+
+        cs.stroke();
+
+        // Súhrn
+        contentY -= 20;
         cs.beginText();
-        cs.setFont(fontBold, 9);
-        cs.newLineAtOffset(x, rowY);
-        cs.showText("Zhrnutie DPH:");
-        cs.endText();
-
-        rowY -= 12;
-        double subtotal = faktura.getSubtotal();
-        double dphTotal = faktura.getDph();
-        double total = faktura.getCelkom();
-
-        cs.beginText();
-        cs.setFont(fontRegular, 9);
-        cs.newLineAtOffset(x, rowY);
-        cs.showText(String.format("Sadzba: 23%%   Základ: %.2f €   DPH: %.2f €   Spolu: %.2f €", subtotal, dphTotal, total));
-        cs.endText();
-
-        rowY -= 16;
-        cs.beginText();
+        cs.setFont(fontRegular, 10);
+        cs.newLineAtOffset(startX, contentY);
+        cs.showText(String.format("Celkový základ: %.2f €", faktura.getSubtotal()));
+        cs.newLine();
+        cs.showText(String.format("DPH (23%%): %.2f €", faktura.getDph()));
+        cs.newLine();
         cs.setFont(fontBold, 10);
-        cs.newLineAtOffset(x, rowY);
-        cs.showText(String.format("Celkom k úhrade: %.2f €", total));
-        cs.newLine();
-        cs.showText("Zaplatený preddavok: 0.00 €");
-        cs.newLine();
-        cs.showText(String.format("Zostáva uhradiť: %.2f €", total));
+        cs.showText(String.format("Spolu s DPH: %.2f €", faktura.getCelkom()));
         cs.endText();
     }
 
