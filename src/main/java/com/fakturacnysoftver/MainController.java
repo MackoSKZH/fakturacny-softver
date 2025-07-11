@@ -55,7 +55,25 @@ public class MainController {
         });
 
         // colCena
-        this.colCena.setCellFactory(column -> new EditingCell<>(new javafx.util.converter.DoubleStringConverter()));
+        this.colCena.setCellFactory(column -> new EditingCell<>(new javafx.util.StringConverter<>() {
+            @Override
+            public String toString(Double value) {
+                return value == null ? "" : String.format("%.2f", value);
+            }
+
+            @Override
+            public Double fromString(String input) {
+                if (input == null || input.trim().isEmpty()) {
+                    return 0.0;
+                }
+                input = input.replace(",", ".").trim();
+                try {
+                    return Double.parseDouble(input);
+                } catch (NumberFormatException e) {
+                    return 0.0;
+                }
+            }
+        }));
         this.colCena.setOnEditCommit(event -> {
             event.getRowValue().setCena(event.getNewValue());
             this.recalculate();
