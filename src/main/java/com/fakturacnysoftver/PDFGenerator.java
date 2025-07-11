@@ -2,9 +2,7 @@ package com.fakturacnysoftver;
 
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.*;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
 
@@ -14,30 +12,34 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.format.DateTimeFormatter;
 
+/** Generuje finálnu PDF faktúru. */
 public class PDFGenerator {
 
-    public static File exportToPdf(FakturaData faktura, FarnostData farnost, Window owner) {
+    /* ---------- Verejné API ---------- */
+
+    public static File exportToPdf(FakturaData f, FarnostData fa, Window owner) {
         FileChooser fc = new FileChooser();
         fc.setTitle("Ulož PDF faktúru");
-        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF súbor", "*.pdf"));
-        fc.setInitialFileName(generateFileName(faktura));
+        fc.getExtensionFilters()
+                .add(new FileChooser.ExtensionFilter("PDF súbor", "*.pdf"));
+        fc.setInitialFileName(generateFileName(f));
         File file = fc.showSaveDialog(owner);
         if (file != null) {
-            generateAndSavePdf(faktura, farnost, file);
+            generateAndSavePdf(f, fa, file);
         }
         return file;
     }
 
-    public static void printFaktura(FakturaData faktura, FarnostData farnost, Window owner) {
+    public static void printFaktura(FakturaData f, FarnostData fa, Window owner) {
         try {
-            File temp = File.createTempFile("faktura_", ".pdf");
-            generateAndSavePdf(faktura, farnost, temp);
+            File tmp = File.createTempFile("faktura_", ".pdf");
+            generateAndSavePdf(f, fa, tmp);
 
             if (Desktop.isDesktopSupported()) {
                 try {
-                    Desktop.getDesktop().print(temp);
+                    Desktop.getDesktop().print(tmp);
                 } catch (IOException ex) {
-                    Desktop.getDesktop().open(temp);
+                    Desktop.getDesktop().open(tmp);
                 }
             }
         } catch (IOException e) {
@@ -45,22 +47,28 @@ public class PDFGenerator {
         }
     }
 
-    private static void generateAndSavePdf(FakturaData faktura, FarnostData farnost, File file) {
+    /* ---------- Privátne ---------- */
+
+    private static void generateAndSavePdf(FakturaData f, FarnostData fa, File file) {
         try (PDDocument doc = new PDDocument()) {
 
-            InputStream regularStream = PDFGenerator.class.getResourceAsStream("/fonts/NotoSans-Regular.ttf");
-            InputStream boldStream = PDFGenerator.class.getResourceAsStream("/fonts/NotoSans-Bold.ttf");
+            // Unicode fonty (NotoSans Regular + Bold)
+            InputStream regular = PDFGenerator.class.getResourceAsStream(
+                    "/fonts/NotoSans-Regular.ttf");
+            InputStream bold = PDFGenerator.class.getResourceAsStream(
+                    "/fonts/NotoSans-Bold.ttf");
 
-            PDType0Font fontRegular = PDType0Font.load(doc, regularStream, true);
-            PDType0Font fontBold = PDType0Font.load(doc, boldStream, true);
+            PDType0Font fontReg = PDType0Font.load(doc, regular, true);
+            PDType0Font fontBold = PDType0Font.load(doc, bold, true);
 
             PDPage page = new PDPage(PDRectangle.A4);
             doc.addPage(page);
 
-            try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
-                drawFaktura(cs, faktura, farnost, fontRegular, fontBold);
+            try (PDPageContentStream cs =
+                         new PDPageContentStream(doc, page,
+                                 PDPageContentStream.AppendMode.OVERWRITE, true)) {
+                drawFaktura(cs, f, fa, fontReg, fontBold);
             }
-
             doc.save(file);
 
         } catch (IOException e) {
@@ -68,165 +76,162 @@ public class PDFGenerator {
         }
     }
 
-    private static void drawFaktura(PDPageContentStream cs, FakturaData faktura, FarnostData farnost,
-                                    PDType0Font fontRegular, PDType0Font fontBold) throws IOException {
-        float margin = 50;
+    /* --- vykresľovanie --- */
+    private static void drawFaktura(PDPageContentStream cs,
+                                    FakturaData f,
+                                    FarnostData fa,
+                                    PDType0Font reg,
+                                    PDType0Font bold) throws IOException {
+
+        final float margin = 50;
+        final float width = PDRectangle.A4.getWidth() - 2 * margin;
         float y = PDRectangle.A4.getHeight() - margin;
-        float startX = margin;
-        float width = PDRectangle.A4.getWidth() - 2 * margin;
-        float rowHeight = 18;
+        cs.setLeading(14);
 
-        cs.setLeading(14f);
-
-        // Nadpis
+        /* Nadpis */
         cs.beginText();
-        cs.setFont(fontBold, 14);
-        cs.newLineAtOffset(startX, y);
+        cs.setFont(bold, 14);
+        cs.newLineAtOffset(margin, y);
         cs.showText("Faktúra – daňový doklad");
         cs.endText();
-
         y -= 30;
 
-        // Predávajúci (Farnost)
+        /* ----- Predávajúci ----- */
         cs.beginText();
-        cs.setFont(fontBold, 11);
-        cs.newLineAtOffset(startX, y);
+        cs.setFont(bold, 10);
+        cs.newLineAtOffset(margin, y);
         cs.showText("Predávajúci:");
+        cs.setFont(reg, 10);
         cs.newLine();
-        cs.setFont(fontRegular, 10);
-        cs.showText("Názov:" + farnost.getNazov());
+        cs.showText(fa.getNazov());
         cs.newLine();
-        cs.showText("Sídlo" + farnost.getSidlo());
+        cs.showText(fa.getSidlo());
         cs.newLine();
-        cs.showText("IČO: " + farnost.getIco());
+        cs.showText("IČO: " + fa.getIco());
         cs.newLine();
-        cs.showText("DIČ: " + farnost.getDic());
+        cs.showText("DIČ: " + fa.getDic());
         cs.newLine();
-        cs.showText("Kontakt: " + farnost.getKontakt());
+
+        // kontaktný riadok len ak je
+        if (!fa.getKontakt().isBlank()) {
+            cs.showText("Kontakt: " + fa.getKontakt());
+            cs.newLine();
+        }
         cs.endText();
 
-        y -= 100;
-
-        // Odberateľ
-        cs.beginText();
-        cs.setFont(fontBold, 11);
-        cs.newLineAtOffset(startX, y);
-        cs.showText("Odberateľ:");
-        cs.newLine();
-        cs.setFont(fontRegular, 10);
-        cs.showText("Názov" + faktura.getOdberatelMeno());
-        cs.newLine();
-        cs.showText("Sídlo" + faktura.getOdberatelAdresa());
-        cs.newLine();
-
-        if (faktura.getOdberatelIco() != null && !faktura.getOdberatelIco().isBlank())
-            cs.showText("IČO: " + faktura.getOdberatelIco());
-        cs.newLine();
-
-        if (faktura.getOdberatelDic() != null && !faktura.getOdberatelDic().isBlank())
-            cs.showText("DIČ: " + faktura.getOdberatelDic());
-        cs.newLine();
-
-        if (faktura.getOdberatelIcdph() != null && !faktura.getOdberatelIcdph().isBlank())
-            cs.showText("IČ DPH: " + faktura.getOdberatelIcdph());
-        cs.newLine();
-
-        if (faktura.getOdberatelTelefon() != null && !faktura.getOdberatelTelefon().isBlank())
-            cs.showText("Telefón: " + faktura.getOdberatelTelefon());
-        cs.newLine();
-
-        if (faktura.getOdberatelEmail() != null && !faktura.getOdberatelEmail().isBlank())
-            cs.showText("Email: " + faktura.getOdberatelEmail());
-        cs.newLine();
-
-        if (faktura.getBankaNazov() != null && !faktura.getBankaNazov().isBlank())
-            cs.showText("Banka: " + faktura.getBankaNazov());
-        cs.newLine();
-
-        if (faktura.getBankaIban() != null && !faktura.getBankaIban().isBlank())
-            cs.showText("IBAN: " + faktura.getBankaIban());
-        cs.newLine();
-
-        if (faktura.getBankaSwift() != null && !faktura.getBankaSwift().isBlank())
-            cs.showText("BIC/SWIFT: " + faktura.getBankaSwift());
-        cs.newLine();
-
-        if (faktura.getVariabilnySymbol() != null && !faktura.getVariabilnySymbol().isBlank())
-            cs.showText("Variabilný symbol: " + faktura.getVariabilnySymbol());
-        cs.newLine();
-        cs.newLine();
-        cs.showText("Dátum vystavenia: " + faktura.getDatum().format(DateTimeFormatter.ISO_LOCAL_DATE));
-        cs.endText();
-
+        /* ----- Odberateľ pod predávajúcim ----- */
         y -= 90;
-
-        // Tabuľka hlavička
-        float tableX = startX;
-        float[] colWidths = {150, 60, 60, 60, 60, 60}; // Popis, MJ, Cena, Základ, DPH, Spolu
-        String[] headers = {"Popis", "Množ.", "Cena", "Základ", "DPH", "Spolu"};
-
-        float tableY = y;
-        float currentX;
-
-        // Hlavička tabuľky
-        currentX = tableX;
-        for (int i = 0; i < headers.length; i++) {
-            cs.addRect(currentX, tableY, colWidths[i], rowHeight);
-            cs.beginText();
-            cs.setFont(fontBold, 9);
-            cs.newLineAtOffset(currentX + 2, tableY + 5);
-            cs.showText(headers[i]);
-            cs.endText();
-            currentX += colWidths[i];
-        }
-
-        cs.stroke();
-
-        // Riadky s položkami
-        float contentY = tableY - rowHeight;
-        for (FakturaData.Item item : faktura.getPolozky()) {
-            currentX = tableX;
-            String[] values = {
-                    item.getPopis(),
-                    String.valueOf(item.getMnozstvo()),
-                    String.format("%.2f", item.getCena()),
-                    String.format("%.2f", item.getZaklad()),
-                    String.format("%.2f", item.getDph()),
-                    String.format("%.2f", item.getCenaSDph())
-            };
-
-            for (int i = 0; i < values.length; i++) {
-                cs.addRect(currentX, contentY, colWidths[i], rowHeight);
-                cs.beginText();
-                cs.setFont(fontRegular, 9);
-                cs.newLineAtOffset(currentX + 2, contentY + 5);
-                cs.showText(values[i]);
-                cs.endText();
-                currentX += colWidths[i];
-            }
-
-            contentY -= rowHeight;
-        }
-
-        cs.stroke();
-
-        // Súhrn
-        contentY -= 20;
         cs.beginText();
-        cs.setFont(fontRegular, 10);
-        cs.newLineAtOffset(startX, contentY);
-        cs.showText(String.format("Celkový základ: %.2f €", faktura.getSubtotal()));
+        cs.setFont(bold, 10);
+        cs.newLineAtOffset(margin, y);
+        cs.showText("Kupujúci:");
+        cs.setFont(reg, 10);
         cs.newLine();
-        cs.showText(String.format("DPH (23%%): %.2f €", faktura.getDph()));
-        cs.newLine();
-        cs.setFont(fontBold, 10);
-        cs.showText(String.format("Spolu s DPH: %.2f €", faktura.getCelkom()));
+        printIfPresent(cs, f.getOdberatelMeno());
+        printIfPresent(cs, f.getOdberatelAdresa());
+        printIfPresent(cs, prefixed("IČO: ",  f.getOdberatelIco()));
+        printIfPresent(cs, prefixed("DIČ: ",  f.getOdberatelDic()));
+        printIfPresent(cs, prefixed("IČ DPH: ", f.getOdberatelIcdph()));
+        printIfPresent(cs, prefixed("Tel.: ", f.getOdberatelTelefon()));
+        printIfPresent(cs, prefixed("E-mail: ", f.getOdberatelEmail()));
+        printIfPresent(cs, "Dátum vystavenia: "
+                + f.getDatum().format(DateTimeFormatter.ISO_LOCAL_DATE));
         cs.endText();
+
+        /* ----- Položky (rovnaké ako predtým) ----- */
+        y -= 150;
+        float tableX = margin;
+        float rowH = 18;
+        float[] colW = {150, 40, 60, 60, 60, 60};
+        String[] header = {"Popis", "MJ", "Cena", "Základ", "DPH", "Spolu"};
+
+        // hlavička
+        float curX = tableX;
+        cs.setLineWidth(0.5f);
+        for (int i = 0; i < header.length; i++) {
+            cs.addRect(curX, y, colW[i], rowH);
+            cs.beginText();
+            cs.setFont(bold, 9);
+            cs.newLineAtOffset(curX + 2, y + 5);
+            cs.showText(header[i]);
+            cs.endText();
+            curX += colW[i];
+        }
+        cs.stroke();
+
+        // riadky položiek
+        float rowY = y - rowH;
+        for (FakturaData.Item it : f.getPolozky()) {
+            curX = tableX;
+            String[] data = {
+                    it.getPopis(),
+                    String.valueOf(it.getMnozstvo()),
+                    fmt(it.getCena()),
+                    fmt(it.getZaklad()),
+                    fmt(it.getDph()),
+                    fmt(it.getCenaSDph())
+            };
+            for (int i = 0; i < data.length; i++) {
+                cs.addRect(curX, rowY, colW[i], rowH);
+                cs.beginText();
+                cs.setFont(reg, 9);
+                cs.newLineAtOffset(curX + 2, rowY + 5);
+                cs.showText(data[i]);
+                cs.endText();
+                curX += colW[i];
+            }
+            rowY -= rowH;
+        }
+        cs.stroke();
+
+        /* ----- Súhrn DPH ----- */
+        rowY -= 20;
+        cs.beginText();
+        cs.setFont(reg, 10);
+        cs.newLineAtOffset(margin, rowY);
+        cs.showText(String.format("Základ dane: %.2f €", f.getSubtotal()));
+        cs.newLine();
+        cs.showText(String.format("DPH 23 %%  : %.2f €", f.getDph()));
+        cs.newLine();
+        cs.setFont(bold, 10);
+        cs.showText(String.format("Spolu s DPH: %.2f €", f.getCelkom()));
+        cs.endText();
+
+        /* ----- Platobné údaje ----- */
+        rowY -= 60;
+        cs.beginText();
+        cs.setFont(bold, 10);
+        cs.newLineAtOffset(margin, rowY);
+        cs.showText("Platobné údaje:");
+        cs.setFont(reg, 10);
+        cs.newLine();
+        printIfPresent(cs, prefixed("Banka: ",  f.getBankaNazov()));
+        printIfPresent(cs, prefixed("IBAN: ",   f.getBankaIban()));
+        printIfPresent(cs, prefixed("BIC/SWIFT: ", f.getBankaSwift()));
+        printIfPresent(cs, prefixed("Variabilný symbol: ", f.getVariabilnySymbol()));
+        cs.endText();
+    }
+
+    /* ---------- Pomocné metódy ---------- */
+
+    private static void printIfPresent(PDPageContentStream cs, String txt) throws IOException {
+        if (txt != null && !txt.isBlank()) {
+            cs.showText(txt);
+            cs.newLine();
+        }
+    }
+
+    private static String prefixed(String prefix, String val) {
+        return (val == null || val.isBlank()) ? "" : prefix + val;
+    }
+    private static String fmt(double v) {
+        return String.format("%.2f", v);
     }
 
     private static String generateFileName(FakturaData f) {
         String date = f.getDatum().format(DateTimeFormatter.ISO_LOCAL_DATE);
-        String name = f.getOdberatelMeno().replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]", "_");
+        String name = f.getOdberatelMeno()
+                .replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]", "_");
         return "Faktura_" + date + "_" + name + ".pdf";
     }
 }
