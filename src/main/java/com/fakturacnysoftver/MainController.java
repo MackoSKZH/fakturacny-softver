@@ -24,6 +24,15 @@ public class MainController {
     @FXML private Label lblSubtotal;
     @FXML private Label lblDph;
     @FXML private Label lblTotal;
+    @FXML private TextField tfCustomerIco;
+    @FXML private TextField tfCustomerDic;
+    @FXML private TextField tfCustomerIcdph;
+    @FXML private TextField tfCustomerTelefon;
+    @FXML private TextField tfCustomerEmail;
+    @FXML private TextField tfBankaNazov;
+    @FXML private TextField tfBankaIban;
+    @FXML private TextField tfBankaSwift;
+    @FXML private TextField tfVarSymbol;
 
     private final ObservableList<FakturaData.Item> items = FXCollections.observableArrayList();
     private final FarnostData farnost = StorageManager.loadFarnost();
@@ -146,7 +155,25 @@ public class MainController {
     }
 
     private FakturaData buildFaktura() {
-        return new FakturaData(this.tfCustomerName.getText(), this.tfCustomerAddress.getText(), this.dpDate.getValue(), this.items);
+        FakturaData faktura = new FakturaData(
+                this.tfCustomerName.getText(),
+                this.tfCustomerAddress.getText(),
+                this.dpDate.getValue(),
+                this.items
+        );
+
+        faktura.setOdberatelIco(this.tfCustomerIco.getText());
+        faktura.setOdberatelDic(this.tfCustomerDic.getText());
+        faktura.setOdberatelIcdph(this.tfCustomerIcdph.getText());
+        faktura.setOdberatelTelefon(this.tfCustomerTelefon.getText());
+        faktura.setOdberatelEmail(this.tfCustomerEmail.getText());
+
+        faktura.setBankaNazov(this.tfBankaNazov.getText());
+        faktura.setBankaIban(this.tfBankaIban.getText());
+        faktura.setBankaSwift(this.tfBankaSwift.getText());
+        faktura.setVariabilnySymbol(this.tfVarSymbol.getText());
+
+        return faktura;
     }
 
     private Window getWindow() {
