@@ -143,7 +143,7 @@ public class PDFGenerator {
         float tableX = margin;
         float rowH = 18;
         float[] colW = {150, 40, 60, 60, 60, 60};
-        String[] header = {"Popis", "MJ", "Cena", "Základ", "DPH", "Spolu"};
+        String[] header = {"Popis", "Ks", "Cena ks", "bez DPH", "DPH", "Cena"};
 
         // hlavička
         float curX = tableX;
