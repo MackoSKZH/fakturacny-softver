@@ -7,19 +7,30 @@ repositories {
     mavenCentral()
 }
 
-dependencies {
-    implementation 'org.apache.pdfbox:pdfbox:3.0.2'
-}
-
 application {
     mainClass = 'com.fakturacnysoftver.AppLauncher'
+    applicationDefaultJvmArgs = [
+            '--module-path', 'C:/java/javafx-sdk-21/lib',
+            '--add-modules', 'javafx.controls,javafx.fxml'
+    ]
 }
 
 javafx {
-    version = '21'
+    version = "21"
     modules = [ 'javafx.controls', 'javafx.fxml' ]
+}
+
+dependencies {
+    implementation 'org.apache.pdfbox:pdfbox:2.0.29'
 }
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+}
+
+run {
+    jvmArgs = [
+            "--module-path", "C:/java/javafx-sdk-21/lib",
+            "--add-modules", "javafx.controls,javafx.fxml"
+    ]
 }
