@@ -2,10 +2,6 @@ package com.fakturacnysoftver;
 
 import java.io.Serializable;
 
-/**
- * Trieda uchováva trvalé údaje farnosti (dodávateľa).
- * Serializuje sa do binárneho súboru cez {@link StorageManager}.
- */
 public class FarnostData implements Serializable {
     private static final long serialVersionUID = 1L;
 

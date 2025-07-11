@@ -8,7 +8,6 @@
             fx:controller="com.fakturacnysoftver.MainController"
             prefWidth="820" prefHeight="720">
 
-    <!-- ===== Hlavička aplikácie ===== -->
     <top>
         <HBox spacing="10">
             <padding>
@@ -23,14 +22,12 @@
         </HBox>
     </top>
 
-    <!-- ===== Centrum: formulár a tabuľka ===== -->
     <center>
         <VBox spacing="12">
             <padding>
                 <Insets top="15" right="15" bottom="15" left="15"/>
             </padding>
 
-            <!-- Zákazník -->
             <GridPane hgap="10" vgap="10">
                 <Label text="Meno / firma:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
                 <TextField fx:id="tfCustomerName" GridPane.rowIndex="0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
@@ -69,7 +66,6 @@
                 <TextField fx:id="tfVarSymbol" GridPane.rowIndex="6" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
             </GridPane>
 
-            <!-- Tabuľka položiek -->
             <TableView fx:id="tblItems" editable="true" VBox.vgrow="ALWAYS">
                 <columns>
                     <TableColumn fx:id="colPopis" text="Popis" prefWidth="400"/>
@@ -78,12 +74,10 @@
                 </columns>
             </TableView>
 
-            <!-- Tlačidlo pridať riadok -->
             <Button text="+ Pridať položku"
                     onAction="#handleAddRow"
                     maxWidth="120"/>
 
-            <!-- Súhrn -->
             <GridPane hgap="10" alignment="CENTER_RIGHT">
                 <Label text="Medzisúčet:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
                 <Label fx:id="lblSubtotal" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
@@ -100,6 +94,5 @@
         </VBox>
     </center>
 
-    <!-- spodné odsadenie pre krajší okraj -->
     <padding><Insets top="0" right="10" bottom="10" left="10"/></padding>
 </BorderPane>

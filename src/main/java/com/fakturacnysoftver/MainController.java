@@ -42,12 +42,10 @@ public class MainController {
         this.dpDate.setValue(LocalDate.now());
         this.tblItems.setItems(this.items);
 
-        // Bindings pre existujúce stĺpce
         this.colPopis.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getPopis()));
         this.colMnoz.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().getMnozstvo()));
         this.colCena.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().getCena()));
 
-        // colPopis
         this.colPopis.setCellFactory(column -> new EditingCell<>(new javafx.util.converter.DefaultStringConverter()));
         this.colPopis.setOnEditCommit(event -> {
             event.getRowValue().setPopis(event.getNewValue());
@@ -55,7 +53,6 @@ public class MainController {
             this.tblItems.refresh();
         });
 
-        // colMnoz
         this.colMnoz.setCellFactory(column -> new EditingCell<>(new javafx.util.converter.IntegerStringConverter()));
         this.colMnoz.setOnEditCommit(event -> {
             event.getRowValue().setMnozstvo(event.getNewValue());
@@ -63,7 +60,6 @@ public class MainController {
             this.tblItems.refresh();
         });
 
-        // colCena
         this.colCena.setCellFactory(column -> new EditingCell<>(new javafx.util.StringConverter<>() {
             @Override
             public String toString(Double value) {
@@ -89,8 +85,6 @@ public class MainController {
             this.tblItems.refresh();
         });
 
-        // ----- NOVÉ STĹPCE -----
-
         TableColumn<FakturaData.Item, String> colZaklad = new TableColumn<>("Základ");
         colZaklad.setCellValueFactory(data -> {
             double zaklad = data.getValue().getZaklad();
@@ -109,7 +103,6 @@ public class MainController {
             return new javafx.beans.property.SimpleStringProperty(String.format("%.2f €", spolu));
         });
 
-        // Pridanie nových stĺpcov do tabuľky
         this.tblItems.getColumns().addAll(colZaklad, colDph, colSpolu);
 
         this.tblItems.setEditable(true);

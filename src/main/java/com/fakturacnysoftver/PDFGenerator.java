@@ -15,8 +15,6 @@ import java.time.format.DateTimeFormatter;
 /** Generuje finálnu PDF faktúru. */
 public class PDFGenerator {
 
-    /* ---------- Verejné API ---------- */
-
     public static File exportToPdf(FakturaData f, FarnostData fa, Window owner) {
         FileChooser fc = new FileChooser();
         fc.setTitle("Ulož PDF faktúru");
@@ -47,8 +45,6 @@ public class PDFGenerator {
         }
     }
 
-    /* ---------- Privátne ---------- */
-
     private static void generateAndSavePdf(FakturaData f, FarnostData fa, File file) {
         try (PDDocument doc = new PDDocument()) {
 
@@ -76,7 +72,6 @@ public class PDFGenerator {
         }
     }
 
-    /* --- vykresľovanie --- */
     private static void drawFaktura(PDPageContentStream cs,
                                     FakturaData f,
                                     FarnostData fa,
@@ -88,7 +83,6 @@ public class PDFGenerator {
         float y = PDRectangle.A4.getHeight() - margin;
         cs.setLeading(14);
 
-        /* Nadpis */
         cs.beginText();
         cs.setFont(bold, 14);
         cs.newLineAtOffset(margin, y);
@@ -96,7 +90,6 @@ public class PDFGenerator {
         cs.endText();
         y -= 30;
 
-        /* ----- Predávajúci ----- */
         cs.beginText();
         cs.setFont(bold, 10);
         cs.newLineAtOffset(margin, y);
@@ -112,14 +105,12 @@ public class PDFGenerator {
         cs.showText("DIČ: " + fa.getDic());
         cs.newLine();
 
-        // kontaktný riadok len ak je
         if (!fa.getKontakt().isBlank()) {
             cs.showText("Kontakt: " + fa.getKontakt());
             cs.newLine();
         }
         cs.endText();
 
-        /* ----- Odberateľ pod predávajúcim ----- */
         y -= 90;
         cs.beginText();
         cs.setFont(bold, 10);
@@ -138,14 +129,12 @@ public class PDFGenerator {
                 + f.getDatum().format(DateTimeFormatter.ISO_LOCAL_DATE));
         cs.endText();
 
-        /* ----- Položky (rovnaké ako predtým) ----- */
         y -= 150;
         float tableX = margin;
         float rowH = 18;
         float[] colW = {150, 40, 60, 60, 60, 60};
         String[] header = {"Popis", "Ks", "Cena ks", "bez DPH", "DPH", "Cena"};
 
-        // hlavička
         float curX = tableX;
         cs.setLineWidth(0.5f);
         for (int i = 0; i < header.length; i++) {
@@ -159,7 +148,6 @@ public class PDFGenerator {
         }
         cs.stroke();
 
-        // riadky položiek
         float rowY = y - rowH;
         for (FakturaData.Item it : f.getPolozky()) {
             curX = tableX;
@@ -184,7 +172,6 @@ public class PDFGenerator {
         }
         cs.stroke();
 
-        /* ----- Súhrn DPH ----- */
         rowY -= 20;
         cs.beginText();
         cs.setFont(reg, 10);
@@ -197,7 +184,6 @@ public class PDFGenerator {
         cs.showText(String.format("Spolu s DPH: %.2f €", f.getCelkom()));
         cs.endText();
 
-        /* ----- Platobné údaje ----- */
         rowY -= 60;
         cs.beginText();
         cs.setFont(bold, 10);
@@ -211,8 +197,6 @@ public class PDFGenerator {
         printIfPresent(cs, prefixed("Variabilný symbol: ", f.getVariabilnySymbol()));
         cs.endText();
     }
-
-    /* ---------- Pomocné metódy ---------- */
 
     private static void printIfPresent(PDPageContentStream cs, String txt) throws IOException {
         if (txt != null && !txt.isBlank()) {

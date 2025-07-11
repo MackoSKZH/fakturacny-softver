@@ -17,7 +17,7 @@ public class StorageManager {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return new FarnostData(); // default values
+        return new FarnostData();
     }
 
     public static void saveFarnost(FarnostData data) {

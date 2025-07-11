@@ -21,15 +21,12 @@ public class FakturaData {
     private LocalDate datum;
     private List<Item> polozky;
 
-    // KONŠTRUKTOR (zatiaľ základný, môžeš rozšíriť podľa potreby)
     public FakturaData(String odberatelMeno, String odberatelAdresa, LocalDate datum, List<Item> polozky) {
         this.odberatelMeno = odberatelMeno;
         this.odberatelAdresa = odberatelAdresa;
         this.datum = datum;
         this.polozky = polozky;
     }
-
-    // GETTRE a SETTRE
 
     public String getOdberatelMeno() {
         return this.odberatelMeno;
@@ -147,7 +144,6 @@ public class FakturaData {
         return this.polozky.stream().mapToDouble(Item::getCenaSDph).sum();
     }
 
-    // VNORENÁ TRIEDA Item
     public static class Item {
         private final StringProperty popis = new SimpleStringProperty("");
         private final IntegerProperty mnozstvo = new SimpleIntegerProperty(1);
