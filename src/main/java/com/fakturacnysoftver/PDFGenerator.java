@@ -103,9 +103,9 @@ public class PDFGenerator {
         cs.showText("Predávajúci:");
         cs.setFont(reg, 10);
         cs.newLine();
-        cs.showText(fa.getNazov());
+        cs.showText("Názov: " + fa.getNazov());
         cs.newLine();
-        cs.showText(fa.getSidlo());
+        cs.showText("Sídlo: " + fa.getSidlo());
         cs.newLine();
         cs.showText("IČO: " + fa.getIco());
         cs.newLine();
@@ -127,8 +127,8 @@ public class PDFGenerator {
         cs.showText("Kupujúci:");
         cs.setFont(reg, 10);
         cs.newLine();
-        printIfPresent(cs, f.getOdberatelMeno());
-        printIfPresent(cs, f.getOdberatelAdresa());
+        printIfPresent(cs, "Názov: " + f.getOdberatelMeno());
+        printIfPresent(cs, "Sídlo: " + f.getOdberatelAdresa());
         printIfPresent(cs, prefixed("IČO: ",  f.getOdberatelIco()));
         printIfPresent(cs, prefixed("DIČ: ",  f.getOdberatelDic()));
         printIfPresent(cs, prefixed("IČ DPH: ", f.getOdberatelIcdph()));
