@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.fakturacnysoftver.MainController"
+            prefWidth="820" prefHeight="720">
+
+    <!-- ===== Hlavička aplikácie ===== -->
+    <top>
+        <HBox spacing="10">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+
+            <Label text="Fakturačný softvér – Farnosť SPM"
+                   style="-fx-font-size: 18; -fx-font-weight: bold;"/>
+            <Pane HBox.hgrow="ALWAYS"/>
+            <Button text="Údaje farnosti"
+                    onAction="#handleEditFarnost"/>
+        </HBox>
+    </top>
+
+    <!-- ===== Centrum: formulár a tabuľka ===== -->
+    <center>
+        <VBox spacing="12">
+            <padding>
+                <Insets top="15" right="15" bottom="15" left="15"/>
+            </padding>
+
+            <!-- Zákazník + dátum -->
+            <GridPane hgap="10" vgap="10">
+                <Label text="Meno / firma:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                <TextField fx:id="tfCustomerName" GridPane.rowIndex="0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
+
+                <Label text="Adresa:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                <TextField fx:id="tfCustomerAddress" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
+
+                <Label text="Dátum:" GridPane.rowIndex="0" GridPane.columnIndex="2"/>
+                <DatePicker fx:id="dpDate" GridPane.rowIndex="0" GridPane.columnIndex="3"/>
+            </GridPane>
+
+            <!-- Tabuľka položiek -->
+            <TableView fx:id="tblItems" editable="true" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="colPopis" text="Popis" prefWidth="400"/>
+                    <TableColumn fx:id="colMnoz"  text="Množ." prefWidth="80"/>
+                    <TableColumn fx:id="colCena"  text="Cena (€)" prefWidth="120"/>
+                </columns>
+            </TableView>
+
+            <!-- Tlačidlo pridať riadok -->
+            <Button text="+ Pridať položku"
+                    onAction="#handleAddRow"
+                    maxWidth="120"/>
+
+            <!-- Súhrn -->
+            <GridPane hgap="10" alignment="CENTER_RIGHT">
+                <Label text="Medzisúčet:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                <Label fx:id="lblSubtotal" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                <Label text="DPH 23 %:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                <Label fx:id="lblDph" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                <Label text="Celkom:" style="-fx-font-weight: bold;" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                <Label fx:id="lblTotal" style="-fx-font-weight: bold;" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+            </GridPane>
+
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button text="Exportovať PDF" onAction="#handleExport"/>
+                <Button text="Tlačiť" onAction="#handlePrint"/>
+            </HBox>
+        </VBox>
+    </center>
+
+    <!-- spodné odsadenie pre krajší okraj -->
+    <padding><Insets top="0" right="10" bottom="10" left="10"/></padding>
+</BorderPane>
