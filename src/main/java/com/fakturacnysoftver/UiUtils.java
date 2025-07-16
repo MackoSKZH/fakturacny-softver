@@ -39,7 +39,7 @@ public class UiUtils {
 
     public static FarnostData showFarnostDialog(FarnostData data, Window owner) {
         Dialog<FarnostData> dialog = new Dialog<>();
-        dialog.setTitle("Upraviť údaje farnosti");
+        dialog.setTitle("Upraviť údaje");
         dialog.initOwner(owner);
         dialog.initModality(Modality.WINDOW_MODAL);
 
