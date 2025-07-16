@@ -74,9 +74,15 @@
                 </columns>
             </TableView>
 
-            <Button text="+ Pridať položku"
-                    onAction="#handleAddRow"
-                    maxWidth="120"/>
+            <HBox spacing="10">
+                <Button text="+ Pridať položku"
+                        onAction="#handleAddRow"
+                        maxWidth="120"/>
+                <Button text="Zmazať vybrané"
+                        onAction="#handleDeleteSelected"
+                        maxWidth="140"/>
+            </HBox>
+
 
             <GridPane hgap="10" alignment="CENTER_RIGHT">
                 <Label text="Medzisúčet:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
