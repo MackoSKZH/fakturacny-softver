@@ -176,7 +176,6 @@ public class MainController {
         this.recalculate();
     }
 
-
     private FakturaData buildFaktura() {
         FakturaData faktura = new FakturaData(
                 this.tfCustomerName.getText(),
