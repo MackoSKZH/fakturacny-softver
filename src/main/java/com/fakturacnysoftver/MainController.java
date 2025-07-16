@@ -5,6 +5,7 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
@@ -41,6 +42,13 @@ public class MainController {
     public void initialize() {
         this.dpDate.setValue(LocalDate.now());
         this.tblItems.setItems(this.items);
+
+        TableColumn<FakturaData.Item, Boolean> colSelect = new TableColumn<>("");
+        colSelect.setCellValueFactory(cellData -> cellData.getValue().selectedProperty());
+        colSelect.setCellFactory(CheckBoxTableCell.forTableColumn(colSelect));
+        colSelect.setPrefWidth(40);
+
+        this.tblItems.getColumns().addFirst(colSelect);
 
         this.colPopis.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getPopis()));
         this.colMnoz.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().getMnozstvo()));
@@ -107,6 +115,33 @@ public class MainController {
 
         this.tblItems.setEditable(true);
         this.recalculate();
+
+//        TableColumn<FakturaData.Item, Void> colDelete = new TableColumn<>("");
+//
+//        colDelete.setCellFactory(param -> new TableCell<>() {
+//            private final Button btn = new Button("🗑");
+//
+//            {
+//                this.btn.setOnAction((ActionEvent event) -> {
+//                    FakturaData.Item item = this.getTableView().getItems().get(this.getIndex());
+//                    MainController.this.items.remove(item);
+//                    MainController.this.recalculate();
+//                });
+//                this.btn.setStyle("-fx-background-color: transparent; -fx-font-size: 14px;");
+//            }
+//
+//            @Override
+//            protected void updateItem(Void item, boolean empty) {
+//                super.updateItem(item, empty);
+//                if (empty) {
+//                    this.setGraphic(null);
+//                } else {
+//                    this.setGraphic(this.btn);
+//                }
+//            }
+//        });
+//
+//        this.tblItems.getColumns().add(colDelete);
     }
 
 
@@ -146,6 +181,13 @@ public class MainController {
             StorageManager.saveFarnost(edited);
         }
     }
+
+    @FXML
+    private void handleDeleteSelected(ActionEvent e) {
+        this.items.removeIf(FakturaData.Item::isSelected);
+        this.recalculate();
+    }
+
 
     private FakturaData buildFaktura() {
         FakturaData faktura = new FakturaData(
