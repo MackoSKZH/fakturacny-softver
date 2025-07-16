@@ -109,7 +109,7 @@ public class MainController {
             return new javafx.beans.property.SimpleStringProperty(String.format("%.2f €", spolu));
         });
 
-        this.tblItems.getColumns().addAll(colZaklad, colDph, colSpolu);
+        Collections.addAll(this.tblItems.getColumns(), colZaklad, colDph, colSpolu);
 
         this.tblItems.setEditable(true);
         this.recalculate();
