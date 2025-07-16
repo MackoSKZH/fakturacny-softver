@@ -113,35 +113,7 @@ public class MainController {
 
         this.tblItems.setEditable(true);
         this.recalculate();
-
-//        TableColumn<FakturaData.Item, Void> colDelete = new TableColumn<>("");
-//
-//        colDelete.setCellFactory(param -> new TableCell<>() {
-//            private final Button btn = new Button("🗑");
-//
-//            {
-//                this.btn.setOnAction((ActionEvent event) -> {
-//                    FakturaData.Item item = this.getTableView().getItems().get(this.getIndex());
-//                    MainController.this.items.remove(item);
-//                    MainController.this.recalculate();
-//                });
-//                this.btn.setStyle("-fx-background-color: transparent; -fx-font-size: 14px;");
-//            }
-//
-//            @Override
-//            protected void updateItem(Void item, boolean empty) {
-//                super.updateItem(item, empty);
-//                if (empty) {
-//                    this.setGraphic(null);
-//                } else {
-//                    this.setGraphic(this.btn);
-//                }
-//            }
-//        });
-//
-//        this.tblItems.getColumns().add(colDelete);
     }
-
 
     @FXML
     private void handleAddRow(ActionEvent e) {
