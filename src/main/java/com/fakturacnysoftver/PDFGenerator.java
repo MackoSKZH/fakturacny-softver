@@ -86,7 +86,7 @@ public class PDFGenerator {
         cs.beginText();
         cs.setFont(bold, 14);
         cs.newLineAtOffset(margin, y);
-        cs.showText("Faktúra – daňový doklad");
+        cs.showText("Faktúra - daňový doklad");
         cs.endText();
         y -= 30;
 
@@ -130,12 +130,11 @@ public class PDFGenerator {
         cs.endText();
 
         y -= 150;
-        float tableX = margin;
         float rowH = 18;
         float[] colW = {150, 40, 60, 60, 60, 60};
         String[] header = {"Popis", "Ks", "Cena ks", "bez DPH", "DPH", "Cena"};
 
-        float curX = tableX;
+        float curX = margin;
         cs.setLineWidth(0.5f);
         for (int i = 0; i < header.length; i++) {
             cs.addRect(curX, y, colW[i], rowH);
@@ -150,7 +149,7 @@ public class PDFGenerator {
 
         float rowY = y - rowH;
         for (FakturaData.Item it : f.getPolozky()) {
-            curX = tableX;
+            curX = margin;
             String[] data = {
                     it.getPopis(),
                     String.valueOf(it.getMnozstvo()),
@@ -213,9 +212,9 @@ public class PDFGenerator {
     }
 
     private static String generateFileName(FakturaData f) {
-        String date = f.getDatum().format(DateTimeFormatter.ISO_LOCAL_DATE);
+        String date = f.getDatum().format(DateTimeFormatter.ofPattern("d.M.yyyy"));
         String name = f.getOdberatelMeno()
-                .replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]", "_");
+                .replaceAll("[^\\p{IsAlphabetic}\\d]", "_");
         return "Faktura_" + date + "_" + name + ".pdf";
     }
 }
