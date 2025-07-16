@@ -17,7 +17,7 @@
             <Label text="Fakturačný softvér"
                    style="-fx-font-size: 18; -fx-font-weight: bold;"/>
             <Pane HBox.hgrow="ALWAYS"/>
-            <Button text="Údaje farnosti"
+            <Button text="Údaje"
                     onAction="#handleEditFarnost"/>
         </HBox>
     </top>
