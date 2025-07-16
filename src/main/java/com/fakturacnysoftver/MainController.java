@@ -12,10 +12,12 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.Alert;
 import javafx.scene.control.cell.CheckBoxTableCell;
+import javafx.scene.control.ContentDisplay;
 import javafx.stage.Window;
 
 import java.io.File;
 import java.time.LocalDate;
+import java.util.Collections;
 
 public class MainController {
 
