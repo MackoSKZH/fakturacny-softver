@@ -2,11 +2,14 @@ package com.fakturacnysoftver;
 
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
-import org.apache.pdfbox.pdmodel.*;
+
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
-import java.awt.*;
+import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,7 +18,7 @@ import java.time.format.DateTimeFormatter;
 /** Generuje finálnu PDF faktúru. */
 public class PDFGenerator {
 
-    public static File exportToPdf(FakturaData f, FarnostData fa, Window owner) {
+    public static File exportToPdf(FakturaData f, UserData fa, Window owner) {
         FileChooser fc = new FileChooser();
         fc.setTitle("Ulož PDF faktúru");
         fc.getExtensionFilters()
@@ -28,7 +31,7 @@ public class PDFGenerator {
         return file;
     }
 
-    public static void printFaktura(FakturaData f, FarnostData fa, Window owner) {
+    public static void printFaktura(FakturaData f, UserData fa, Window owner) {
         try {
             File tmp = File.createTempFile("faktura_", ".pdf");
             generateAndSavePdf(f, fa, tmp);
@@ -45,7 +48,7 @@ public class PDFGenerator {
         }
     }
 
-    private static void generateAndSavePdf(FakturaData f, FarnostData fa, File file) {
+    private static void generateAndSavePdf(FakturaData f, UserData fa, File file) {
         try (PDDocument doc = new PDDocument()) {
 
             // Unicode fonty (NotoSans Regular + Bold)
@@ -74,7 +77,7 @@ public class PDFGenerator {
 
     private static void drawFaktura(PDPageContentStream cs,
                                     FakturaData f,
-                                    FarnostData fa,
+                                    UserData fa,
                                     PDType0Font reg,
                                     PDType0Font bold) throws IOException {
 
@@ -126,7 +129,7 @@ public class PDFGenerator {
         printIfPresent(cs, prefixed("Tel.: ", f.getOdberatelTelefon()));
         printIfPresent(cs, prefixed("E-mail: ", f.getOdberatelEmail()));
         printIfPresent(cs, "Dátum vystavenia: "
-                + f.getDatum().format(DateTimeFormatter.ISO_LOCAL_DATE));
+                + f.getDatum().format(DateTimeFormatter.ofPattern("d.M.yyyy")));
         cs.endText();
 
         y -= 150;
@@ -212,7 +215,7 @@ public class PDFGenerator {
     }
 
     private static String generateFileName(FakturaData f) {
-        String date = f.getDatum().format(DateTimeFormatter.ofPattern("d.M.yyyy"));
+        String date = f.getDatum().format(DateTimeFormatter.ISO_LOCAL_DATE);
         String name = f.getOdberatelMeno()
                 .replaceAll("[^\\p{IsAlphabetic}\\d]", "_");
         return "Faktura_" + date + "_" + name + ".pdf";
