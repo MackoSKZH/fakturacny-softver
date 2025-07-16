@@ -193,7 +193,7 @@ public class MainController {
         this.lblTotal.setText(String.format("%.2f €", subtotal + dph));
     }
 
-    private class EditingCell<T> extends TableCell<FakturaData.Item, T> {
+    private static class EditingCell<T> extends TableCell<FakturaData.Item, T> {
 
         private final TextField textField = new TextField();
         private final javafx.util.StringConverter<T> converter;
