@@ -149,6 +149,19 @@ public class FakturaData {
         private final IntegerProperty mnozstvo = new SimpleIntegerProperty(1);
         private final DoubleProperty cena = new SimpleDoubleProperty(0.0);
         private static final double DPH_SADZBA = 23.0;
+        private final BooleanProperty selected = new SimpleBooleanProperty(false);
+
+        public BooleanProperty selectedProperty() {
+            return this.selected;
+        }
+
+        public boolean isSelected() {
+            return this.selected.get();
+        }
+
+        public void setSelected(boolean selected) {
+            this.selected.set(selected);
+        }
 
         public Item(String popis, int mnozstvo, double cena) {
             this.popis.set(popis);
