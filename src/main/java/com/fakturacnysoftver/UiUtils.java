@@ -1,7 +1,13 @@
 package com.fakturacnysoftver;
 
-import javafx.scene.control.*;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.TableColumn;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.TextField;
+import javafx.scene.control.Label;
+
 import javafx.util.converter.DoubleStringConverter;
 import javafx.util.converter.IntegerStringConverter;
 import javafx.stage.Modality;
@@ -37,8 +43,8 @@ public class UiUtils {
         });
     }
 
-    public static FarnostData showFarnostDialog(FarnostData data, Window owner) {
-        Dialog<FarnostData> dialog = new Dialog<>();
+    public static UserData showUserDialog(UserData data, Window owner) {
+        Dialog<UserData> dialog = new Dialog<>();
         dialog.setTitle("Upraviť údaje");
         dialog.initOwner(owner);
         dialog.initModality(Modality.WINDOW_MODAL);
