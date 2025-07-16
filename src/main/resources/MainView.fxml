@@ -6,7 +6,7 @@
 
 <BorderPane xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.fakturacnysoftver.MainController"
-            prefWidth="820" prefHeight="720">
+            prefWidth="880" prefHeight="720">
 
     <top>
         <HBox spacing="10">
@@ -18,7 +18,7 @@
                    style="-fx-font-size: 18; -fx-font-weight: bold;"/>
             <Pane HBox.hgrow="ALWAYS"/>
             <Button text="Údaje"
-                    onAction="#handleEditFarnost"/>
+                    onAction="#handleEditUser"/>
         </HBox>
     </top>
 
@@ -68,7 +68,7 @@
 
             <TableView fx:id="tblItems" editable="true" VBox.vgrow="ALWAYS">
                 <columns>
-                    <TableColumn fx:id="colPopis" text="Popis" prefWidth="400"/>
+                    <TableColumn fx:id="colPopis" text="Popis" prefWidth="300"/>
                     <TableColumn fx:id="colMnoz"  text="Množ."/>
                     <TableColumn fx:id="colCena"  text="Cena (€)" prefWidth="120"/>
                 </columns>
@@ -78,11 +78,10 @@
                 <Button text="+ Pridať položku"
                         onAction="#handleAddRow"
                         maxWidth="120"/>
-                <Button text="Zmazať vybrané"
+                <Button text="- Zmazať vybrané"
                         onAction="#handleDeleteSelected"
                         maxWidth="140"/>
             </HBox>
-
 
             <GridPane hgap="10" alignment="CENTER_RIGHT">
                 <Label text="Medzisúčet:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
