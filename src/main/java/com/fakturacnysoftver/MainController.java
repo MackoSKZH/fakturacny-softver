@@ -56,18 +56,28 @@ public class MainController {
 
         this.tblItems.getColumns().addFirst(colSelect);
 
-        this.colPopis.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getPopis()));
-        this.colMnoz.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().getMnozstvo()));
-        this.colCena.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().getCena()));
+        this.colPopis.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(cellData.getValue().getPopis())
+        );
+        this.colMnoz.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().getMnozstvo())
+        );
+        this.colCena.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().getCena())
+        );
 
-        this.colPopis.setCellFactory(column -> new EditingCell<>(new javafx.util.converter.DefaultStringConverter()));
+        this.colPopis.setCellFactory(column ->
+                new EditingCell<>(new javafx.util.converter.DefaultStringConverter())
+        );
         this.colPopis.setOnEditCommit(event -> {
             event.getRowValue().setPopis(event.getNewValue());
             this.recalculate();
             this.tblItems.refresh();
         });
 
-        this.colMnoz.setCellFactory(column -> new EditingCell<>(new javafx.util.converter.IntegerStringConverter()));
+        this.colMnoz.setCellFactory(column ->
+                new EditingCell<>(new javafx.util.converter.IntegerStringConverter())
+        );
         this.colMnoz.setOnEditCommit(event -> {
             event.getRowValue().setMnozstvo(event.getNewValue());
             this.recalculate();
