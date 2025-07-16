@@ -17,6 +17,7 @@ import javafx.stage.Window;
 
 import java.io.File;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 
 public class MainController {
@@ -42,7 +43,7 @@ public class MainController {
     @FXML private TextField tfVarSymbol;
 
     private final ObservableList<FakturaData.Item> items = FXCollections.observableArrayList();
-    private final FarnostData farnost = StorageManager.loadFarnost();
+    private final UserData user = StorageManager.loadUser();
 
     @FXML
     public void initialize() {
@@ -150,7 +151,7 @@ public class MainController {
     @FXML
     private void handleExport(ActionEvent e) {
         FakturaData faktura = this.buildFaktura();
-        File pdf = PDFGenerator.exportToPdf(faktura, this.farnost, this.getWindow());
+        File pdf = PDFGenerator.exportToPdf(faktura, this.user, this.getWindow());
         assert pdf != null;
         Alert alert = new Alert(Alert.AlertType.INFORMATION, "PDF uložené: " + pdf.getAbsolutePath());
         alert.showAndWait();
@@ -159,16 +160,17 @@ public class MainController {
     @FXML
     private void handlePrint(ActionEvent e) {
         FakturaData faktura = this.buildFaktura();
-        PDFGenerator.printFaktura(faktura, this.farnost, this.getWindow());
+        PDFGenerator.printFaktura(faktura, this.user, this.getWindow());
     }
 
     @FXML
-    private void handleEditFarnost(ActionEvent e) {
-        FarnostData edited = UiUtils.showFarnostDialog(this.farnost, this.getWindow());
+    private void handleEditUser(ActionEvent e) {
+        UserData edited = UiUtils.showUserDialog(this.user, this.getWindow());
         if (edited != null) {
-            StorageManager.saveFarnost(edited);
+            StorageManager.saveUser(edited);
         }
     }
+
 
     @FXML
     private void handleDeleteSelected(ActionEvent e) {
