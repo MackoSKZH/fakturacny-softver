@@ -38,7 +38,7 @@ public class PDFGenerator {
         return file;
     }
 
-    public static void printFaktura(FakturaData f, UserData fa, Window owner) {
+    public static void printFaktura(FakturaData f, UserData fa) {
         try {
             File tmp = File.createTempFile("faktura_", ".pdf");
             generateAndSavePdf(f, fa, tmp);
@@ -101,7 +101,6 @@ public class PDFGenerator {
                                     BufferedImage logoBuffered) throws IOException {
 
         final float margin = 50;
-        final float width = PDRectangle.A4.getWidth() - 2 * margin;
         float y = PDRectangle.A4.getHeight() - margin;
         cs.setLeading(14);
 

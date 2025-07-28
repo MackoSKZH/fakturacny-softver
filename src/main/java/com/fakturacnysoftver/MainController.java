@@ -159,7 +159,7 @@ public class MainController {
     @FXML
     private void handlePrint(ActionEvent e) {
         FakturaData faktura = this.buildFaktura();
-        PDFGenerator.printFaktura(faktura, this.user, this.getWindow());
+        PDFGenerator.printFaktura(faktura, this.user);
     }
 
     @FXML
