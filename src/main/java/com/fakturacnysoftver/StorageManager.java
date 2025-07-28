@@ -6,8 +6,12 @@ import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class StorageManager {
     private static final Path BIN_PATH = Path.of(System.getProperty("user.home"), ".user", "user.bin");
+    private static final Logger LOGGER = Logger.getLogger(StorageManager.class.getName());
 
     public static UserData loadUser() {
         try {
@@ -17,7 +21,7 @@ public class StorageManager {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error while loading user data", e);
         }
         return new UserData();
     }
@@ -29,7 +33,7 @@ public class StorageManager {
                 out.writeObject(data);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error while saving user data", e);
         }
     }
 }
