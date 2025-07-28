@@ -18,8 +18,12 @@ import java.io.InputStream;
 import javax.imageio.ImageIO;
 import java.time.format.DateTimeFormatter;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /** Generuje finálnu PDF faktúru. */
 public class PDFGenerator {
+    private static final Logger LOGGER = Logger.getLogger(PDFGenerator.class.getName());
 
     public static File exportToPdf(FakturaData f, UserData fa, Window owner) {
         FileChooser fc = new FileChooser();
@@ -47,7 +51,7 @@ public class PDFGenerator {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Chyba pri generovaní dočasného PDF", e);
         }
     }
 
@@ -83,6 +87,7 @@ public class PDFGenerator {
             doc.save(file);
 
         } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Chyba pri generovaní alebo ukladaní PDF faktúry", e);
             throw new RuntimeException("Chyba pri ukladaní PDF", e);
         }
     }
