@@ -8,11 +8,14 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
 import java.awt.Desktop;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import javax.imageio.ImageIO;
 import java.time.format.DateTimeFormatter;
 
 /** Generuje finálnu PDF faktúru. */
@@ -57,6 +60,15 @@ public class PDFGenerator {
             InputStream bold = PDFGenerator.class.getResourceAsStream(
                     "/fonts/NotoSans-Bold.ttf");
 
+            InputStream logoStream = PDFGenerator.class.getResourceAsStream("/images/logo.png");
+            assert logoStream != null;
+            BufferedImage logoBuffered = ImageIO.read(logoStream);
+
+            InputStream logoStream2 = PDFGenerator.class.getResourceAsStream("/images/logo.png");
+            assert logoStream2 != null;
+            PDImageXObject logoImage = PDImageXObject.createFromByteArray(doc,
+                    logoStream2.readAllBytes(), "logo");
+
             PDType0Font fontReg = PDType0Font.load(doc, regular, true);
             PDType0Font fontBold = PDType0Font.load(doc, bold, true);
 
@@ -66,7 +78,7 @@ public class PDFGenerator {
             try (PDPageContentStream cs =
                          new PDPageContentStream(doc, page,
                                  PDPageContentStream.AppendMode.OVERWRITE, true)) {
-                drawFaktura(cs, f, fa, fontReg, fontBold);
+                drawFaktura(cs, f, fa, fontReg, fontBold, logoImage, logoBuffered);
             }
             doc.save(file);
 
@@ -79,12 +91,36 @@ public class PDFGenerator {
                                     FakturaData f,
                                     UserData fa,
                                     PDType0Font reg,
-                                    PDType0Font bold) throws IOException {
+                                    PDType0Font bold,
+                                    PDImageXObject logoImage,
+                                    BufferedImage logoBuffered) throws IOException {
 
         final float margin = 50;
         final float width = PDRectangle.A4.getWidth() - 2 * margin;
         float y = PDRectangle.A4.getHeight() - margin;
         cs.setLeading(14);
+
+        float logoWidth = 100f;
+
+        float aspectRatio = (float)logoBuffered.getHeight() / logoBuffered.getWidth();
+
+        float logoHeight = logoWidth * aspectRatio;
+
+        float logoX = PDRectangle.A4.getWidth() - logoWidth - margin;
+        float logoY = PDRectangle.A4.getHeight() - logoHeight - 30;
+
+        cs.drawImage(logoImage, logoX, logoY, logoWidth, logoHeight);
+
+        String cisloFaktury = generateInvoiceNumber(f);
+        cs.beginText();
+        cs.setFont(bold, 20);
+        float textWidth = bold.getStringWidth(cisloFaktury) / 1000 * 20;
+        float centerX = (PDRectangle.A4.getWidth() - textWidth) / 2;
+        cs.newLineAtOffset(centerX, y);
+        cs.showText(cisloFaktury);
+        cs.endText();
+
+        y -= 30;
 
         cs.beginText();
         cs.setFont(bold, 14);
@@ -219,5 +255,10 @@ public class PDFGenerator {
         String name = f.getOdberatelMeno()
                 .replaceAll("[^\\p{IsAlphabetic}\\d]", "_");
         return "Faktura_" + date + "_" + name + ".pdf";
+    }
+
+    private static String generateInvoiceNumber(FakturaData f) {
+        return "F" + f.getDatum().format(DateTimeFormatter.ofPattern("yyyyMMdd")) +
+                "-" + System.currentTimeMillis() % 100000;
     }
 }
