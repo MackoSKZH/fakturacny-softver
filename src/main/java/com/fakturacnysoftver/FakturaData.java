@@ -20,13 +20,14 @@ public class FakturaData {
     private String odberatelIcdph;
     private String odberatelTelefon;
     private String odberatelEmail;
-    private String bankaNazov;
-    private String bankaIban;
-    private String bankaSwift;
-    private String variabilnySymbol;
 
     private LocalDate datum;
+    private LocalDate datumDodania;
     private List<Item> polozky;
+
+    private String variabilnySymbol;
+
+    private String cisloFaktury;
 
     public FakturaData(String odberatelMeno, String odberatelAdresa, LocalDate datum, List<Item> polozky) {
         this.odberatelMeno = odberatelMeno;
@@ -38,137 +39,95 @@ public class FakturaData {
     public String getOdberatelMeno() {
         return this.odberatelMeno;
     }
-
     public void setOdberatelMeno(String odberatelMeno) {
         this.odberatelMeno = odberatelMeno;
     }
-
     public String getOdberatelAdresa() {
         return this.odberatelAdresa;
     }
-
     public void setOdberatelAdresa(String odberatelAdresa) {
         this.odberatelAdresa = odberatelAdresa;
     }
-
     public String getOdberatelIco() {
         return this.odberatelIco;
     }
-
     public void setOdberatelIco(String odberatelIco) {
         this.odberatelIco = odberatelIco;
     }
-
     public String getOdberatelDic() {
         return this.odberatelDic;
     }
-
     public void setOdberatelDic(String odberatelDic) {
         this.odberatelDic = odberatelDic;
     }
-
     public String getOdberatelIcdph() {
         return this.odberatelIcdph;
     }
-
     public void setOdberatelIcdph(String odberatelIcdph) {
         this.odberatelIcdph = odberatelIcdph;
     }
-
     public String getOdberatelTelefon() {
         return this.odberatelTelefon;
     }
-
     public void setOdberatelTelefon(String odberatelTelefon) {
         this.odberatelTelefon = odberatelTelefon;
     }
-
     public String getOdberatelEmail() {
         return this.odberatelEmail;
     }
-
     public void setOdberatelEmail(String odberatelEmail) {
         this.odberatelEmail = odberatelEmail;
     }
-
-    public String getBankaNazov() {
-        return this.bankaNazov;
+    public LocalDate getDatum() {
+        return this.datum;
     }
-
-    public void setBankaNazov(String bankaNazov) {
-        this.bankaNazov = bankaNazov;
+    public void setDatum(LocalDate datum) {
+        this.datum = datum;
     }
-
-    public String getBankaIban() {
-        return this.bankaIban;
+    public List<Item> getPolozky() {
+        return this.polozky;
     }
-
-    public void setBankaIban(String bankaIban) {
-        this.bankaIban = bankaIban;
+    public void setPolozky(List<Item> polozky) {
+        this.polozky = polozky;
     }
-
-    public String getBankaSwift() {
-        return this.bankaSwift;
+    public double getSubtotal() {
+        return this.polozky.stream().mapToDouble(Item::getZaklad).sum();
     }
-
-    public void setBankaSwift(String bankaSwift) {
-        this.bankaSwift = bankaSwift;
+    public double getDph() {
+        return this.polozky.stream().mapToDouble(Item::getDph).sum();
     }
-
+    public LocalDate getDatumDodania() {
+        return this.datumDodania;
+    }
+    public void setDatumDodania(LocalDate datumDodania) {
+        this.datumDodania = datumDodania;
+    }
     public String getVariabilnySymbol() {
         return this.variabilnySymbol;
     }
-
     public void setVariabilnySymbol(String variabilnySymbol) {
         this.variabilnySymbol = variabilnySymbol;
     }
 
-    public LocalDate getDatum() {
-        return this.datum;
+    public double getCelkom(boolean jePlatca) {
+        return this.polozky.stream()
+                .mapToDouble(p -> jePlatca ? p.getCenaSDph() : p.getZaklad())
+                .sum();
     }
 
-    public void setDatum(LocalDate datum) {
-        this.datum = datum;
+    public String getCisloFaktury() {
+        return this.cisloFaktury;
     }
 
-    public List<Item> getPolozky() {
-        return this.polozky;
-    }
-
-    public void setPolozky(List<Item> polozky) {
-        this.polozky = polozky;
-    }
-
-    public double getSubtotal() {
-        return this.polozky.stream().mapToDouble(Item::getZaklad).sum();
-    }
-
-    public double getDph() {
-        return this.polozky.stream().mapToDouble(Item::getDph).sum();
-    }
-
-    public double getCelkom() {
-        return this.polozky.stream().mapToDouble(Item::getCenaSDph).sum();
+    public void setCisloFaktury(String cisloFaktury) {
+        this.cisloFaktury = cisloFaktury;
     }
 
     public static class Item {
         private final StringProperty popis = new SimpleStringProperty("");
         private final IntegerProperty mnozstvo = new SimpleIntegerProperty(1);
         private final DoubleProperty cena = new SimpleDoubleProperty(0.0);
-        private static final double DPH_SADZBA = 23.0;
         private final BooleanProperty selected = new SimpleBooleanProperty(false);
-
-        public BooleanProperty selectedProperty() {
-            return this.selected;
-        }
-
-        public boolean isSelected() {
-            return this.selected.get();
-        }
-
-        public void setSelected(boolean selected) {
-            this.selected.set(selected);
-        }
 
         public Item(String popis, int mnozstvo, double cena) {
             this.popis.set(popis);
@@ -179,37 +138,41 @@ public class FakturaData {
         public String getPopis() {
             return this.popis.get();
         }
-
-        public void setPopis(String popis) {
-            this.popis.set(popis);
+        public void setPopis(String val) {
+            this.popis.set(val);
         }
-
-        public StringProperty popisProperty() {
+        public javafx.beans.property.StringProperty popisProperty() {
             return this.popis;
         }
 
         public int getMnozstvo() {
             return this.mnozstvo.get();
         }
-
-        public void setMnozstvo(int mnozstvo) {
-            this.mnozstvo.set(mnozstvo);
+        public void setMnozstvo(int val) {
+            this.mnozstvo.set(val);
         }
-
-        public IntegerProperty mnozstvoProperty() {
+        public javafx.beans.property.IntegerProperty mnozstvoProperty() {
             return this.mnozstvo;
         }
 
         public double getCena() {
             return this.cena.get();
         }
-
-        public void setCena(double cena) {
-            this.cena.set(cena);
+        public void setCena(double val) {
+            this.cena.set(val);
+        }
+        public javafx.beans.property.DoubleProperty cenaProperty() {
+            return this.cena;
         }
 
-        public DoubleProperty cenaProperty() {
-            return this.cena;
+        public boolean isSelected() {
+            return this.selected.get();
+        }
+        public void setSelected(boolean val) {
+            this.selected.set(val);
+        }
+        public javafx.beans.property.BooleanProperty selectedProperty() {
+            return this.selected;
         }
 
         public double getZaklad() {
@@ -217,11 +180,12 @@ public class FakturaData {
         }
 
         public double getDph() {
-            return this.getZaklad() * (DPH_SADZBA / 100.0);
+            return this.getZaklad() * 0.23;
         }
 
         public double getCenaSDph() {
             return this.getZaklad() + this.getDph();
         }
     }
+
 }
