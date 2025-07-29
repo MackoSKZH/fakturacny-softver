@@ -57,11 +57,8 @@ public class PDFGenerator {
     private static void generateAndSavePdf(FakturaData f, UserData fa, File file) {
         try (PDDocument doc = new PDDocument()) {
 
-            // Unicode fonty (NotoSans Regular + Bold)
-            InputStream regular = PDFGenerator.class.getResourceAsStream(
-                    "/fonts/NotoSans-Regular.ttf");
-            InputStream bold = PDFGenerator.class.getResourceAsStream(
-                    "/fonts/NotoSans-Bold.ttf");
+            BufferedImage logoBuffered = null;
+            PDImageXObject logoImage = null;
 
             InputStream logoStream = PDFGenerator.class.getResourceAsStream("/images/logo.png");
             assert logoStream != null;
