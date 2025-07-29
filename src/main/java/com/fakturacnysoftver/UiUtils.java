@@ -1,12 +1,13 @@
 package com.fakturacnysoftver;
 
-import javafx.scene.control.ButtonBar;
 import javafx.scene.control.TableColumn;
-import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.control.Dialog;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.cell.TextFieldTableCell;
 
 import javafx.util.converter.DoubleStringConverter;
 import javafx.util.converter.IntegerStringConverter;
@@ -59,16 +60,30 @@ public class UiUtils {
         TextField tfKontakt = new TextField(data.getKontakt());
         TextField tfZastupeny = new TextField(data.getZastupeny());
 
+        TextField tfBankaNazov = new TextField(data.getBankaNazov());
+        TextField tfIban = new TextField(data.getBankaIban());
+        TextField tfSwift = new TextField(data.getBankaSwift());
+
+        CheckBox cbPlatcaDph = new CheckBox("Platiteľ DPH");
+        cbPlatcaDph.setSelected(data.isPlatcaDPH());
+
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
 
-        grid.addRow(0, new Label("Názov:"), tfNazov);
-        grid.addRow(1, new Label("Sídlo:"), tfSidlo);
-        grid.addRow(2, new Label("IČO:"), tfIco);
-        grid.addRow(3, new Label("DIČ:"), tfDic);
-        grid.addRow(4, new Label("Kontakt:"), tfKontakt);
-        grid.addRow(5, new Label("Zastúpený:"), tfZastupeny);
+        int row = 0;
+        grid.addRow(row++, new Label("Názov:"), tfNazov);
+        grid.addRow(row++, new Label("Sídlo:"), tfSidlo);
+        grid.addRow(row++, new Label("IČO:"), tfIco);
+        grid.addRow(row++, new Label("DIČ:"), tfDic);
+        grid.addRow(row++, new Label("Kontakt:"), tfKontakt);
+        grid.addRow(row++, new Label("Zastúpený:"), tfZastupeny);
+
+        grid.addRow(row++, new Label("Banka:"), tfBankaNazov);
+        grid.addRow(row++, new Label("IBAN:"), tfIban);
+        grid.addRow(row++, new Label("BIC/SWIFT:"), tfSwift);
+
+        grid.addRow(row++, cbPlatcaDph);
 
         GridPane.setHgrow(tfNazov, Priority.ALWAYS);
         GridPane.setHgrow(tfSidlo, Priority.ALWAYS);
@@ -76,6 +91,9 @@ public class UiUtils {
         GridPane.setHgrow(tfDic, Priority.ALWAYS);
         GridPane.setHgrow(tfKontakt, Priority.ALWAYS);
         GridPane.setHgrow(tfZastupeny, Priority.ALWAYS);
+        GridPane.setHgrow(tfBankaNazov, Priority.ALWAYS);
+        GridPane.setHgrow(tfIban, Priority.ALWAYS);
+        GridPane.setHgrow(tfSwift, Priority.ALWAYS);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -87,6 +105,12 @@ public class UiUtils {
                 data.setDic(tfDic.getText());
                 data.setKontakt(tfKontakt.getText());
                 data.setZastupeny(tfZastupeny.getText());
+                data.setPlatcaDPH(cbPlatcaDph.isSelected());
+
+                data.setBankaNazov(tfBankaNazov.getText());
+                data.setBankaIban(tfIban.getText());
+                data.setBankaSwift(tfSwift.getText());
+
                 return data;
             }
             return null;
@@ -94,4 +118,5 @@ public class UiUtils {
 
         return dialog.showAndWait().orElse(null);
     }
+
 }
