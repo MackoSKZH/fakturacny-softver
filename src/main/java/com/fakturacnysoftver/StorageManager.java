@@ -10,7 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class StorageManager {
-    private static final Path BIN_PATH = Path.of(System.getProperty("user.home"), ".user", "user.bin");
+    private static final Path BIN_PATH = Path.of(System.getProperty("user.dir"), "data", "user.bin");
     private static final Logger LOGGER = Logger.getLogger(StorageManager.class.getName());
 
     public static UserData loadUser() {
