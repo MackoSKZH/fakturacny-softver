@@ -14,6 +14,12 @@ public class UserData implements Serializable {
     private String kontakt = "0900 012 345";
     private String zastupeny = "Mgr. Prezident, Phd.";
 
+    private String bankaNazov = "Tatra banka, a.s.";
+    private String bankaIban = "SK8975000000000012345671";
+    private String bankaSwift = "TATRSKBX";
+
+    private boolean platcaDPH = true;
+
     public String getNazov() {
         return this.nazov;
     }
@@ -31,6 +37,18 @@ public class UserData implements Serializable {
     }
     public String getZastupeny() {
         return this.zastupeny;
+    }
+    public boolean isPlatcaDPH() {
+        return this.platcaDPH;
+    }
+    public String getBankaNazov() {
+        return this.bankaNazov;
+    }
+    public String getBankaIban() {
+        return this.bankaIban;
+    }
+    public String getBankaSwift() {
+        return this.bankaSwift;
     }
 
     public void setNazov(String nazov) {
@@ -50,5 +68,17 @@ public class UserData implements Serializable {
     }
     public void setZastupeny(String zastupeny) {
         this.zastupeny = zastupeny;
+    }
+    public void setPlatcaDPH(boolean platcaDPH) {
+        this.platcaDPH = platcaDPH;
+    }
+    public void setBankaNazov(String bankaNazov) {
+        this.bankaNazov = bankaNazov;
+    }
+    public void setBankaIban(String bankaIban) {
+        this.bankaIban = bankaIban;
+    }
+    public void setBankaSwift(String bankaSwift) {
+        this.bankaSwift = bankaSwift;
     }
 }
