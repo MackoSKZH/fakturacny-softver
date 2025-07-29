@@ -60,14 +60,21 @@ public class PDFGenerator {
             BufferedImage logoBuffered = null;
             PDImageXObject logoImage = null;
 
-            InputStream logoStream = PDFGenerator.class.getResourceAsStream("/images/logo.png");
-            assert logoStream != null;
-            BufferedImage logoBuffered = ImageIO.read(logoStream);
-
-            InputStream logoStream2 = PDFGenerator.class.getResourceAsStream("/images/logo.png");
-            assert logoStream2 != null;
-            PDImageXObject logoImage = PDImageXObject.createFromByteArray(doc,
-                    logoStream2.readAllBytes(), "logo");
+            try (InputStream logoStream = PDFGenerator.class.getResourceAsStream("/images/logo.png")) {
+                if (logoStream != null) {
+                    byte[] logoBytes = logoStream.readAllBytes();
+                    logoBuffered = ImageIO.read(new java.io.ByteArrayInputStream(logoBytes));
+                    if (logoBuffered != null) {
+                        logoImage = PDImageXObject.createFromByteArray(doc, logoBytes, "logo");
+                    } else {
+                        LOGGER.warning("Nepodarilo sa načítať logo.png – neznámy formát alebo poškodený súbor.");
+                    }
+                } else {
+                    LOGGER.info("Logo sa nenašlo v classpath: /images/logo.png");
+                }
+            } catch (IOException e) {
+                LOGGER.warning("Chyba pri načítaní loga: " + e.getMessage());
+            }
 
             PDType0Font fontReg = PDType0Font.load(doc, regular, true);
             PDType0Font fontBold = PDType0Font.load(doc, bold, true);
@@ -75,9 +82,7 @@ public class PDFGenerator {
             PDPage page = new PDPage(PDRectangle.A4);
             doc.addPage(page);
 
-            try (PDPageContentStream cs =
-                         new PDPageContentStream(doc, page,
-                                 PDPageContentStream.AppendMode.OVERWRITE, true)) {
+            try (PDPageContentStream cs = new PDPageContentStream(doc, page, PDPageContentStream.AppendMode.OVERWRITE, true)) {
                 drawFaktura(cs, f, fa, fontReg, fontBold, logoImage, logoBuffered);
             }
             doc.save(file);
