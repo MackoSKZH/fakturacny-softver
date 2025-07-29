@@ -35,8 +35,11 @@
                 <Label text="Adresa:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
                 <TextField fx:id="tfCustomerAddress" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
 
-                <Label text="Dátum:" GridPane.rowIndex="0" GridPane.columnIndex="2"/>
+                <Label text="Dátum vystavenia:" GridPane.rowIndex="0" GridPane.columnIndex="2"/>
                 <DatePicker fx:id="dpDate" GridPane.rowIndex="0" GridPane.columnIndex="3"/>
+
+                <Label text="Dátum dodania:" GridPane.rowIndex="1" GridPane.columnIndex="2"/>
+                <DatePicker fx:id="dpDatumDodania" GridPane.rowIndex="1" GridPane.columnIndex="3"/>
 
                 <Label text="IČO:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
                 <TextField fx:id="tfCustomerIco" GridPane.rowIndex="2" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
@@ -52,15 +55,6 @@
 
                 <Label text="E-mail:" GridPane.rowIndex="3" GridPane.columnIndex="2"/>
                 <TextField fx:id="tfCustomerEmail" GridPane.rowIndex="3" GridPane.columnIndex="3" GridPane.hgrow="ALWAYS"/>
-
-                <Label text="Banka:" GridPane.rowIndex="4" GridPane.columnIndex="2"/>
-                <TextField fx:id="tfBankaNazov" GridPane.rowIndex="4" GridPane.columnIndex="3" GridPane.hgrow="ALWAYS"/>
-
-                <Label text="IBAN:" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
-                <TextField fx:id="tfBankaIban" GridPane.rowIndex="5" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
-
-                <Label text="BIC/SWIFT:" GridPane.rowIndex="5" GridPane.columnIndex="2"/>
-                <TextField fx:id="tfBankaSwift" GridPane.rowIndex="5" GridPane.columnIndex="3" GridPane.hgrow="ALWAYS"/>
 
                 <Label text="Variabilný symbol:" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
                 <TextField fx:id="tfVarSymbol" GridPane.rowIndex="6" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
