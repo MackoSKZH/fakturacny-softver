@@ -1,5 +1,5 @@
 JLink:
-    jlink --module-path "C:\java\javafx-sdk-21.0.2\lib;C:\Program Files\Java\jdk-21.0.7\jmods" --add-modules java.base,javafx.controls,javafx.fxml --output "C:\Users\Maťo\Desktop\aplikacia\runtime2" --strip-debug --compress=2 --no-header-files --no-man-pages
+    jlink --module-path "C:\java\javafx-sdk-21.0.2\lib;C:\Program Files\Java\jdk-21.0.7\jmods" --add-modules java.base,javafx.controls,javafx.fxml --output "C:\Users\Maťo\Desktop\aplikacia\runtime" --strip-debug --compress=2 --no-header-files --no-man-pages
 
 JPackage:
-jpackage --type exe --input "C:\Users\Maťo\Desktop\fakturacny-softver\build\libs" --dest "C:\Users\Maťo\Desktop\aplikacia" --name FakturacnySoftver --main-jar fakturacny-softver.jar --main-class com.fakturacnysoftver.AppLauncher --runtime-image "C:\Users\Maťo\Desktop\aplikacia\runtime2" --icon "C:\Users\Maťo\Desktop\fakturacny-softver\src\main\resources\faktura.ico" --win-dir-chooser --win-shortcut --win-menu --app-version 1.0
+jpackage --type exe --input "C:\Users\Maťo\Desktop\fakturacny-softver\build\libs" --dest "C:\Users\Maťo\Desktop\aplikacia" --name FakturacnySoftver --main-jar fakturacny-softver.jar --main-class com.fakturacnysoftver.AppLauncher --runtime-image "C:\Users\Maťo\Desktop\aplikacia\runtime" --icon "C:\Users\Maťo\Desktop\fakturacny-softver\src\main\resources\icon.ico" --win-dir-chooser --win-shortcut --win-menu --app-version 1.0
