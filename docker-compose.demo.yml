@@ -10,13 +10,13 @@ services:
   db:
     image: postgres:16
     environment:
-      POSTGRES_DB: ucto
-      POSTGRES_USER: ucto
+      POSTGRES_DB: fgs_hq
+      POSTGRES_USER: fgs
       POSTGRES_PASSWORD: demo-db-heslo
     volumes:
       - demo-db:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ucto -d ucto"]
+      test: ["CMD-SHELL", "pg_isready -U fgs -d fgs_hq"]
       interval: 5s
       retries: 20
 
@@ -28,8 +28,8 @@ services:
     ports:
       - "127.0.0.1:8080:8080"
     environment:
-      DATABASE_URL: jdbc:postgresql://db:5432/ucto
-      DATABASE_USER: ucto
+      DATABASE_URL: jdbc:postgresql://db:5432/fgs_hq
+      DATABASE_USER: fgs
       DATABASE_PASSWORD: demo-db-heslo
       SPRING_PROFILES_ACTIVE: demo
       APP_SECURITY_MODE: local

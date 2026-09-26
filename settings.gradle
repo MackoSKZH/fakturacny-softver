@@ -1,4 +1,4 @@
-rootProject.name = 'fgs-platform'
+rootProject.name = 'fgs-hq'
 
 include 'platform-core'
 include 'platform-web'

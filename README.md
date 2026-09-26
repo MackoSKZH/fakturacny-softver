@@ -1,26 +1,32 @@
 # FIRST Global Slovakia HQ
 
-Interná platforma občianskeho združenia FIRST Global Slovakia: aktivity (národné kolo, cesta na FGC, NTE, sústredenia, FLL turnaje), ľudia a ich roly, harmonogramy a osobné kalendáre, dochádzka platených ľudí, partneri, financovanie a granty, majetok a výpožičky, podklady, verejné príspevky cez QR, potvrdenia dobrovoľníkom, úlohy a checklisty, exporty do Excelu a PDF, rozpočty, položky, faktúry a e-faktúry (Peppol, povinné od 1. 1. 2027).
+Interná platforma občianskeho združenia FIRST Global Slovakia - jedno miesto pre akcie, ľudí a peniaze:
+národné kolo, cesta na FIRST Global Challenge, NTE, sústredenia a FLL turnaje.
 
-| Modul | Čo robí |
+| Oblasť | Čo vie |
 |---|---|
-| `platform-core` | Doména bez frameworku: faktúra, DPH 23/19/5 %, číselné rady, kontrola IČO/DIČ/IBAN, e-faktúra UBL 2.1 Peppol BIS 3.0, QR PAY by square |
-| `platform-web` | Webová aplikácia (Spring Boot, PostgreSQL): aktivity, ľudia, tím a roly, úlohy, položky, faktúry a dobropisy, audit log, Google prihlásenie |
-| `artifact/` | Prehliadačová ukážka fakturácie ako artifact na claude.ai |
-| `src/` | Pôvodná desktopová aplikácia (JavaFX) - nahrádza ju `platform-web` |
+| Aktivity | tím a roly, harmonogram, osobný program a kalendár (ICS), úlohy a checklisty zo šablón, podklady, vlastníci aktivít |
+| Ľudia | adresár so súhlasmi (GDPR, maloletí), dochádzka platených (DoVP, DoPČ, DoBPŠ), potvrdenia o dobrovoľníctve |
+| Financie | položky v štýle Notion, rozpočty aktivít, vydané faktúry a e-faktúry (Peppol UBL), prijaté faktúry a e-faktúry, import výpisu z banky, partneri, dohody a granty, verejné príspevky cez QR, majetok |
+| Prístup | Google prihlásenie, roly a vlastné roly, pozvánky, audit, exporty do Excelu a PDF |
 
-- Rozsah platformy a čo ďalej: [docs/PLATFORMA.md](docs/PLATFORMA.md)
-- Financie a e-fakturácia: [docs/PLAN.md](docs/PLAN.md)
-- Nasadenie a zálohy: [docs/NASADENIE.md](docs/NASADENIE.md)
+| Modul | Obsah |
+|---|---|
+| `platform-core` | doména bez frameworku: faktúra, DPH, číselné rady, IČO/DIČ/IBAN, e-faktúra UBL 2.1 Peppol BIS 3.0, QR PAY by square |
+| `platform-web` | webová aplikácia (Java 21, Spring Boot, PostgreSQL) |
 
-Vyskúšať na vlastnom počítači s ukážkovými dátami (Docker Desktop):
+- Rozsah a čo ďalej: [docs/PLATFORMA.md](docs/PLATFORMA.md)
+- Financie, e-fakturácia a právny rámec: [docs/PLAN.md](docs/PLAN.md)
+- Nasadenie (vlastný VPS alebo Render blueprint `render.yaml`), zálohy, roly: [docs/NASADENIE.md](docs/NASADENIE.md)
+
+## Vyskúšať (Docker Desktop)
 
 ```sh
 docker compose -f docker-compose.demo.yml up --build
-# http://localhost:8080  pokladnik / demo-heslo-2027  (alebo eva@demo.example - členka)
+# http://localhost:8080  pokladnik / demo-heslo-2027 (admin); ďalšie demo účty sú v docs/NASADENIE.md
 ```
 
-Testy:
+## Testy
 
 ```sh
 sh ./gradlew :platform-core:test :platform-web:test

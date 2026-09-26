@@ -2,8 +2,9 @@ spring:
   application:
     name: fgs-hq
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/ucto}
-    username: ${DATABASE_USER:ucto}
+    # bud cela JDBC adresa (docker compose), alebo jednotlive casti (Render blueprint)
+    url: ${DATABASE_URL:jdbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:fgs_hq}}
+    username: ${DATABASE_USER:fgs}
     password: ${DATABASE_PASSWORD:}
   flyway:
     locations: classpath:db/migration
@@ -20,6 +21,8 @@ spring:
       max-request-size: 51MB
 
 server:
+  # Render nastavuje PORT sam; inde 8080
+  port: ${PORT:8080}
   forward-headers-strategy: framework
   tomcat:
     # pri prilis velkom subore dorucit peknu chybu namiesto zhodeneho spojenia

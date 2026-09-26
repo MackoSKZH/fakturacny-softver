@@ -11,7 +11,7 @@ Stav k 26. 9. 2026. Právne fakty sú overené z verejných zdrojov (zoznam na k
 3. **Nestavaj vlastný Peppol access point.** Akreditácia, bezpečnosť, audit - to nie je projekt pre OZ. Pripoj sa cez štandardné API **SAPI-SK** ku ktorémukoľvek certifikovanému poštárovi.
 4. **Vlastná platforma má zmysel len ako vrstva navyše:** rozpočty projektov, prepojenie s Notion, sledovanie charitatívnej reklamy, peňažný denník a podklady pre závierku. To hotové fakturačné programy pre OZ nerobia dobre.
 5. **Notion nikdy nesmie byť účtovná kniha.** Je to dashboard. Zdroj pravdy je databáza platformy.
-6. **"Dostať softvér online" nie je migrácia, je to prepis.** Z 1 200 riadkov súčasného kódu je ~90 % JavaFX UI, ktoré sa na web nedá preniesť. Preniesť sa dá doména - tú som v tejto iterácii prepísal nanovo a správne (`platform-core`).
+6. **"Dostať softvér online" nie je migrácia, je to prepis.** Z 1 200 riadkov súčasného kódu je ~90 % JavaFX UI, ktoré sa na web nedá preniesť. Preniesť sa dá doména - tú som v tejto iterácii prepísal nanovo a správne (`platform-core`). Pôvodná desktopová aplikácia bola neskôr z repozitára odstránená (ostáva v histórii gitu).
 
 ---
 
@@ -152,7 +152,7 @@ Ak ani jedno neplatí, zastavte sa tu a kúpte si nástroj.
 **Doplnené po fáze 2:**
 - **Dobropis** (opravná faktúra): vlastný rad `D` + vzor faktúr, odkaz na pôvodnú faktúru a dôvod opravy v PDF aj v UBL `CreditNote` (prechádza oficiálnymi Peppol pravidlami pre dobropis). Súčet dobropisov nesmie prekročiť sumu faktúry, kontrola beží pod zámkom pôvodnej faktúry (otestované súbežnými dobropismi). Rozpočet projektu dobropisy odpočíta.
 - **Roly:** editori (`APP_EDITOR_EMAILS`) vystavujú a menia, ostatní povolení členovia len čítajú. Bez aspoň jedného editora sa aplikácia v Google režime nespustí.
-- **Artifact** na claude.ai (`artifact/`): prehliadačová verzia na vyskúšanie, rovnaká logika v JS, XML overené tými istými Peppol pravidlami.
+- **Artifact** na claude.ai: prehliadačová verzia na vyskúšanie, rovnaká logika v JS, XML overené tými istými Peppol pravidlami. (Neskôr odstránená - na skúšanie slúži `docker-compose.demo.yml`.)
 
 **Čo ešte chýba:**
 - Úprava a deaktivácia odberateľov a projektov.

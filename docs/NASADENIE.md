@@ -36,7 +36,7 @@ s potvrdeniami o dobrovoľníctve, grant s výdavkom mimo obdobia, sponzor, maje
 ## 1. Čo potrebujete
 
 - VPS v EÚ s Dockerom (napr. Hetzner, 2 GB RAM stačí).
-- Doménu alebo subdoménu smerujúcu na IP servera (záznam A), napr. `ucto.firstglobal.sk`.
+- Doménu alebo subdoménu smerujúcu na IP servera (záznam A), napr. `hq.firstglobal.sk`.
 - Google OAuth klienta (ak má OZ Google Workspace, ideálne v ňom):
   1. [Google Cloud Console](https://console.cloud.google.com/) -> APIs & Services -> Credentials -> Create OAuth client ID -> Web application.
   2. Authorized redirect URI: `https://VASA-DOMENA/login/oauth2/code/google`.
@@ -45,15 +45,15 @@ s potvrdeniami o dobrovoľníctve, grant s výdavkom mimo obdobia, sponzor, maje
 ## 2. Spustenie
 
 ```sh
-git clone <repozitar> ucto && cd ucto
+git clone <repozitar> fgs-hq && cd fgs-hq
 cp .env.example .env      # vyplnte DOMAIN, DATABASE_PASSWORD, GOOGLE_*, APP_ALLOWED_EMAILS
 docker compose up -d --build
-docker compose logs -f app   # "Started UctoApplication" = bezi
+docker compose logs -f app   # "Started HqApplication" = bezi
 ```
 
 Aplikácia **odmietne štart**, ak:
-- je zapnuté Google prihlásenie bez `APP_ALLOWED_EMAILS` / `APP_ALLOWED_DOMAINS` (inak by sa prihlásil ktokoľvek s Google účtom),
-- je Google prihlásenie bez `APP_EDITOR_EMAILS` (aspoň jeden účet, ktorý smie vystavovať doklady),
+- je Google prihlásenie bez `APP_EDITOR_EMAILS` (aspoň jeden admin; ostatní sa dostanú dnu len pozvánkou,
+  cez Správu alebo cez `APP_ALLOWED_EMAILS` / `APP_ALLOWED_DOMAINS` - nikdy nie ľubovoľný Google účet),
 - je lokálne prihlásenie bez hesla s aspoň 12 znakmi.
 
 Používatelia a roly sa spravujú v aplikácii (**Správa**), nie v `.env`:
@@ -69,6 +69,29 @@ Používatelia a roly sa spravujú v aplikácii (**Správa**), nie v `.env`:
 
 Po prvom prihlásení: **Nastavenia** (údaje OZ, IBAN, DIČ) -> **Aktivity** -> **Ľudia** -> **Partneri**.
 
+## 2b. Alternatíva bez vlastného servera: Render
+
+Ak nechcete spravovať VPS, repozitár obsahuje `render.yaml` (Render Blueprint). Všetko beží vo **Frankfurte** (EÚ).
+
+1. [render.com](https://render.com) -> prihlásiť sa GitHubom -> **New -> Blueprint** -> vybrať tento repozitár.
+2. Render vypýta tajné hodnoty: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `APP_EDITOR_EMAILS`
+   (a voliteľne `APP_ALLOWED_DOMAINS`). Databázu a jej heslo prepojí sám.
+3. V Google Console pridajte redirect URI `https://fgs-hq.onrender.com/login/oauth2/code/google`
+   (alebo s vlastnou doménou, pozri nižšie).
+4. Každý push do hlavnej vetvy sa nasadí automaticky; Flyway pri štarte urobí migrácie.
+
+Vlastná doména: v Render službe **Settings -> Custom Domains** pridať `hq.firstglobal.sk`, v DNS (napr. Cloudflare)
+nastaviť CNAME na `fgs-hq.onrender.com`. Pri Cloudflare dajte záznam **DNS only** (sivý oblak), certifikát vydá Render.
+
+Na čo si dať pozor:
+- **Cena:** web `starter` + databáza `basic-256mb` je rádovo 13 USD mesačne. Plán `free` nepoužívajte - web
+  po nečinnosti zaspí (prvé otvorenie trvá desiatky sekúnd) a **free databázu Render po 30 dňoch zmaže**.
+- **Zálohy:** platená databáza má denné zálohy u Renderu. To je stále jeden dodávateľ - raz mesačne si stiahnite
+  export (`/exporty/vsetko.zip`) a dump databázy (Render -> databáza -> Backups) aj mimo Renderu.
+- **GDPR:** Render je americká firma (dáta ostávajú vo Frankfurte, ale platí pre ňu US CLOUD Act). S Renderom treba
+  mať DPA (je v ich podmienkach) a uviesť ho v zázname o spracovateľských činnostiach. Ak to OZ nechce, zvoľte VPS
+  u Hetzner (Nemecko, nemecká firma) podľa časti 2.
+
 ## 3. Zálohy - bez tohto do produkcie nechoďte
 
 Všetko (údaje, faktúry, PDF, nahrané podklady) je v jednej databáze PostgreSQL na serveri, takže jedna záloha pokryje všetko.
@@ -79,13 +102,13 @@ Záloha obsahuje osobné údaje vrátane detí, preto ide mimo servera **šifrov
 
 ```sh
 # crontab -e na serveri
-30 3 * * * rclone copy /cesta/ucto/backups gdrive-crypt:fgs-hq-zalohy --max-age 48h
+30 3 * * * rclone copy /cesta/fgs-hq/backups gdrive-crypt:fgs-hq-zalohy --max-age 48h
 ```
 
 Obnova (otestujte si ju aspoň raz, kým to nie je naostro):
 
 ```sh
-docker compose exec -T db pg_restore -U ucto -d ucto --clean < backups/ucto-2027-01-15.dump
+docker compose exec -T db pg_restore -U fgs -d fgs_hq --clean < backups/fgs-hq-2027-01-15.dump
 ```
 
 Účtovné doklady sa archivujú 10 rokov (§ 35 zákona o účtovníctve). Raz ročne si stiahnite všetky PDF a XML faktúry roka aj mimo platformy.
@@ -118,6 +141,6 @@ DATABASE_PASSWORD=... APP_LOCAL_PASSWORD=dlhe-lokalne-heslo COOKIE_SECURE=false 
 # Testy - spustia vlastný embedded PostgreSQL (netreba Docker; nesmú bežať ako root)
 sh ./gradlew :platform-core:test :platform-web:test
 # ...alebo proti existujúcej DB:
-TEST_DATABASE_URL=jdbc:postgresql://localhost:5432/ucto_test TEST_DATABASE_USER=ucto \
-  TEST_DATABASE_PASSWORD=ucto sh ./gradlew :platform-web:test
+TEST_DATABASE_URL=jdbc:postgresql://localhost:5432/fgs_hq_test TEST_DATABASE_USER=fgs \
+  TEST_DATABASE_PASSWORD=fgs sh ./gradlew :platform-web:test
 ```

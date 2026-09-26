@@ -4,13 +4,13 @@ services:
     image: postgres:16
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ucto
-      POSTGRES_USER: ucto
+      POSTGRES_DB: fgs_hq
+      POSTGRES_USER: fgs
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?Nastavte DATABASE_PASSWORD v subore .env}
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ucto -d ucto"]
+      test: ["CMD-SHELL", "pg_isready -U fgs -d fgs_hq"]
       interval: 10s
       retries: 10
 
@@ -21,8 +21,8 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: jdbc:postgresql://db:5432/ucto
-      DATABASE_USER: ucto
+      DATABASE_URL: jdbc:postgresql://db:5432/fgs_hq
+      DATABASE_USER: fgs
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-google}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
@@ -60,9 +60,9 @@ services:
       - -c
       - |
         while true; do
-          pg_dump -h db -U ucto -Fc ucto > /backups/ucto-$$(date +%F).dump.tmp &&
-            mv /backups/ucto-$$(date +%F).dump.tmp /backups/ucto-$$(date +%F).dump
-          find /backups -name 'ucto-*.dump' -mtime +30 -delete
+          pg_dump -h db -U fgs -Fc fgs_hq > /backups/fgs-hq-$$(date +%F).dump.tmp &&
+            mv /backups/fgs-hq-$$(date +%F).dump.tmp /backups/fgs-hq-$$(date +%F).dump
+          find /backups -name 'fgs-hq-*.dump' -mtime +30 -delete
           sleep 86400
         done
 

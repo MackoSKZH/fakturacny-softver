@@ -15,4 +15,4 @@ jobs:
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
       # platform-web testy spustia embedded PostgreSQL (bez Dockeru)
-      - run: sh ./gradlew --no-daemon :platform-core:test :platform-web:test compileJava
+      - run: sh ./gradlew --no-daemon :platform-core:test :platform-web:test
