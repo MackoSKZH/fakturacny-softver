@@ -41,7 +41,9 @@
     <section class="card" id="tim">
         <div class="page-head"><h2>Tím a roly</h2>
             <a class="button" th:if="${canSeeTeam and attendees > 0}" th:href="@{/aktivity/{id}/potvrdenia.zip(id=${a.id()})}"
-               th:text="'Potvrdenia dobrovoľníkom (' + ${attendees} + ', ZIP)'"></a></div>
+               th:text="'Potvrdenia dobrovoľníkom (' + ${attendees} + ', ZIP)'"></a>
+            <a class="button" th:if="${canSeeTeam and !roles.isEmpty()}" th:href="@{/aktivity/{id}/zmluvy.zip(id=${a.id()})}"
+               title="Zmluvy o dobrovoľníckej činnosti pre celý tím - na podpis pred akciou">Zmluvy tímu (ZIP)</a></div>
         <p class="empty" th:if="${roles.isEmpty()}">Zatiaľ žiadne roly. Pridajte napríklad rozhodcov, hodnotiteľov NTE alebo registráciu.</p>
         <div class="roles">
             <article class="role" th:each="r : ${roles}">

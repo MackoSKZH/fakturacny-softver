@@ -42,6 +42,9 @@ Stav k 26. 9. 2026. Pivot z "fakturačného softvéru" na operačný systém zdr
 | **Prijaté faktúry** | kniha došlých faktúr: e-faktúry UBL (Invoice aj CreditNote, povinné prijímanie od 2027) s kontrolou, že sú pre vaše IČO, archív pôvodného XML, papierové/PDF faktúry ručne s prílohou; úhrada = zamknutý výdavok v položkách; import výpisu páruje odchádzajúce platby podľa VS alebo IBAN dodávateľa a sumy | hotové |
 | **Príspevky od verejnosti** | verejná stránka /podpora/KÓD (zapína editor pri každej aktivite), QR platba PAY by square s VS aktivity (800000 + id), voliteľná suma, cieľ zbierky a vyzbierané z príjmov s týmto VS v poli „Doklad“; žiadne interné dáta | hotové |
 | **Potvrdenia** | potvrdenie o výkone dobrovoľníckej činnosti (zákon 406/2011) za rok pre osobu, sám si ho stiahne aj dobrovoľník, ZIP pre všetkých zúčastnených po akcii; len akcie, ktoré už prebehli | hotové |
+| **Zmluvy dobrovoľníkov** | zmluva o dobrovoľníckej činnosti (§ 5 zákona 406/2011) na aktivitu alebo obdobie: strany, smeny z tímu (druh, miesto, čas), povinnosti, náhrada výdavkov, GDPR, podpis zákonného zástupcu pri maloletých; ZIP pre celý tím. Vzor - pred prvým použitím nechajte skontrolovať právnikom | hotové |
+| **Nábor do tímu** | pozvánka na konkrétnu smenu od vlastníka aktivity, zápis do tímu po prijatí, kapacita smeny, platnosť do začiatku smeny | hotové |
+| **GDPR** | výpis všetkých údajov osoby (čl. 15/20), anonymizácia na žiadosť (čl. 17) s výnimkou mzdových podkladov, audit log len na zápis s prehľadom pre admina | hotové |
 | **Verejné prihlášky** | formulár pre dobrovoľníkov a tímy so súhlasmi (alebo Tally, ktoré už máte pripojené) | ďalšia iterácia |
 | Mzdy | **nestavať** - účtovník / certifikovaný softvér | - |
 

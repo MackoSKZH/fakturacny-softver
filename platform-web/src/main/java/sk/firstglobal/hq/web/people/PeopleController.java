@@ -35,9 +35,12 @@ class PeopleController {
     private final AuditLog audit;
     private final Clock clock;
     private final PersonPrivacy privacy;
+    private final VolunteerContract contracts;
 
     PeopleController(PersonRepository people, ScheduleService schedule, AssetRepository assets,
-                     VolunteerConfirmation confirmations, AuditLog audit, Clock clock, PersonPrivacy privacy) {
+                     VolunteerConfirmation confirmations, AuditLog audit, Clock clock, PersonPrivacy privacy,
+                     VolunteerContract contracts) {
+        this.contracts = contracts;
         this.privacy = privacy;
         this.confirmations = confirmations;
         this.people = people;
@@ -94,7 +97,11 @@ class PeopleController {
         Person p = this.people.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         model.addAttribute("p", p);
         model.addAttribute("roles", PersonRole.values());
-        model.addAttribute("participation", this.people.participation(id));
+        List<PersonRepository.Participation> participation = this.people.participation(id);
+        model.addAttribute("participation", participation);
+        java.util.Map<Long, String> acts = new java.util.LinkedHashMap<>();
+        participation.forEach(x -> acts.putIfAbsent(x.projectId(), x.activityCode() + " " + x.activityName()));
+        model.addAttribute("contractActivities", acts);
         model.addAttribute("hours", this.people.volunteerHours(id));
         this.schedule.calendarToken(id).ifPresent(t -> model.addAllAttributes(ScheduleService.feedUrls(t)));
         model.addAttribute("lent", this.assets.lentTo(id));
@@ -102,6 +109,23 @@ class PeopleController {
         model.addAttribute("today", LocalDate.now(this.clock));
         model.addAttribute("privacy", this.privacy.assess(id));
         return "people/detail";
+    }
+
+    /** Zmluva o dobrovolnickej cinnosti - na aktivitu alebo na obdobie (predvolene do konca roka). */
+    @GetMapping("/{id}/zmluva.pdf")
+    ResponseEntity<byte[]> contract(@PathVariable long id, @RequestParam(required = false) Long aktivita,
+                                    @RequestParam(required = false) LocalDate od, @RequestParam(required = false) LocalDate
+                                            doDna, Authentication auth) {
+        Person p = this.people.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        byte[] pdf;
+        try {
+            pdf = this.contracts.pdf(id, aktivita, od, doDna);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+        this.audit.record(CurrentUser.name(auth), "ZMLUVA", "osoba", id, aktivita == null ? "dobrovoľnícka zmluva"
+                : "dobrovoľnícka zmluva, aktivita " + aktivita);
+        return VolunteerConfirmation.response(pdf, "zmluva-dobrovolnik-" + VolunteerConfirmation.fileSafe(p.fullName()));
     }
 
     /** Vypis vsetkych udajov o osobe - odpoved na ziadost podla cl. 15 GDPR. */

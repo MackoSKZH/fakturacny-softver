@@ -39,6 +39,16 @@
             </tr>
             </tbody>
         </table>
+        <form th:action="@{/ludia/{id}/zmluva.pdf(id=${p.id()})}" method="get" class="toolbar">
+            <span class="muted">Zmluva o dobrovoľníckej činnosti:</span>
+            <select name="aktivita" aria-label="Aktivita">
+                <option value="">na obdobie (bez aktivity)</option>
+                <option th:each="e : ${contractActivities}" th:value="${e.key}" th:text="${e.value}"></option>
+            </select>
+            <label>od <input type="date" name="od"></label>
+            <label>do <input type="date" name="doDna"></label>
+            <button type="submit">PDF</button>
+        </form>
     </section>
 
     <section class="card" th:unless="${lent.isEmpty()}">

@@ -55,6 +55,7 @@ class ActivityController {
     private final AttachmentRepository attachments;
     private final DonationRepository donations;
     private final VolunteerConfirmation confirmations;
+    private final sk.firstglobal.hq.web.people.VolunteerContract contracts;
     private final AccessRepository access;
     private final AccessService accessService;
     private final Clock clock;
@@ -62,7 +63,8 @@ class ActivityController {
     ActivityController(ActivityRepository activities, StaffingRepository staffing, TaskRepository tasks,
                        PersonRepository people, AuditLog audit, AttachmentRepository attachments,
                        DonationRepository donations, VolunteerConfirmation confirmations, AccessRepository access,
-                       AccessService accessService, Clock clock) {
+                       AccessService accessService, Clock clock, sk.firstglobal.hq.web.people.VolunteerContract contracts) {
+        this.contracts = contracts;
         this.confirmations = confirmations;
         this.access = access;
         this.accessService = accessService;
@@ -195,6 +197,20 @@ class ActivityController {
         this.audit.record(CurrentUser.name(auth), "POTVRDENIE", "aktivita", id, "všetci zúčastnení");
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"potvrdenia-" + a.code() + ".zip\"")
+                .contentType(MediaType.parseMediaType("application/zip")).body(zip);
+    }
+
+    /** Zmluvy o dobrovolnickej cinnosti pre cely tim - na podpis pred akciou. */
+    @GetMapping("/{id}/zmluvy.zip")
+    ResponseEntity<byte[]> contracts(@PathVariable long id, Authentication auth) {
+        Activity a = this.activities.findById(id, this.today()).orElseThrow(NotFound::new);
+        byte[] zip = this.contracts.zipForActivity(id);
+        if (zip == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "V tíme zatiaľ nikto nie je.");
+        }
+        this.audit.record(CurrentUser.name(auth), "ZMLUVA", "aktivita", id, "zmluvy pre tím");
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"zmluvy-" + a.code() + ".zip\"")
                 .contentType(MediaType.parseMediaType("application/zip")).body(zip);
     }
 

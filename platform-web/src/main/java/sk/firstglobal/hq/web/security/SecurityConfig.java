@@ -79,7 +79,7 @@ public class SecurityConfig {
                         .hasAnyAuthority(perm(Permission.ACTIVITIES_READ), perm(Permission.ASSETS))
                 .requestMatchers("/majetok", "/majetok/**").hasAuthority(perm(Permission.ASSETS))
                 // Aktivity: rozpis s e-mailmi a potvrdenia - adresar ludi alebo vlastnik aktivity.
-                .requestMatchers("/aktivity/{id}/rozpis.*", "/aktivity/{id}/potvrdenia.zip")
+                .requestMatchers("/aktivity/{id}/rozpis.*", "/aktivity/{id}/potvrdenia.zip", "/aktivity/{id}/zmluvy.zip")
                         .access(activity(AccessInfo::canSeeTeamContacts))
                 .requestMatchers(HttpMethod.GET, "/aktivity").hasAuthority(perm(Permission.ACTIVITIES_READ))
                 .requestMatchers(HttpMethod.GET, "/aktivity/{id}", "/aktivity/{id}/**")
