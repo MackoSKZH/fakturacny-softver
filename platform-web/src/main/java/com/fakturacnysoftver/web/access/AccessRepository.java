@@ -83,7 +83,7 @@ public class AccessRepository {
 
     public record User(long id, String email, String displayName, Long personId, String personName, boolean active,
                        String createdBy, OffsetDateTime createdAt, OffsetDateTime lastSeenAt, List<String> roleCodes,
-                       List<String> roleNames, List<String> ownedCodes) {
+                       List<String> roleNames, List<String> ownedCodes, List<Long> ownedIds) {
     }
 
     private static final String USER_SELECT = """
@@ -94,7 +94,9 @@ public class AccessRepository {
                    ARRAY(SELECT r.name FROM user_role ur JOIN app_role r ON r.id = ur.role_id
                          WHERE ur.user_id = u.id ORDER BY r.id) AS role_names,
                    ARRAY(SELECT pr.code FROM activity_owner o JOIN project pr ON pr.id = o.project_id
-                         WHERE o.user_id = u.id ORDER BY pr.code) AS owned_codes
+                         WHERE o.user_id = u.id ORDER BY pr.code) AS owned_codes,
+                   ARRAY(SELECT pr.id FROM activity_owner o JOIN project pr ON pr.id = o.project_id
+                         WHERE o.user_id = u.id ORDER BY pr.code) AS owned_ids
             FROM app_user u LEFT JOIN person p ON p.id = u.person_id
             """;
 
@@ -102,7 +104,7 @@ public class AccessRepository {
             rs.getString("display_name"), nullableLong(rs, "person_id"), rs.getString("person_name"),
             rs.getBoolean("active"), rs.getString("created_by"), rs.getObject("created_at", OffsetDateTime.class),
             rs.getObject("last_seen_at", OffsetDateTime.class), strings(rs.getArray("role_codes")),
-            strings(rs.getArray("role_names")), strings(rs.getArray("owned_codes")));
+            strings(rs.getArray("role_names")), strings(rs.getArray("owned_codes")), longs(rs.getArray("owned_ids")));
 
     public List<User> users() {
         return this.jdbc.sql(USER_SELECT + "ORDER BY u.active DESC, u.email").query(USER).list();

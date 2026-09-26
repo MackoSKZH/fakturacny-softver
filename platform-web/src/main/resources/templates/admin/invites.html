@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Pozvánky')}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='sprava')}"></header>
+<main class="wide">
+    <h1>Správa</h1>
+    <nav th:replace="~{admin/tabs :: tabs(${tab})}"></nav>
+    <div th:replace="~{fragments :: messages}"></div>
+
+    <section class="card highlight" th:if="${inviteLink != null}">
+        <h2>Odkaz na pozvánku</h2>
+        <p><input class="copy" readonly th:value="${inviteLink}" aria-label="Odkaz na pozvánku"></p>
+        <p class="muted">Skopírujte ho teraz a pošlite (e-mail, WhatsApp). Uložený je len jeho odtlačok - znova ho zobraziť nevieme.
+            Ak sa stratí, pozvánku zrušte a vytvorte novú.</p>
+    </section>
+
+    <section class="card">
+        <h2>Nová pozvánka</h2>
+        <form th:action="@{/sprava/pozvanky}" method="post" class="grid">
+            <label>E-mail pozvaného <input type="email" name="email" placeholder="prázdne = otvorený odkaz pre viac ľudí"></label>
+            <label>Platí dní <input type="number" name="days" min="1" max="30" value="7"></label>
+            <fieldset class="span2">
+                <legend>Roly</legend>
+                <label class="check" th:each="r : ${roles}" th:title="${r.description()}">
+                    <input type="checkbox" name="roleIds" th:value="${r.id()}"> <span th:text="${r.name()}"></span>
+                    <small class="muted" th:if="${r.isSensitive()}">(len s e-mailom)</small></label>
+            </fieldset>
+            <label>Vlastník aktivity (nepovinné) <select name="projectId">
+                <option value="">-</option>
+                <option th:each="a : ${activities}" th:value="${a.id()}" th:text="${a.code()} + ' ' + ${a.name()}"></option>
+            </select></label>
+            <label>Počet použití (len otvorený odkaz) <input type="number" name="maxUses" min="1" max="200" value="1"></label>
+            <label class="span2">Poznámka <input name="note" placeholder="napr. mentori sústredenie 2027"></label>
+            <p class="muted span2">Otvorený odkaz bez e-mailu môže dať len rolu na čítanie aktivít (dobrovoľník, mentor) - keby ho niekto
+                preposlal, nezíska prístup k financiám ani osobným údajom. Admina, financie, ľudí či vlastníctvo aktivity dajte len pozvánkou na konkrétny e-mail.</p>
+            <div class="span2"><button type="submit" class="primary">Vytvoriť pozvánku</button></div>
+        </form>
+    </section>
+
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Pre koho</th><th>Roly</th><th>Aktivita</th><th>Použitia</th><th>Platí do</th><th>Stav</th><th>Vytvoril</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="i : ${invites}">
+                <td th:text="${i.email() ?: 'otvorený odkaz'}"></td>
+                <td><span class="chips"><span class="chip" th:each="rid : ${i.roleIds()}" th:text="${roleNamesById[rid]}"></span></span>
+                    <small class="muted" th:if="${i.note() != null}" th:text="${i.note()}"></small></td>
+                <td th:text="${i.projectCode()}"></td>
+                <td th:text="${i.usedCount()} + ' / ' + ${i.maxUses()}"></td>
+                <td th:text="${#temporals.format(i.expiresAt(), 'd. M. yyyy HH:mm')}"></td>
+                <td><span class="badge" th:classappend="${i.state(now) == 'platná'} ? 'ok'" th:text="${i.state(now)}"></span></td>
+                <td class="muted" th:text="${i.createdBy()}"></td>
+                <td><form th:if="${i.isUsable(now)}" th:action="@{/sprava/pozvanky/{id}/zrusit(id=${i.id()})}" method="post">
+                    <button type="submit" class="link danger">zrušiť</button></form></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="empty" th:if="${invites.isEmpty()}">Zatiaľ žiadne pozvánky.</p>
+</main>
+</body>
+</html>

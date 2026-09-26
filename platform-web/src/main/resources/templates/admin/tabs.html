@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<body>
+<nav th:fragment="tabs(tab)" class="tabs">
+    <a th:href="@{/sprava/pouzivatelia}" th:classappend="${tab == 'pouzivatelia'} ? 'active'">Používatelia</a>
+    <a th:href="@{/sprava/role}" th:classappend="${tab == 'role'} ? 'active'">Roly a oprávnenia</a>
+    <a th:href="@{/sprava/pozvanky}" th:classappend="${tab == 'pozvanky'} ? 'active'">Pozvánky</a>
+</nav>
+</body>
+</html>

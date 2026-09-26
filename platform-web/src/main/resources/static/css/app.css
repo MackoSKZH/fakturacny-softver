@@ -257,3 +257,11 @@ dl.pay dt { color: var(--muted); }
 dl.pay dd { margin: 0; }
 .muted.small, p.small { font-size: 0.85rem; }
 @media (max-width: 560px) { .donate { grid-template-columns: 1fr; } .donate .qr { max-width: 260px; } }
+nav.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin: 8px 0 16px; flex-wrap: wrap; }
+nav.tabs a { padding: 8px 12px; text-decoration: none; color: var(--muted); border-bottom: 2px solid transparent; }
+nav.tabs a.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+table.matrix th { font-size: 0.75rem; vertical-align: bottom; }
+table.matrix td.center { text-align: center; color: var(--accent); }
+tr.inactive td { opacity: 0.55; }
+.card.highlight { border-color: var(--accent); }
+details.edit fieldset { margin: 6px 0; }
