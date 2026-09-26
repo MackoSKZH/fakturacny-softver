@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Nastavenia')}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='nastavenia')}"></header>
+<main>
+    <h1>Údaje organizácie</h1>
+    <div th:replace="~{fragments :: messages}"></div>
+    <form th:action="@{/nastavenia}" method="post" class="card grid">
+        <label class="span2">Názov <input name="name" required th:value="${org.name()}"></label>
+        <label>Ulica a číslo <input name="street" th:value="${org.street()}"></label>
+        <label>Obec <input name="city" required th:value="${org.city()}"></label>
+        <label>PSČ <input name="postalCode" th:value="${org.postalCode()}"></label>
+        <label>Krajina <input name="country" maxlength="2" th:value="${org.country()}"></label>
+        <label>IČO <input name="ico" th:value="${org.ico()}"></label>
+        <label>DIČ <input name="dic" th:value="${org.dic()}"><small>= Peppol ID 0245:DIČ</small></label>
+        <label>IČ DPH <input name="icDph" th:value="${org.icDph()}">
+            <small>len ak ste platiteľ DPH podľa § 4 - inak nechajte prázdne</small></label>
+        <label>E-mail <input name="email" type="email" th:value="${org.email()}"></label>
+        <label>Telefón <input name="phone" th:value="${org.phone()}"></label>
+        <label>IBAN <input name="iban" th:value="${org.iban()}"></label>
+        <label>BIC <input name="bic" th:value="${org.bic()}"></label>
+        <label class="span2">Registrácia (tlačí sa na faktúre)
+            <input name="registrationNote" th:value="${org.registrationNote()}"
+                   placeholder="Registrované na MV SR pod č. VVS/1-900/90-..."></label>
+        <label>Vzor čísla faktúry <input name="invoicePattern" th:value="${org.invoicePattern()}">
+            <small>{YYYY} rok, {NNNN} poradové číslo</small></label>
+        <label>Splatnosť (dni) <input name="dueDays" type="number" min="0" max="365" th:value="${org.dueDays()}"></label>
+        <div class="span2"><button type="submit" class="primary">Uložiť</button>
+            <span class="muted">Zmena sa neprejaví na už vystavených faktúrach.</span></div>
+    </form>
+
+    <section class="card">
+        <h2>Posledné zmeny (audit log)</h2>
+        <p class="empty" th:if="${audit.isEmpty()}">Zatiaľ žiadne.</p>
+        <table th:unless="${audit.isEmpty()}">
+            <thead><tr><th>Kedy</th><th>Kto</th><th>Akcia</th><th>Detail</th></tr></thead>
+            <tbody>
+            <tr th:each="a : ${audit}">
+                <td th:text="${#temporals.format(a.at(), 'd. M. yyyy HH:mm')}"></td>
+                <td th:text="${a.actor()}"></td>
+                <td th:text="${a.action()} + ' ' + ${a.entity()}"></td>
+                <td th:text="${a.detail()}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Chyba')}"></head>
+<body>
+<main class="card narrow">
+    <h1 th:text="${status == 404} ? 'Nenájdené' : 'Niečo sa pokazilo'">Chyba</h1>
+    <p class="muted" th:text="${status == 404} ? 'Stránka alebo doklad neexistuje.' : 'Skúste to znova. Ak chyba pretrváva, pozrite logy servera.'"></p>
+    <a class="button" th:href="@{/}">Späť na faktúry</a>
+</main>
+</body>
+</html>

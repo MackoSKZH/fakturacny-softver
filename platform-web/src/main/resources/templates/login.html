@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Prihlásenie')}"></head>
+<body class="login">
+<main class="card narrow">
+    <h1>Účto</h1>
+    <p class="muted">Faktúry a rozpočty občianskeho združenia</p>
+    <p class="errors" th:if="${param.error}">Prihlásenie zlyhalo alebo účet nemá prístup.</p>
+    <p class="flash" th:if="${param.logout}">Boli ste odhlásený.</p>
+
+    <a th:if="${googleLogin}" class="button primary wide" th:href="@{/oauth2/authorization/google}">
+        Prihlásiť sa Google účtom</a>
+
+    <form th:unless="${googleLogin}" th:action="@{/login}" method="post" class="stack">
+        <label>Používateľ <input name="username" autocomplete="username" required autofocus></label>
+        <label>Heslo <input name="password" type="password" autocomplete="current-password" required></label>
+        <button type="submit" class="primary">Prihlásiť</button>
+    </form>
+</main>
+</body>
+</html>

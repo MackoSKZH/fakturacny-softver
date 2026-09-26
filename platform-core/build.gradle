@@ -12,6 +12,9 @@ java {
 }
 
 dependencies {
+    // raw LZMA pre QR platby PAY by square
+    implementation 'org.tukaani:xz:1.12'
+
     testImplementation platform('org.junit:junit-bom:5.13.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

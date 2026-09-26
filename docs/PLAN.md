@@ -102,12 +102,12 @@ Ak ani jedno neplatí, zastavte sa tu a kúpte si nástroj.
 
 ```
                 +-------------------- platforma (EU hosting) --------------------+
- prehliadač --> | Spring Boot web (Thymeleaf + HTMX)                             |
+ prehliadač --> | Spring Boot web (Thymeleaf + trochu vanilla JS)                |
  (Google login) |   |-- platform-core: faktúry, DPH, číslovanie, UBL  [HOTOVÉ]    |
-                |   |-- PDF + PAY by square QR                                   |
+                |   |-- PDF + PAY by square QR                         [HOTOVÉ]    |
                 |   |-- peňažný denník (JÚ), kniha pohľadávok / záväzkov         |
-                |   |-- projekty a rozpočty, limit charitatívnej reklamy          |
-                |   +-- audit log, nemenné vystavené doklady, dobropisy          |
+                |   |-- projekty a rozpočty [ZÁKLAD], limit charit. reklamy       |
+                |   +-- audit log, nemenné vystavené doklady [HOTOVÉ], dobropisy |
                 |  PostgreSQL (+ nočné zálohy mimo servera)                      |
                 +------+-----------------------+------------------------+--------+
                        | SAPI-SK (REST)        | Notion API             | banka (CSV / API)
@@ -119,7 +119,7 @@ Ak ani jedno neplatí, zastavte sa tu a kúpte si nástroj.
 **Prečo Java / Spring Boot a nie prepis do JS:**
 - Tím už vie Javu, PDFBox kód sa dá čiastočne použiť.
 - Java má najlepší ekosystém pre e-faktúry (phive, ph-ubl - oficiálne Peppol validačné pravidlá). Už teraz ich používame v testoch.
-- Server-rendered UI (Thymeleaf + HTMX) = jeden deploy, žiadny SPA build, menej vecí na údržbu.
+- Server-rendered UI (Thymeleaf + ~60 riadkov vanilla JS) = jeden deploy, žiadny SPA build, žiadna JS knižnica na aktualizovanie.
 
 **Hosting:** EU VPS (napr. Hetzner, rádovo 5 € / mesiac) + Docker Compose + šifrované nočné zálohy mimo servera. Overiť nárok na neziskové programy (Google for Nonprofits, TechSoup) - môžu dať Workspace a kredity zadarmo.
 
@@ -137,9 +137,22 @@ Ak ani jedno neplatí, zastavte sa tu a kúpte si nástroj.
 - `platform-core`: faktúra, položky, `BigDecimal`, sadzby 23 / 19 / 5 %, kategórie DPH podľa EN 16931, poradové číslovanie radov, kontrola IČO / DIČ / IČ DPH / IBAN / VS, export **UBL 2.1 Peppol BIS 3.0**.
 - Testy validujú XML **oficiálnymi pravidlami OpenPeppol (release 2026.05)** - XSD + EN 16931 + Peppol Schematron, vrátane negatívneho testu, ktorý dokazuje, že validácia reálne beží.
 
-### Fáza 2 - web a vystavovanie
-- Spring Boot aplikácia, PostgreSQL, Flyway migrácie, Google login, roly.
-- Vystavenie faktúry: pridelenie čísla v DB transakcii (bez medzier a duplicít), nemenné po vystavení, PDF + QR PAY by square, UBL príloha.
+### Fáza 2 - web a vystavovanie [HOTOVÉ]
+- `platform-web`: Spring Boot 4.1, PostgreSQL 16, Flyway, Thymeleaf. Stránky: faktúry, odberatelia, projekty, nastavenia + audit log.
+- Prihlásenie Google účtom so zoznamom povolených e-mailov / domén; aplikácia sa bez neho **odmietne spustiť**. Lokálny režim len s heslom 12+ znakov. CSRF, CSP hlavičky, XSS escapovanie otestované.
+- Vystavenie v jednej transakcii: kontrola -> pridelenie čísla (`UPDATE ... RETURNING` so zámkom) -> PDF + UBL -> uloženie. Otestované: 24 súbežných vystavení = čísla 1 až 24 bez medzier a duplicít; neúspešné vystavenie číslo nespotrebuje.
+- Nemennosť: DB trigger zakáže zmenu alebo zmazanie vystavenej faktúry (povolená je len úhrada). Audit log je iba na zápis.
+- Chronológia: nová faktúra nesmie mať dátum starší než posledná v roku ani dátum v budúcnosti.
+- PDF: § 74 náležitosti, rekapitulácia DPH podľa sadzieb, stránkovanie dlhých faktúr, znaky mimo písma (emoji) PDF nezhodia.
+- **PAY by square**: výstup je bajt po bajte zhodný s nezávislou implementáciou (Python `pay-by-square`), a test QR kód **naskenuje z vyrenderovaného PDF**. Pred ostrým použitím ho aj tak naskenujte v 2 až 3 bankových appkách.
+- E-faktúra (UBL) sa uloží len keď odberateľ má DIČ (inak nie je kam doručiť) - vtedy len PDF.
+- Nasadenie: `Dockerfile`, `docker-compose.yml` (PostgreSQL, HTTPS cez Caddy, denné zálohy), CI pre GitHub Actions. Návod: [NASADENIE.md](NASADENIE.md).
+- **Neoverené:** samotný `docker compose up` (v tomto prostredí nebeží Docker daemon; overená je len konfigurácia a build cez gradle wrapper).
+
+**Čo ešte chýba z fázy 2 a je dôležité:**
+- Dobropis (opravný doklad) - kým nie je, chybnú faktúru nejde legálne opraviť.
+- Roly (pokladník vs. člen len na čítanie) - teraz má každý prihlásený plný prístup.
+- Úprava a deaktivácia odberateľov a projektov.
 
 ### Fáza 3 - prijaté e-faktúry
 - SAPI-SK klient: stiahnuť prijaté dokumenty, uložiť originál XML (archív), rozparsovať, priradiť k projektu, potvrdiť prijatie.

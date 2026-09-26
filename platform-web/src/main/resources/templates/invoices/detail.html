@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Faktúra ' + ${s.number()})}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='faktury')}"></header>
+<main>
+    <div class="page-head">
+        <h1>Faktúra <span th:text="${s.number()}"></span></h1>
+        <div class="row">
+            <a class="button primary" th:href="@{/faktury/{id}/pdf(id=${s.id()})}" target="_blank">PDF</a>
+            <a class="button" th:if="${s.hasUbl()}" th:href="@{/faktury/{id}/xml(id=${s.id()})}">E-faktúra (XML)</a>
+        </div>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+
+    <section class="card">
+        <div class="grid">
+            <div><small>Odberateľ</small><strong th:text="${inv.buyer().name()}"></strong>
+                <span th:text="${inv.buyer().street()}"></span>
+                <span th:text="${inv.buyer().postalCode()} + ' ' + ${inv.buyer().city()}"></span></div>
+            <div><small>Vystavená</small><strong th:text="${#temporals.format(inv.issueDate(), 'd. M. yyyy')}"></strong></div>
+            <div><small>Dodanie</small><strong th:text="${#temporals.format(inv.deliveryDate(), 'd. M. yyyy')}"></strong></div>
+            <div><small>Splatnosť</small><strong th:text="${#temporals.format(inv.dueDate(), 'd. M. yyyy')}"></strong></div>
+            <div><small>Variabilný symbol</small><strong th:text="${inv.variableSymbol()} ?: '-'"></strong></div>
+            <div><small>Projekt</small><strong th:text="${inv.projectCode()} ?: '-'"></strong></div>
+            <div><small>Dodávateľ</small><strong th:text="${inv.seller().name()}"></strong></div>
+            <div><small>E-faktúra</small><strong th:text="${s.hasUbl()} ? 'áno (Peppol BIS 3.0)' : 'nie - odberateľ nemá DIČ'"></strong></div>
+        </div>
+    </section>
+
+    <table>
+        <thead><tr><th>Popis</th><th class="num">Množstvo</th><th class="num">Cena/MJ</th><th class="num">Spolu bez DPH</th></tr></thead>
+        <tbody>
+        <tr th:each="l : ${inv.lines()}">
+            <td th:text="${l.description()}"></td>
+            <td class="num" th:text="${l.quantity().stripTrailingZeros().toPlainString()}"></td>
+            <td class="num" th:text="${#numbers.formatDecimal(l.unitPrice(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+            <td class="num" th:text="${#numbers.formatDecimal(l.netAmount(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+        </tr>
+        </tbody>
+    </table>
+    <dl class="sums">
+        <dt>Bez DPH</dt><dd th:text="${#numbers.formatDecimal(totals.lineExtensionAmount(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></dd>
+        <th:block th:if="${inv.seller().isVatRegistered()}">
+            <dt>DPH</dt><dd th:text="${#numbers.formatDecimal(totals.vatAmount(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></dd>
+        </th:block>
+        <dt>Na úhradu</dt><dd><strong th:text="${#numbers.formatDecimal(totals.payableAmount(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></strong></dd>
+    </dl>
+
+    <section class="card">
+        <h2>Úhrada</h2>
+        <p th:if="${s.paidOn() != null}">Uhradená <strong th:text="${#temporals.format(s.paidOn(), 'd. M. yyyy')}"></strong></p>
+        <form th:if="${s.paidOn() == null}" th:action="@{/faktury/{id}/uhrada(id=${s.id()})}" method="post" class="row">
+            <label>Dátum úhrady <input type="date" name="paidOn" required></label>
+            <button type="submit" class="primary">Označiť ako uhradenú</button>
+        </form>
+        <form th:if="${s.paidOn() != null}" th:action="@{/faktury/{id}/uhrada(id=${s.id()})}" method="post">
+            <button type="submit" class="link">Zrušiť úhradu</button>
+        </form>
+    </section>
+</main>
+</body>
+</html>

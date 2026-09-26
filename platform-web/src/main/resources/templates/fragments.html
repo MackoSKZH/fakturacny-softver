@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' | Účto'">Účto</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header th:fragment="nav(active)" class="topbar">
+    <a class="brand" th:href="@{/}">Účto</a>
+    <nav>
+        <a th:href="@{/faktury}" th:classappend="${active == 'faktury'} ? 'active'">Faktúry</a>
+        <a th:href="@{/odberatelia}" th:classappend="${active == 'odberatelia'} ? 'active'">Odberatelia</a>
+        <a th:href="@{/projekty}" th:classappend="${active == 'projekty'} ? 'active'">Projekty</a>
+        <a th:href="@{/nastavenia}" th:classappend="${active == 'nastavenia'} ? 'active'">Nastavenia</a>
+    </nav>
+    <form th:action="@{/logout}" method="post" class="logout">
+        <span th:text="${currentUser}">user</span>
+        <button type="submit" class="link">Odhlásiť</button>
+    </form>
+</header>
+<div th:fragment="messages">
+    <p class="flash" th:if="${message}" th:text="${message}">Uložené.</p>
+    <ul class="errors" th:if="${errors != null and !errors.isEmpty()}">
+        <li th:each="e : ${errors}" th:text="${e}">Chyba</li>
+    </ul>
+</div>
+</body>
+</html>

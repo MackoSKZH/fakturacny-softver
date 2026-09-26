@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: ucto-platforma
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/ucto}
+    username: ${DATABASE_USER:ucto}
+    password: ${DATABASE_PASSWORD:}
+  flyway:
+    locations: classpath:db/migration
+  thymeleaf:
+    cache: true
+  mvc:
+    format:
+      date: iso
+
+server:
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      timeout: 8h
+      cookie:
+        secure: ${COOKIE_SECURE:true}
+        same-site: lax
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+app:
+  security:
+    # local = jeden lokalny ucet (na skusanie); produkcia: profil "google" (application-google.yml)
+    mode: ${APP_SECURITY_MODE:local}
+    allowed-emails: ${APP_ALLOWED_EMAILS:}
+    allowed-domains: ${APP_ALLOWED_DOMAINS:}
+    local-username: ${APP_LOCAL_USERNAME:admin}
+    local-password: ${APP_LOCAL_PASSWORD:}

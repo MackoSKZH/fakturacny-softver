@@ -1,3 +1,4 @@
 rootProject.name = 'fakturacny-softver'
 
 include 'platform-core'
+include 'platform-web'
