@@ -1,6 +1,6 @@
 package com.fakturacnysoftver.web.timesheet;
 
-import com.fakturacnysoftver.web.export.Csv;
+import com.fakturacnysoftver.web.export.Table;
 import com.fakturacnysoftver.web.people.Person;
 import com.fakturacnysoftver.web.people.PersonRepository;
 import com.fakturacnysoftver.web.people.PersonRole;
@@ -117,26 +117,28 @@ class TimesheetController {
     }
 
     /** Mesacny podklad pre uctovnika - vsetky zmluvy. */
-    @GetMapping("/dochadzka/export.csv")
-    ResponseEntity<byte[]> exportMonth(@RequestParam(required = false) String mesiac) {
+    @GetMapping("/dochadzka/export.{format:csv|xlsx|pdf}")
+    ResponseEntity<byte[]> exportMonth(@PathVariable String format, @RequestParam(required = false) String mesiac) {
         YearMonth m = this.month(mesiac);
-        Csv csv = new Csv("Mesiac", "Meno", "Pozícia", "Typ zmluvy", "Hodiny", "Hodinovka (€)", "Hrubá odmena (€)",
-                "Rozpis podľa projektov", "Uzavreté");
+        Table table = new Table("Dochádzka " + m, "Mesiac", "Meno", "Pozícia", "Typ zmluvy", "Hodiny", "Hodinovka (€)",
+                "Hrubá odmena (€)", "Rozpis podľa projektov", "Uzavreté")
+                .subtitle("Podklad pre účtovníka. Odmena = hodiny × hodinovka; odvody a daň počíta účtovník.");
         for (TimesheetRepository.Contract c : this.repo.contracts()) {
             TimesheetService.MonthReport r = this.service.report(c.id(), m);
             if (r.hours().signum() == 0 && !c.isActiveOn(m.atEndOfMonth()) && !c.isActiveOn(m.atDay(1))) {
                 continue;
             }
-            csv.row(m.toString(), c.personName(), c.title(), c.kindLabel(), r.hours(), c.hourlyRate(), r.reward(),
-                    r.hoursByProject().entrySet().stream().map(e -> e.getKey() + ": " + Csv.cell(e.getValue())).toList(),
+            table.row(m.toString(), c.personName(), c.title(), c.kindLabel(), r.hours(), c.hourlyRate(), r.reward(),
+                    r.hoursByProject().entrySet().stream().map(e -> e.getKey() + ": " + Table.text(e.getValue())).toList(),
                     r.closed() ? "áno" : "NIE");
         }
-        return csv.response("dochadzka-" + m + ".csv");
+        return table.response(format, "dochadzka-" + m);
     }
 
-    @GetMapping("/dochadzka/{id}/vykaz.csv")
-    ResponseEntity<byte[]> exportContract(@PathVariable long id, @RequestParam(required = false) String mesiac) {
-        return this.contractCsv(this.service.report(id, this.month(mesiac)));
+    @GetMapping("/dochadzka/{id}/vykaz.{format:csv|xlsx|pdf}")
+    ResponseEntity<byte[]> exportContract(@PathVariable long id, @PathVariable String format,
+                                          @RequestParam(required = false) String mesiac) {
+        return this.statement(this.service.report(id, this.month(mesiac)), format);
     }
 
     // ---------- samoobsluha ----------
@@ -170,11 +172,11 @@ class TimesheetController {
         return this.doDelete(id, logId, workDate, redirect, "/moja-dochadzka?zmluva=" + id);
     }
 
-    @GetMapping("/moja-dochadzka/{id}/vykaz.csv")
-    ResponseEntity<byte[]> exportMine(@PathVariable long id, @RequestParam(required = false) String mesiac,
-                                      Authentication auth) {
+    @GetMapping("/moja-dochadzka/{id}/vykaz.{format:csv|xlsx|pdf}")
+    ResponseEntity<byte[]> exportMine(@PathVariable long id, @PathVariable String format,
+                                      @RequestParam(required = false) String mesiac, Authentication auth) {
         this.requireOwn(id, auth);
-        return this.contractCsv(this.service.report(id, this.month(mesiac)));
+        return this.statement(this.service.report(id, this.month(mesiac)), format);
     }
 
     private void requireOwn(long contractId, Authentication auth) {
@@ -200,7 +202,8 @@ class TimesheetController {
         String base = self ? "/moja-dochadzka/" + id : "/dochadzka/" + id;
         model.addAttribute("prevUrl", page + m.minusMonths(1));
         model.addAttribute("nextUrl", page + m.plusMonths(1));
-        model.addAttribute("csvUrl", base + "/vykaz.csv?mesiac=" + m);
+        model.addAttribute("exportBase", base + "/vykaz");
+        model.addAttribute("exportQuery", "?mesiac=" + m);
         model.addAttribute("logUrl", base + "/hodiny");
         model.addAttribute("deleteUrl", base + "/hodiny/");
         model.addAttribute("projects", this.projects.findAll());
@@ -229,11 +232,18 @@ class TimesheetController {
         return "redirect:" + back + (back.contains("?") ? "&" : "?") + "mesiac=" + (date == null ? "" : YearMonth.from(date));
     }
 
-    private ResponseEntity<byte[]> contractCsv(TimesheetService.MonthReport r) {
-        Csv csv = new Csv("Dátum", "Hodiny", "Projekt", "Činnosť", "Zapísal");
-        r.logs().forEach(l -> csv.row(l.workDate(), l.hours(), l.projectCode(), l.description(), l.createdBy()));
-        csv.row("Spolu", r.hours(), "", "Hrubá odmena " + Csv.cell(r.reward()) + " € (" + Csv.cell(r.contract().hourlyRate())
-                + " €/h)", r.closed() ? "uzavreté" : "neuzavreté");
-        return csv.response("vykaz-" + r.contract().personName().replaceAll("[^A-Za-z0-9]", "_") + "-" + r.month() + ".csv");
+    /** Mesacny vykaz prace jednej zmluvy - v PDF s miestom na podpisy. */
+    private ResponseEntity<byte[]> statement(TimesheetService.MonthReport r, String format) {
+        TimesheetRepository.Contract c = r.contract();
+        Table t = new Table("Výkaz práce " + r.month() + " - " + c.personName(), "Dátum", "Hodiny", "Projekt",
+                "Činnosť", "Zapísal")
+                .subtitle(c.kindLabel() + " · " + c.title() + " · " + Table.text(c.hourlyRate()) + " €/h"
+                        + (r.closed() ? " · mesiac uzavretý" : " · mesiac NEUZAVRETÝ"));
+        r.logs().forEach(l -> t.row(l.workDate(), l.hours(), l.projectCode(), l.description(), l.createdBy()));
+        t.row("Spolu", r.hours());
+        t.note("Hrubá odmena: " + Table.text(r.reward()) + " € (" + Table.text(r.hours()) + " h × "
+                + Table.text(c.hourlyRate()) + " €/h). Odvody a daň vypočíta účtovník.");
+        t.note("Podpis pracovníka: ______________________        Podpis za FIRST Global Slovakia: ______________________");
+        return t.response(format, "vykaz-" + c.personName().replaceAll("[^A-Za-z0-9]", "_") + "-" + r.month());
     }
 }

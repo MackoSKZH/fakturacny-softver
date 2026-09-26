@@ -15,7 +15,7 @@
             <a class="button" th:href="@{${prevUrl}}">&larr;</a>
             <strong th:text="${#temporals.format(r.month().atDay(1), 'MMMM yyyy', new java.util.Locale('sk'))}"></strong>
             <a class="button" th:href="@{${nextUrl}}">&rarr;</a>
-            <a class="button" th:href="@{${csvUrl}}">Výkaz CSV</a>
+            <span th:replace="~{fragments :: exports(${exportBase}, ${exportQuery})}"></span>
         </div>
     </div>
     <div th:replace="~{fragments :: messages}"></div>

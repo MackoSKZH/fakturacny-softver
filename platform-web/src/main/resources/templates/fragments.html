@@ -13,12 +13,14 @@
     <a class="brand" th:href="@{/}">FGS <span>HQ</span></a>
     <nav>
         <a th:href="@{/aktivity}" th:classappend="${active == 'aktivity' or active == 'projekty'} ? 'active'">Aktivity</a>
+        <a th:href="@{/moj-program}" th:classappend="${active == 'program'} ? 'active'">Môj program</a>
         <a th:if="${canEdit}" th:href="@{/ludia}" th:classappend="${active == 'ludia'} ? 'active'">Ľudia</a>
         <a th:if="${canEdit}" th:href="@{/dochadzka}" th:classappend="${active == 'dochadzka'} ? 'active'">Dochádzka</a>
         <a th:unless="${canEdit}" th:href="@{/moja-dochadzka}" th:classappend="${active == 'dochadzka'} ? 'active'">Moja dochádzka</a>
         <a th:href="@{/polozky}" th:classappend="${active == 'polozky'} ? 'active'">Položky</a>
         <a th:href="@{/faktury}" th:classappend="${active == 'faktury'} ? 'active'">Faktúry</a>
         <a th:href="@{/odberatelia}" th:classappend="${active == 'odberatelia'} ? 'active'">Odberatelia</a>
+        <a th:if="${canEdit}" th:href="@{/exporty}" th:classappend="${active == 'exporty'} ? 'active'">Exporty</a>
         <a th:href="@{/nastavenia}" th:classappend="${active == 'nastavenia'} ? 'active'">Nastavenia</a>
     </nav>
     <form th:action="@{/logout}" method="post" class="logout">
@@ -26,6 +28,11 @@
         <button type="submit" class="link">Odhlásiť</button>
     </form>
 </header>
+<span th:fragment="exports(base, query)" class="export-links">
+    <a class="button" th:href="@{${base + '.xlsx' + query}}" title="Excel s číslami a dátumami">Excel</a>
+    <a class="button" th:href="@{${base + '.pdf' + query}}" title="Na tlač a pre partnerov">PDF</a>
+    <a class="button link" th:href="@{${base + '.csv' + query}}" title="Na import do iných nástrojov">CSV</a>
+</span>
 <div th:fragment="messages">
     <p class="flash" th:if="${message}" th:text="${message}">Uložené.</p>
     <ul class="errors" th:if="${errors != null and !errors.isEmpty()}">

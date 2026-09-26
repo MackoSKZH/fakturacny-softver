@@ -1,6 +1,6 @@
 package com.fakturacnysoftver.web.ledger;
 
-import com.fakturacnysoftver.web.export.Csv;
+import com.fakturacnysoftver.web.export.Table;
 import com.fakturacnysoftver.web.security.CurrentUser;
 
 import org.springframework.http.HttpHeaders;
@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -80,17 +81,29 @@ class LedgerApiController {
         return this.ledger.history(id);
     }
 
-    /** CSV pre Excel. */
-    @GetMapping(value = "/export.csv")
-    ResponseEntity<byte[]> export() {
-        Csv csv = new Csv("Dátum", "Popis", "Typ", "Suma", "Projekt", "Tagy", "Kategória", "Protistrana", "Doklad",
-                "Úhrada", "Poznámka");
-        for (LedgerEntry e : this.ledger.findAll()) {
-            csv.row(e.entryDate(), e.description(), LedgerEntry.INCOME.equals(e.direction()) ? "Príjem" : "Výdavok",
-                    e.amount(), e.projectCode(), e.tags(), e.category(), e.counterparty(), e.documentRef(),
+    /** Export do Excelu, PDF alebo CSV; volitelne len jedna aktivita (?projekt=). */
+    @GetMapping(value = "/export.{format:csv|xlsx|pdf}")
+    ResponseEntity<byte[]> export(@PathVariable String format, @RequestParam(required = false) Long projekt) {
+        List<LedgerEntry> entries = this.ledger.findAll().stream()
+                .filter(e -> projekt == null || projekt.equals(e.projectId())).toList();
+        Table table = new Table("Položky - príjmy a výdavky", "Dátum", "Popis", "Typ", "Suma (€)", "Projekt", "Tagy",
+                "Kategória", "Protistrana", "Doklad", "Úhrada", "Poznámka");
+        BigDecimal income = BigDecimal.ZERO;
+        BigDecimal expense = BigDecimal.ZERO;
+        for (LedgerEntry e : entries) {
+            boolean in = LedgerEntry.INCOME.equals(e.direction());
+            income = in ? income.add(e.amount()) : income;
+            expense = in ? expense : expense.add(e.amount());
+            table.row(e.entryDate(), e.description(), in ? "Príjem" : "Výdavok", e.amount(), e.projectCode(), e.tags(),
+                    e.category(), e.counterparty(), e.documentRef(),
                     LedgerEntry.CASH.equals(e.paymentMethod()) ? "Pokladňa" : "Banka", e.note());
         }
-        return csv.response("polozky.csv");
+        if (projekt != null && !entries.isEmpty()) {
+            table.subtitle("Aktivita " + entries.get(0).projectCode());
+        }
+        table.note("Príjmy " + Table.text(income) + " € · výdavky " + Table.text(expense) + " € · rozdiel "
+                + Table.text(income.subtract(expense)) + " € · počet položiek " + entries.size());
+        return table.response(format, projekt == null ? "polozky" : "polozky-" + projekt);
     }
 
     @ExceptionHandler(LedgerException.class)

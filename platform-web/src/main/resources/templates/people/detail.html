@@ -34,6 +34,27 @@
         </table>
     </section>
 
+    <section class="card" id="kalendar">
+        <div class="page-head">
+            <h2>Program a kalendár</h2>
+            <div class="row">
+                <span th:replace="~{fragments :: exports('/ludia/' + ${p.id()} + '/program', '')}"></span>
+                <a class="button" th:href="@{/ludia/{id}/program.ics(id=${p.id()})}">.ics</a>
+            </div>
+        </div>
+        <th:block th:if="${feedUrl == null}">
+            <p class="muted">Osobný odkaz na odber kalendára zatiaľ nie je. Človek si ho vie vytvoriť sám v „Môj program“, alebo ho vytvorte tu a pošlite mu ho.</p>
+            <form th:action="@{/ludia/{id}/kalendar(id=${p.id()})}" method="post"><button type="submit">Vytvoriť odkaz</button></form>
+        </th:block>
+        <th:block th:if="${feedUrl != null}">
+            <p><input class="copy" readonly th:value="${feedUrl}" aria-label="Odkaz na kalendár"></p>
+            <div class="row">
+                <form th:action="@{/ludia/{id}/kalendar(id=${p.id()})}" method="post"><button type="submit">Nový odkaz</button></form>
+                <form th:action="@{/ludia/{id}/kalendar/zrusit(id=${p.id()})}" method="post"><button type="submit" class="link danger">Zrušiť odkaz</button></form>
+            </div>
+        </th:block>
+    </section>
+
     <section class="card">
         <h2>Údaje a súhlasy</h2>
         <form th:action="@{/ludia/{id}(id=${p.id()})}" method="post" class="grid">

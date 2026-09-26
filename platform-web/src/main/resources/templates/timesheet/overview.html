@@ -9,7 +9,8 @@
         <div class="row">
             <a class="button" th:href="@{/dochadzka(mesiac=${month.minusMonths(1)})}">&larr;</a>
             <a class="button" th:href="@{/dochadzka(mesiac=${month.plusMonths(1)})}">&rarr;</a>
-            <a class="button primary" th:href="@{/dochadzka/export.csv(mesiac=${month})}">Export pre účtovníka (CSV)</a>
+            <span class="muted">Podklad pre účtovníka:</span>
+            <span th:replace="~{fragments :: exports('/dochadzka/export', '?mesiac=' + ${month})}"></span>
         </div>
     </div>
     <p class="muted">Evidencia odpracovaného času a hrubej odmeny (hodiny × hodinovka). Odvody, daň a výplatu počíta účtovník z uzavretého výkazu.</p>

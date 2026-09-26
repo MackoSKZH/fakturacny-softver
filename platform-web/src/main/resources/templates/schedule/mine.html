@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Môj program')}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='program')}"></header>
+<main>
+    <div class="page-head">
+        <h1>Môj program</h1>
+        <th:block th:if="${me != null}"><span th:replace="~{fragments :: exports('/moj-program/program', '')}"></span></th:block>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+    <p class="muted" th:if="${me == null}">Váš účet (<span th:text="${currentUser}"></span>) nie je prepojený so žiadnou osobou.
+        Požiadajte koordinátora, aby vo vašej karte v Ľuďoch uviedol tento e-mail.</p>
+
+    <th:block th:if="${me != null}">
+        <p class="muted">Vaše smeny, body programu pre vaše roly alebo celý tím, body, za ktoré zodpovedáte, a termíny vašich úloh.</p>
+        <p class="empty" th:if="${days.isEmpty()}">Nič naplánované.</p>
+        <section class="card day" th:each="d : ${days}">
+            <h2 th:text="${#temporals.format(d.key, 'EEEE d. M. yyyy', new java.util.Locale('sk'))}"></h2>
+            <table class="agenda">
+                <tbody>
+                <tr th:each="e : ${d.value}">
+                    <td class="time">
+                        <span th:unless="${e.allDay()}" th:text="${#temporals.format(e.startsAt(), 'HH:mm')} + (${e.endsAt() != null} ? ' - ' + ${#temporals.format(e.endsAt(), 'HH:mm')} : '')"></span>
+                        <span th:if="${e.allDay()}">termín</span>
+                    </td>
+                    <td>
+                        <strong th:text="${e.title()}"></strong>
+                        <span class="badge" th:unless="${e.kind().name() == 'PROGRAM'}" th:text="${e.kind().label()}"></span>
+                        <div class="muted"><a th:href="@{/aktivity/{id}/harmonogram(id=${e.projectId()})}" th:text="${e.activityName()}"></a>
+                            <span th:if="${e.location() != null}" th:text="' · ' + ${e.location()}"></span></div>
+                        <div class="note" th:if="${e.note() != null}" th:text="${e.note()}"></div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+        <p class="muted" th:if="${pastCount > 0}" th:text="'Minulé položky (' + ${pastCount} + ') sú v exporte.'"></p>
+
+        <section class="card" id="kalendar">
+            <h2>Program v mojom kalendári</h2>
+            <th:block th:if="${feedUrl == null}">
+                <p class="muted">Vytvorte si osobný odkaz a pridajte ho do Google Kalendára (Ďalšie kalendáre → Z webovej adresy),
+                    Outlooku alebo iPhonu. Zmeny v harmonograme sa vám potom objavia samy.</p>
+                <form th:action="@{/moj-program/kalendar}" method="post"><button type="submit" class="primary">Vytvoriť odkaz</button></form>
+            </th:block>
+            <th:block th:if="${feedUrl != null}">
+                <p><input class="copy" readonly th:value="${feedUrl}" aria-label="Odkaz na kalendár"></p>
+                <p><a class="button" th:href="${webcalUrl}">Otvoriť v kalendári (iPhone, Outlook)</a></p>
+                <p class="muted">Odkaz je tajný - kto ho má, vidí váš program. Ak unikne, vytvorte nový; starý prestane fungovať.</p>
+                <div class="row">
+                    <form th:action="@{/moj-program/kalendar}" method="post"><button type="submit">Nový odkaz</button></form>
+                    <form th:action="@{/moj-program/kalendar/zrusit}" method="post"><button type="submit" class="link danger">Zrušiť odkaz</button></form>
+                </div>
+            </th:block>
+        </section>
+    </th:block>
+</main>
+</body>
+</html>

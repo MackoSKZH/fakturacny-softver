@@ -246,7 +246,7 @@ public class LedgerService {
     }
 
     /** Tagy bez medzier na krajoch, bez duplicit (bez ohladu na velkost pismen), s limitom. */
-    static List<String> normalizeTags(List<String> raw, List<String> errors) {
+    public static List<String> normalizeTags(List<String> raw, List<String> errors) {
         Map<String, String> unique = new LinkedHashMap<>();
         if (raw != null) {
             for (String t : raw) {

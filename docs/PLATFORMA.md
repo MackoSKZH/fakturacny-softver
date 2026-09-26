@@ -28,10 +28,13 @@ Stav k 26. 9. 2026. Pivot z "fakturačného softvéru" na operačný systém zdr
 
 | Modul | Obsah | Stav |
 |---|---|---|
-| **Aktivity** | typ (národné kolo, sústredenie, FLL turnaj, NTE, cesta na FGC, workshop), dátumy, miesto, stav, rozpočet | v tejto iterácii |
-| **Ľudia** | jedna karta osoby naprieč akciami; roly (dobrovoľník, hodnotiteľ, rozhodca, mentor, študent, rodič, partner, investor, sponzor); súhlasy GDPR a fotografie, zákonný zástupca pri maloletých | v tejto iterácii |
-| **Tím a roly na akcii** | pozície so zmenami (napr. 3 rozhodcovia 9:00-13:00), obsadenosť, pozvaný / potvrdený / odmietol / zúčastnil sa, odpracované hodiny | v tejto iterácii |
-| **Úlohy a checklisty** | úlohy s termínom a zodpovednou osobou, sekcie, šablóny pre každý typ akcie s termínmi relatívnymi k začiatku | v tejto iterácii |
+| **Aktivity** | typ (národné kolo, sústredenie, FLL turnaj, NTE, cesta na FGC, workshop), dátumy, miesto, stav, rozpočet | hotové |
+| **Ľudia** | jedna karta osoby naprieč akciami; roly (dobrovoľník, hodnotiteľ, rozhodca, mentor, študent, rodič, partner, investor, sponzor); súhlasy GDPR a fotografie, zákonný zástupca pri maloletých | hotové |
+| **Tím a roly na akcii** | pozície so zmenami (napr. 3 rozhodcovia 9:00-13:00), obsadenosť, pozvaný / potvrdený / odmietol / zúčastnil sa, odpracované hodiny | hotové |
+| **Úlohy a checklisty** | úlohy s termínom a zodpovednou osobou, sekcie, šablóny pre každý typ akcie s termínmi relatívnymi k začiatku | hotové |
+| **Dochádzka** | zmluvy platených ľudí (DoVP, DoPČ, DoBPŠ, pracovný pomer, živnosť), náplň práce, hodinovka, register hodín so zákonnými limitmi, mesačné uzavretie, výkaz s podpismi, „Moja dochádzka“ | hotové |
+| **Harmonogram** | body programu s vlastníkom a tagmi „pre koho“ (roly, „všetci“), smeny z rolí, filter podľa roly / osoby / zodpovedného, osobný program každého člena, odber kalendára cez tajný odkaz (Google, Outlook, iPhone), rozpis pre každého s e-mailom | hotové |
+| **Exporty** | všetko v Exceli (.xlsx so skutočnými číslami a dátumami), PDF (na tlač, strany, podpisy) a CSV; centrálna stránka a ZIP so všetkým; hromadné exporty len pre editorov a s auditom | hotové |
 | **Podklady** | hárky k výzvam, pravidlá, hodnotiace hárky, zmluvy - prílohy k aktivite | ďalšia iterácia |
 | **Financovanie** | cieľ financovania aktivity, podporovatelia (každý môže prispieť - QR platba s VS aktivity), partneri a investori ako pipeline (oslovený -> rokujeme -> zmluva -> zaplatené), plnenie protiplnení (logo na robote = charitatívna reklama) | ďalšia iterácia |
 | **Potvrdenia** | potvrdenie o dobrovoľníckej činnosti (zákon 406/2011) a certifikáty z odpracovaných hodín | ďalšia iterácia |

@@ -32,9 +32,14 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http, AppSecurityProperties props) throws Exception {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/login", "/css/**", "/js/**", "/actuator/health", "/error").permitAll()
+                // Odber kalendara z Google/Outlook/iPhone - bez prihlasenia, chraneny 256-bitovym tokenom v URL.
+                .requestMatchers(HttpMethod.GET, "/kalendar/*").permitAll()
                 // Zapis (a formulare, ktore k nemu vedu) len pre editorov; clenovia citaju.
                 // Platený clovek zapisuje vlastne hodiny aj bez roly editora - vlastnictvo overuje controller.
                 .requestMatchers("/moja-dochadzka", "/moja-dochadzka/**").authenticated()
+                .requestMatchers("/moj-program", "/moj-program/**").authenticated()
+                // Hromadne exporty a rozpis s e-mailami obsahuju osobne udaje.
+                .requestMatchers("/exporty", "/exporty/**", "/aktivity/*/rozpis.*").hasRole(EDITOR)
                 .requestMatchers("/dochadzka", "/dochadzka/**").hasRole(EDITOR)
                 .requestMatchers(HttpMethod.POST, "/**").hasRole(EDITOR)
                 .requestMatchers(HttpMethod.PUT, "/**").hasRole(EDITOR)

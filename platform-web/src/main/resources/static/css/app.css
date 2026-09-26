@@ -221,3 +221,18 @@ fieldset { border: 1px solid var(--line); border-radius: var(--radius); padding:
 fieldset legend { font-size: 0.85rem; font-weight: 600; padding: 0 4px; }
 .role form.inline { flex-wrap: wrap; max-width: 100%; }
 .role form.inline select[name=personId] { flex: 1 1 160px; min-width: 0; max-width: 100%; }
+.export-links { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.filters { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px 14px; align-items: end; }
+.filters .row { margin: 0; }
+.day h2 { font-size: 1rem; text-transform: capitalize; margin: 0 0 8px; }
+table.agenda td { vertical-align: top; }
+table.agenda td.time { width: 110px; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+table.agenda td.who { width: 160px; font-size: 0.9rem; }
+table.agenda tr.shift td { background: var(--soft, rgba(0, 0, 0, 0.025)); }
+table.agenda .note { white-space: pre-line; font-size: 0.9rem; margin-top: 4px; }
+table.agenda details.edit { margin-top: 6px; }
+input.copy { width: 100%; font-family: ui-monospace, monospace; font-size: 0.85rem; }
+@media (max-width: 640px) {
+    table.agenda td.who, table.agenda td.tags { display: none; }
+    table.agenda td.time { width: 80px; }
+}

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Exporty')}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='exporty')}"></header>
+<main class="wide">
+    <div class="page-head">
+        <div>
+            <h1>Exporty</h1>
+            <p class="muted">Excel má skutočné čísla a dátumy (dá sa počítať a filtrovať), PDF je na tlač a pre partnerov, CSV na import inam.</p>
+        </div>
+        <a class="button primary" th:href="@{/exporty/vsetko.zip}">Stiahnuť všetko (ZIP, Excel)</a>
+    </div>
+    <p class="warning">Exporty obsahujú osobné údaje vrátane údajov o deťoch. Neposielajte ich e-mailom mimo združenia
+        a neukladajte do verejne zdieľaných priečinkov. Každé stiahnutie sa zapisuje do auditu.</p>
+    <table>
+        <thead><tr><th>Prehľad</th><th>Obsah</th><th>Formát</th></tr></thead>
+        <tbody>
+        <tr th:each="e : ${exports}">
+            <td><strong th:text="${e.label()}"></strong></td>
+            <td class="muted" th:text="${e.description()}"></td>
+            <td><span th:replace="~{fragments :: exports('/exporty/' + ${e.key()}, '')}"></span></td>
+        </tr>
+        </tbody>
+    </table>
+    <h2>Ďalšie exporty priamo pri dátach</h2>
+    <ul>
+        <li>Harmonogram akcie podľa roly, osoby alebo zodpovedného a rozpis pre každého: <a th:href="@{/aktivity}">Aktivity</a> → akcia → Harmonogram.</li>
+        <li>Mesačná dochádzka pre účtovníka a výkazy s podpismi: <a th:href="@{/dochadzka}">Dochádzka</a>.</li>
+        <li>Program jednej osoby (Excel, PDF, kalendár): <a th:href="@{/ludia}">Ľudia</a> → osoba.</li>
+    </ul>
+</main>
+</body>
+</html>

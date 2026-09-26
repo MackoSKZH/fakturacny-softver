@@ -1,6 +1,7 @@
 package com.fakturacnysoftver.web.people;
 
 import com.fakturacnysoftver.web.audit.AuditLog;
+import com.fakturacnysoftver.web.schedule.ScheduleService;
 import com.fakturacnysoftver.web.security.CurrentUser;
 
 import org.springframework.http.HttpStatus;
@@ -26,11 +27,13 @@ import java.util.Locale;
 @RequestMapping("/ludia")
 class PeopleController {
     private final PersonRepository people;
+    private final ScheduleService schedule;
     private final AuditLog audit;
     private final Clock clock;
 
-    PeopleController(PersonRepository people, AuditLog audit, Clock clock) {
+    PeopleController(PersonRepository people, ScheduleService schedule, AuditLog audit, Clock clock) {
         this.people = people;
+        this.schedule = schedule;
         this.audit = audit;
         this.clock = clock;
     }
@@ -84,6 +87,7 @@ class PeopleController {
         model.addAttribute("roles", PersonRole.values());
         model.addAttribute("participation", this.people.participation(id));
         model.addAttribute("hours", this.people.volunteerHours(id));
+        this.schedule.calendarToken(id).ifPresent(t -> model.addAllAttributes(ScheduleService.feedUrls(t)));
         return "people/detail";
     }
 

@@ -15,7 +15,12 @@
                 <span th:if="${a.location() != null}"> · <span th:text="${a.location()}"></span></span>
             </p>
         </div>
-        <a class="button" th:href="@{/polozky(projekt=${a.id()})}">Položky a rozpočet</a>
+        <div class="row">
+            <a class="button primary" th:href="@{/aktivity/{id}/harmonogram(id=${a.id()})}">Harmonogram</a>
+            <a class="button" th:href="@{/polozky(projekt=${a.id()})}">Položky a rozpočet</a>
+            <a class="button" th:href="@{/api/polozky/export.xlsx(projekt=${a.id()})}" title="Vyúčtovanie aktivity v Exceli">Vyúčtovanie (Excel)</a>
+            <a class="button" th:href="@{/api/polozky/export.pdf(projekt=${a.id()})}" title="Vyúčtovanie aktivity v PDF">PDF</a>
+        </div>
     </div>
     <div th:replace="~{fragments :: messages}"></div>
 

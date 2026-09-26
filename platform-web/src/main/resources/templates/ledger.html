@@ -9,7 +9,7 @@
         <div class="row">
             <button type="button" class="primary" id="new-entry" th:if="${canEdit}">+ Nová položka</button>
             <button type="button" id="open-import" th:if="${canEdit}">Import z Excelu / banky</button>
-            <a class="button" th:href="@{/api/polozky/export.csv}">Export CSV</a>
+            <span th:replace="~{fragments :: exports('/api/polozky/export', '')}"></span>
         </div>
     </div>
 
