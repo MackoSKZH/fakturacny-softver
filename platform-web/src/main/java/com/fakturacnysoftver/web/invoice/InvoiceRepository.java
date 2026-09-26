@@ -75,6 +75,11 @@ public class InvoiceRepository {
         this.jdbc.sql("SELECT id FROM invoice WHERE id = :id FOR UPDATE").param("id", invoiceId).query(Long.class).list();
     }
 
+    public Long projectIdOf(long id) {
+        List<Long> r = this.jdbc.sql("SELECT project_id FROM invoice WHERE id = :id").param("id", id).query(Long.class).list();
+        return r.isEmpty() ? null : r.get(0);
+    }
+
     public long customerIdOf(long id) {
         return this.jdbc.sql("SELECT customer_id FROM invoice WHERE id = :id").param("id", id).query(Long.class).single();
     }

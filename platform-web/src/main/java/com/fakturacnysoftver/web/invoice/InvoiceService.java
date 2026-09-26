@@ -10,6 +10,7 @@ import com.fakturacnysoftver.core.ubl.UblInvoiceWriter;
 import com.fakturacnysoftver.web.audit.AuditLog;
 import com.fakturacnysoftver.web.customer.Customer;
 import com.fakturacnysoftver.web.customer.CustomerRepository;
+import com.fakturacnysoftver.web.ledger.LedgerService;
 import com.fakturacnysoftver.web.organization.Organization;
 import com.fakturacnysoftver.web.organization.OrganizationRepository;
 import com.fakturacnysoftver.web.pdf.InvoicePdfRenderer;
@@ -39,12 +40,14 @@ public class InvoiceService {
     private final InvoiceNumberAllocator numbers;
     private final InvoicePdfRenderer pdf;
     private final AuditLog audit;
+    private final LedgerService ledger;
     private final JsonMapper json;
     private final Clock clock;
 
     public InvoiceService(OrganizationRepository organizations, CustomerRepository customers,
                           ProjectRepository projects, InvoiceRepository invoices, InvoiceNumberAllocator numbers,
-                          InvoicePdfRenderer pdf, AuditLog audit, JsonMapper json, Clock clock) {
+                          InvoicePdfRenderer pdf, AuditLog audit, JsonMapper json, Clock clock, LedgerService ledger) {
+        this.ledger = ledger;
         this.organizations = organizations;
         this.customers = customers;
         this.projects = projects;
@@ -203,8 +206,14 @@ public class InvoiceService {
 
     @Transactional
     public void markPaid(long id, LocalDate paidOn, String actor) {
+        if (paidOn != null && paidOn.isAfter(LocalDate.now(this.clock))) {
+            throw new InvoiceValidationException(List.of("Dátum úhrady nemôže byť v budúcnosti."));
+        }
         if (this.invoices.markPaid(id, paidOn) == 1) {
             this.audit.record(actor, "UHRADA", "faktura", id, paidOn == null ? "zrušená úhrada" : paidOn.toString());
+            InvoiceSummary s = this.invoices.findSummary(id).orElseThrow();
+            this.ledger.recordInvoicePayment(id, s.number(), s.isCreditNote(), s.totalPayable(), paidOn,
+                    this.invoices.projectIdOf(id), s.buyerName(), actor);
         }
     }
 

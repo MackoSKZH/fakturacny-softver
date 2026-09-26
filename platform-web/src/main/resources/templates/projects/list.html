@@ -6,17 +6,23 @@
 <main>
     <h1>Projekty a rozpočty</h1>
     <div th:replace="~{fragments :: messages}"></div>
-    <p class="muted">Zatiaľ sa započítavajú len vystavené faktúry (príjmy). Výdavky pribudnú s prijatými
-        e-faktúrami a bankovým výpisom.</p>
+    <p class="muted">Rozpočet = plánované výdavky. Čerpanie počítajú výdavky v <a th:href="@{/polozky}">Položkách</a>
+        s týmto projektom, príjmy sú úhrady a ostatné príjmy s projektom.</p>
     <table th:unless="${projects.isEmpty()}">
-        <thead><tr><th>Kód</th><th>Názov</th><th class="num">Rozpočet</th><th class="num">Vyfakturované</th><th>Plnenie</th></tr></thead>
+        <thead><tr><th>Kód</th><th>Názov</th><th class="num">Rozpočet</th><th class="num">Čerpanie</th>
+            <th class="num">Zostáva</th><th>Plnenie</th><th class="num">Príjmy</th><th class="num">Vyfakturované</th></tr></thead>
         <tbody>
         <tr th:each="p : ${projects}">
-            <td th:text="${p.code()}"></td>
+            <td><a th:href="@{/polozky}" th:text="${p.code()}"></a></td>
             <td th:text="${p.name()}"></td>
             <td class="num" th:text="${#numbers.formatDecimal(p.budget(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></td>
+            <td class="num" th:text="${#numbers.formatDecimal(p.spent(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></td>
+            <td class="num" th:classappend="${p.isOverBudget()} ? 'over'"
+                th:text="${#numbers.formatDecimal(p.remaining(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></td>
+            <td><progress th:if="${p.budget().signum() > 0}" th:value="${p.spent().min(p.budget())}" th:max="${p.budget()}"></progress>
+                <span class="over" th:if="${p.isOverBudget()}">prekročený</span></td>
+            <td class="num" th:text="${#numbers.formatDecimal(p.income(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></td>
             <td class="num" th:text="${#numbers.formatDecimal(p.invoiced(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></td>
-            <td><progress th:if="${p.budget().signum() > 0}" th:value="${p.invoiced()}" th:max="${p.budget()}"></progress></td>
         </tr>
         </tbody>
     </table>

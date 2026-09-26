@@ -34,6 +34,8 @@ public class SecurityConfig {
                 .requestMatchers("/login", "/css/**", "/js/**", "/actuator/health", "/error").permitAll()
                 // Zapis (a formulare, ktore k nemu vedu) len pre editorov; clenovia citaju.
                 .requestMatchers(HttpMethod.POST, "/**").hasRole(EDITOR)
+                .requestMatchers(HttpMethod.PUT, "/**").hasRole(EDITOR)
+                .requestMatchers(HttpMethod.DELETE, "/**").hasRole(EDITOR)
                 .requestMatchers("/faktury/nova", "/faktury/*/dobropis").hasRole(EDITOR)
                 .anyRequest().authenticated());
 

@@ -12,7 +12,11 @@ public class ProjectRepository {
     private static final String SELECT = """
             SELECT p.id, p.code, p.name, p.budget, p.active,
                    COALESCE((SELECT sum(CASE WHEN i.doc_type = 'DOBROPIS' THEN -i.total_payable ELSE i.total_payable END)
-                             FROM invoice i WHERE i.project_id = p.id), 0) AS invoiced
+                             FROM invoice i WHERE i.project_id = p.id), 0) AS invoiced,
+                   COALESCE((SELECT sum(l.amount) FROM ledger_entry l
+                             WHERE l.project_id = p.id AND l.direction = 'PRIJEM'), 0) AS income,
+                   COALESCE((SELECT sum(l.amount) FROM ledger_entry l
+                             WHERE l.project_id = p.id AND l.direction = 'VYDAVOK'), 0) AS spent
             FROM project p""";
 
     private final JdbcClient jdbc;

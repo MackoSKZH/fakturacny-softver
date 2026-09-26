@@ -125,8 +125,8 @@ class InvoiceServiceTest extends IntegrationTest {
         assertThrows(DataAccessException.class, () -> this.jdbc
                 .sql("DELETE FROM invoice WHERE id = :id").param("id", id).update());
 
-        this.service.markPaid(id, LocalDate.of(2027, 1, 20), "pokladnik");
-        assertEquals(LocalDate.of(2027, 1, 20), this.invoices.findSummary(id).orElseThrow().paidOn());
+        this.service.markPaid(id, LocalDate.of(2027, 1, 15), "pokladnik");
+        assertEquals(LocalDate.of(2027, 1, 15), this.invoices.findSummary(id).orElseThrow().paidOn());
     }
 
     @Test

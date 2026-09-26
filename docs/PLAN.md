@@ -161,8 +161,20 @@ Ak ani jedno neplatí, zastavte sa tu a kúpte si nástroj.
 ### Fáza 3 - prijaté e-faktúry
 - SAPI-SK klient: stiahnuť prijaté dokumenty, uložiť originál XML (archív), rozparsovať, priradiť k projektu, potvrdiť prijatie.
 
-### Fáza 4 - peňažný denník a banka
-- Import výpisov, párovanie podľa VS, peňažný denník JÚ, knihy pohľadávok a záväzkov.
+### Fáza 4 - peňažný denník a banka [ZÁKLAD HOTOVÝ]
+- **Položky** (`/polozky`): tabuľka príjmov a výdavkov v štýle Notion - úprava v bunke (Enter/Tab/Esc), projekt (jeden na riadok, aby sedel rozpočet), ľubovoľné tagy, kategórie, filtre, triedenie, súčty, hromadné priradenie projektu a tagov, import vložením z Excelu/banky (všetko alebo nič), export CSV pre Excel.
+- Každá zmena ide do histórie cez DB trigger (kto, kedy, čo z čoho na čo) - opravy sú preukázateľné. Súbežné úpravy chráni verzia riadku (nikto neprepíše cudziu zmenu naslepo).
+- Úhrada faktúry automaticky vytvorí príjem (dobropis výdavok); jeho sumu a dátum mení len faktúra.
+- Projekty ukazujú rozpočet, čerpanie, zostatok a prekročenie.
+- **Chýba:** priložené doklady (skeny bločkov), rozdelenie riadku medzi projekty, párovanie bankového výpisu s faktúrami podľa VS, uzávierka mesiaca (zamknutie starých položiek).
+
+### Rozsah - čo stavať a čo nie
+| Modul | Verdikt |
+|---|---|
+| Zmluvy (evidencia, prílohy, termíny, upozornenia) | Áno, ďalší modul po dokladoch. |
+| DocuSign | Dá sa cez API na sponzorské zmluvy. Pre podania štátu platí len KEP (slovensko.sk), DocuSign ho nenahradí. |
+| Výplatné pásky / mzdy | **Nestavať.** Odvody, preddavky dane a mesačné výkazy (SP, ZP, FS) sa menia každý rok, chyba = pokuta pre štatutára. Mzdy nech robí účtovník alebo certifikovaný mzdový softvér; platforma mu dá export. |
+| "Full firemný softvér" | Modul po module, každý hotový, otestovaný a zdokumentovaný skôr, než začne ďalší. |
 
 ### Fáza 5 - Notion
 - Jednosmerný sync transakcií do Notion databázy s väzbou na projekt, čítanie rozpočtov z Notion.

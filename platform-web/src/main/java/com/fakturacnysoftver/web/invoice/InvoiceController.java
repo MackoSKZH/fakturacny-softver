@@ -162,7 +162,12 @@ class InvoiceController {
     String markPaid(@PathVariable long id, @RequestParam(required = false) LocalDate paidOn, Authentication auth,
                     RedirectAttributes redirect) {
         this.invoices.findSummary(id).orElseThrow(NotFound::new);
-        this.service.markPaid(id, paidOn, CurrentUser.name(auth));
+        try {
+            this.service.markPaid(id, paidOn, CurrentUser.name(auth));
+        } catch (InvoiceValidationException e) {
+            redirect.addFlashAttribute("errors", e.errors());
+            return "redirect:/faktury/" + id;
+        }
         redirect.addFlashAttribute("message", paidOn == null ? "Úhrada bola zrušená." : "Úhrada bola zaznamenaná.");
         return "redirect:/faktury/" + id;
     }

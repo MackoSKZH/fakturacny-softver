@@ -44,7 +44,7 @@ public abstract class IntegrationTest {
 
     @BeforeEach
     void cleanDatabase() {
-        this.jdbc.sql("TRUNCATE invoice, invoice_series, customer, project, organization, audit_log "
+        this.jdbc.sql("TRUNCATE ledger_entry, ledger_history, invoice, invoice_series, customer, project, organization, audit_log "
                 + "RESTART IDENTITY CASCADE").update();
     }
 

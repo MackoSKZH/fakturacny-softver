@@ -114,7 +114,7 @@ class WebFlowTest extends IntegrationTest {
         this.mvc.perform(get(detailUrl + "/xml")).andExpect(status().isOk())
                 .andExpect(content().string(containsString("urn:fdc:peppol.eu:2017:poacc:billing:3.0")));
 
-        this.mvc.perform(post(detailUrl + "/uhrada").with(csrf()).param("paidOn", "2027-01-20"))
+        this.mvc.perform(post(detailUrl + "/uhrada").with(csrf()).param("paidOn", "2027-01-15"))
                 .andExpect(redirectedUrl(detailUrl));
         this.mvc.perform(get("/faktury")).andExpect(status().isOk())
                 .andExpect(content().string(containsString("Uhradená")));
