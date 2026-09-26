@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Moja dochádzka')}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='dochadzka')}"></header>
+<main>
+    <h1>Moja dochádzka</h1>
+    <p class="muted" th:if="${me == null}">Váš účet (<span th:text="${currentUser}"></span>) nie je prepojený so žiadnou osobou.
+        Požiadajte pokladníka, aby vo vašej karte v Ľuďoch uviedol tento e-mail.</p>
+    <p class="muted" th:if="${me != null}">Nemáte žiadnu zmluvu s evidenciou hodín.</p>
+</main>
+</body>
+</html>

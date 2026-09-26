@@ -44,6 +44,13 @@ public class PersonRepository {
         return this.jdbc.sql(SELECT + " WHERE id = :id").param("id", id).query(MAPPER).optional();
     }
 
+    public Optional<Person> findByEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return Optional.empty();
+        }
+        return this.jdbc.sql(SELECT + " WHERE lower(email) = lower(:e)").param("e", email.trim()).query(MAPPER).optional();
+    }
+
     public boolean emailTaken(String email, Long exceptId) {
         return this.jdbc.sql("SELECT count(*) FROM person WHERE lower(email) = lower(:e) AND id <> COALESCE(:id, -1)")
                 .param("e", email).param("id", exceptId).query(Long.class).single() > 0;

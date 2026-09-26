@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Výkaz ' + ${r.contract().personName()})}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='dochadzka')}"></header>
+<main class="wide">
+    <p th:unless="${self}"><a th:href="@{/dochadzka(mesiac=${r.month()})}">&larr; Dochádzka</a></p>
+    <div class="page-head">
+        <div>
+            <h1 th:text="${self} ? 'Moja dochádzka' : ${r.contract().personName()}"></h1>
+            <p class="muted" th:text="${r.contract().title()} + ' · ' + ${r.contract().kindLabel()} + ' · '
+                + ${#numbers.formatDecimal(r.contract().hourlyRate(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €/h'"></p>
+        </div>
+        <div class="row">
+            <a class="button" th:href="@{${prevUrl}}">&larr;</a>
+            <strong th:text="${#temporals.format(r.month().atDay(1), 'MMMM yyyy', new java.util.Locale('sk'))}"></strong>
+            <a class="button" th:href="@{${nextUrl}}">&rarr;</a>
+            <a class="button" th:href="@{${csvUrl}}">Výkaz CSV</a>
+        </div>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+
+    <section class="kpis">
+        <div><small>Hodiny</small><strong th:text="${#numbers.formatDecimal(r.hours(), 1, 'WHITESPACE', 2, 'COMMA')}"></strong></div>
+        <div><small>Hrubá odmena</small><strong th:text="${#numbers.formatDecimal(r.reward(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></strong>
+            <small>pred odvodmi a daňou</small></div>
+        <div><small>Stav mesiaca</small><strong th:text="${r.closed()} ? 'Uzavretý' : 'Otvorený'"></strong>
+            <small th:if="${r.closed()}" th:text="${r.closure().closedBy()}"></small></div>
+        <div th:unless="${r.hoursByProject().isEmpty()}"><small>Podľa projektov</small>
+            <span th:each="e : ${r.hoursByProject()}" th:text="${e.key} + ': ' + ${e.value} + ' h'"></span></div>
+    </section>
+
+    <section class="card" th:if="${r.contract().jobDescription() != null}">
+        <h2>Náplň práce</h2>
+        <p th:text="${r.contract().jobDescription()}"></p>
+    </section>
+
+    <section class="card">
+        <h2>Záznamy</h2>
+        <p class="empty" th:if="${r.logs().isEmpty()}">V tomto mesiaci zatiaľ nič.</p>
+        <table th:unless="${r.logs().isEmpty()}">
+            <thead><tr><th>Dátum</th><th class="num">Hodiny</th><th>Projekt</th><th>Činnosť</th><th>Zapísal</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="l : ${r.logs()}">
+                <td th:text="${#temporals.format(l.workDate(), 'd. M. yyyy (EEE)', new java.util.Locale('sk'))}"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(l.hours(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                <td th:text="${l.projectCode()} ?: '-'"></td>
+                <td th:text="${l.description()}"></td>
+                <td><small th:text="${l.createdBy()}"></small></td>
+                <td><form th:unless="${r.closed()}" class="inline" method="post"
+                          th:action="@{${deleteUrl + l.id() + '/zmazat'}(workDate=${l.workDate()})}">
+                    <button type="submit" class="link danger" aria-label="Zmazať záznam">×</button></form></td>
+            </tr>
+            </tbody>
+        </table>
+        <form th:unless="${r.closed()}" method="post" th:action="@{${logUrl}}" class="grid add-task">
+            <label>Dátum <input type="date" name="workDate" required th:value="${today}" th:max="${today}"></label>
+            <label>Hodiny <input name="hours" required inputmode="decimal" placeholder="2,5"></label>
+            <label>Projekt <select name="projectId">
+                <option value="">predvolený</option>
+                <option th:each="p : ${projects}" th:value="${p.id()}" th:text="${p.code()}"></option>
+            </select></label>
+            <label class="span2">Čo ste robili <input name="description" required placeholder="Príprava ihriska, komunikácia s tímami…"></label>
+            <div><button type="submit" class="primary">Zapísať</button></div>
+        </form>
+        <form th:if="${!self and !r.closed()}" method="post" th:action="@{/dochadzka/{id}/uzavriet(id=${r.contract().id()})}" class="row">
+            <input type="hidden" name="mesiac" th:value="${r.month()}">
+            <button type="submit">Uzavrieť mesiac</button>
+            <span class="muted">Po uzavretí sa hodiny v mesiaci už nedajú meniť - výkaz ide účtovníkovi.</span>
+        </form>
+    </section>
+</main>
+</body>
+</html>

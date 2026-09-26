@@ -14,7 +14,8 @@ public enum PersonRole {
     RODIC("Rodič"),
     PARTNER("Partner"),
     INVESTOR("Investor"),
-    SPONZOR("Sponzor / darca");
+    SPONZOR("Sponzor / darca"),
+    PLATENY("Platený spolupracovník");
 
     private final String label;
 

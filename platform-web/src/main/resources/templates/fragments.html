@@ -14,6 +14,8 @@
     <nav>
         <a th:href="@{/aktivity}" th:classappend="${active == 'aktivity' or active == 'projekty'} ? 'active'">Aktivity</a>
         <a th:if="${canEdit}" th:href="@{/ludia}" th:classappend="${active == 'ludia'} ? 'active'">Ľudia</a>
+        <a th:if="${canEdit}" th:href="@{/dochadzka}" th:classappend="${active == 'dochadzka'} ? 'active'">Dochádzka</a>
+        <a th:unless="${canEdit}" th:href="@{/moja-dochadzka}" th:classappend="${active == 'dochadzka'} ? 'active'">Moja dochádzka</a>
         <a th:href="@{/polozky}" th:classappend="${active == 'polozky'} ? 'active'">Položky</a>
         <a th:href="@{/faktury}" th:classappend="${active == 'faktury'} ? 'active'">Faktúry</a>
         <a th:href="@{/odberatelia}" th:classappend="${active == 'odberatelia'} ? 'active'">Odberatelia</a>

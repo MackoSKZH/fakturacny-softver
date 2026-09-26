@@ -1,5 +1,6 @@
 package com.fakturacnysoftver.web.ledger;
 
+import com.fakturacnysoftver.web.export.Csv;
 import com.fakturacnysoftver.web.security.CurrentUser;
 
 import org.springframework.http.HttpHeaders;
@@ -79,35 +80,22 @@ class LedgerApiController {
         return this.ledger.history(id);
     }
 
-    /** CSV pre Excel (bodkociarka, BOM kvoli diakritike). */
+    /** CSV pre Excel. */
     @GetMapping(value = "/export.csv")
     ResponseEntity<byte[]> export() {
-        StringBuilder sb = new StringBuilder("﻿Dátum;Popis;Typ;Suma;Projekt;Tagy;Kategória;Protistrana;Doklad;Úhrada;Poznámka\r\n");
+        Csv csv = new Csv("Dátum", "Popis", "Typ", "Suma", "Projekt", "Tagy", "Kategória", "Protistrana", "Doklad",
+                "Úhrada", "Poznámka");
         for (LedgerEntry e : this.ledger.findAll()) {
-            sb.append(String.join(";", List.of(e.entryDate().toString(), csv(e.description()),
-                    LedgerEntry.INCOME.equals(e.direction()) ? "Príjem" : "Výdavok",
-                    e.amount().toPlainString().replace('.', ','), csv(e.projectCode()), csv(String.join(", ", e.tags())),
-                    csv(e.category()), csv(e.counterparty()), csv(e.documentRef()),
-                    LedgerEntry.CASH.equals(e.paymentMethod()) ? "Pokladňa" : "Banka", csv(e.note())))).append("\r\n");
+            csv.row(e.entryDate(), e.description(), LedgerEntry.INCOME.equals(e.direction()) ? "Príjem" : "Výdavok",
+                    e.amount(), e.projectCode(), e.tags(), e.category(), e.counterparty(), e.documentRef(),
+                    LedgerEntry.CASH.equals(e.paymentMethod()) ? "Pokladňa" : "Banka", e.note());
         }
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"polozky.csv\"")
-                .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
-                .body(sb.toString().getBytes(StandardCharsets.UTF_8));
+        return csv.response("polozky.csv");
     }
 
     @ExceptionHandler(LedgerException.class)
     ResponseEntity<Map<String, Object>> handle(LedgerException e) {
         return ResponseEntity.status(e.isConflict() ? HttpStatus.CONFLICT : HttpStatus.BAD_REQUEST)
                 .body(Map.of("errors", e.errors()));
-    }
-
-    private static String csv(String s) {
-        if (s == null) {
-            return "";
-        }
-        // Obrana proti CSV/formula injection v Exceli.
-        String v = s.matches("^[=+\\-@].*") ? "'" + s : s;
-        return v.contains(";") || v.contains("\"") || v.contains("\n") ? "\"" + v.replace("\"", "\"\"") + "\"" : v;
     }
 }

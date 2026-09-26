@@ -33,6 +33,9 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/login", "/css/**", "/js/**", "/actuator/health", "/error").permitAll()
                 // Zapis (a formulare, ktore k nemu vedu) len pre editorov; clenovia citaju.
+                // Platený clovek zapisuje vlastne hodiny aj bez roly editora - vlastnictvo overuje controller.
+                .requestMatchers("/moja-dochadzka", "/moja-dochadzka/**").authenticated()
+                .requestMatchers("/dochadzka", "/dochadzka/**").hasRole(EDITOR)
                 .requestMatchers(HttpMethod.POST, "/**").hasRole(EDITOR)
                 .requestMatchers(HttpMethod.PUT, "/**").hasRole(EDITOR)
                 .requestMatchers(HttpMethod.DELETE, "/**").hasRole(EDITOR)
