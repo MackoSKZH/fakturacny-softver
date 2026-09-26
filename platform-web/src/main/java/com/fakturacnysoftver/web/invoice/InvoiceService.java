@@ -1,6 +1,8 @@
 package com.fakturacnysoftver.web.invoice;
 
+import com.fakturacnysoftver.core.CreditNote;
 import com.fakturacnysoftver.core.Invoice;
+import com.fakturacnysoftver.core.InvoiceLine;
 import com.fakturacnysoftver.core.InvoiceNumbering;
 import com.fakturacnysoftver.core.InvoiceTotals;
 import com.fakturacnysoftver.core.InvoiceValidator;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -104,16 +107,92 @@ public class InvoiceService {
 
         // E-fakturu (UBL) ukladame len ak ju je mozne dorucit cez Peppol - inak by to bol nevalidny dokument.
         String ubl = InvoiceValidator.validateForPeppol(invoice).isEmpty() ? UblInvoiceWriter.write(invoice) : null;
-        byte[] pdfBytes = this.pdf.render(invoice, org.registrationNote(), project == null ? null : project.name(), actor);
+        byte[] pdfBytes = this.pdf.render(invoice, null, org.registrationNote(),
+                project == null ? null : project.name(), actor);
         InvoiceTotals totals = invoice.totals();
 
         long id = this.invoices.insert(new InvoiceRepository.NewInvoice(number, issueDate, dueDate, customer.id(),
                 project == null ? null : project.id(), customer.name(), totals.lineExtensionAmount(),
                 totals.vatAmount(), totals.payableAmount(), invoice.currency(), this.json.writeValueAsString(invoice),
-                ubl, pdfBytes, actor));
+                ubl, pdfBytes, actor, InvoiceSummary.INVOICE, null, null));
         this.audit.record(actor, "VYSTAVENIE", "faktura", id,
                 number + " " + customer.name() + " " + totals.payableAmount() + " " + invoice.currency());
         return id;
+    }
+
+    /**
+     * Dobropis k vystavenej fakture. Strany, mena a platobne udaje sa preberaju z povodnej faktury
+     * (nie z aktualnych nastaveni), aby oprava sedela s opravovanym dokladom. Sucet dobropisov
+     * nesmie prekrocit sumu faktury - kontrola bezi pod zamkom povodnej faktury.
+     */
+    @Transactional
+    public long issueCreditNote(long invoiceId, List<InvoiceLine> lines, String reason, LocalDate requestedDate,
+                                String actor) {
+        InvoiceSummary original = this.invoices.findSummary(invoiceId)
+                .orElseThrow(() -> new InvoiceValidationException(List.of("Faktúra neexistuje.")));
+        if (original.isCreditNote()) {
+            throw new InvoiceValidationException(List.of("Dobropis sa vystavuje k faktúre, nie k dobropisu."));
+        }
+        Organization org = this.organizations.find()
+                .orElseThrow(() -> new InvoiceValidationException(List.of("Chýbajú údaje organizácie.")));
+        Invoice orig = this.load(invoiceId);
+        LocalDate today = LocalDate.now(this.clock);
+        LocalDate issueDate = requestedDate == null ? today : requestedDate;
+        List<String> errors = new ArrayList<>();
+        if (issueDate.isAfter(today)) {
+            errors.add("Dátum vyhotovenia nemôže byť v budúcnosti.");
+        }
+        CreditNote draft = this.creditNote(orig, "NEPRIDELENE", issueDate, lines, reason, org.dueDays());
+        errors.addAll(draft.validate());
+        if (!errors.isEmpty()) {
+            throw new InvoiceValidationException(errors);
+        }
+
+        this.invoices.lockForCredit(invoiceId);
+        BigDecimal remaining = original.totalPayable().subtract(this.invoices.creditedTotal(invoiceId));
+        BigDecimal amount = draft.totals().payableAmount();
+        if (amount.signum() <= 0) {
+            throw new InvoiceValidationException(List.of("Suma dobropisu musí byť kladná."));
+        }
+        if (amount.compareTo(remaining) > 0) {
+            throw new InvoiceValidationException(List.of("Dobropis " + amount + " € prevyšuje zostatok faktúry "
+                    + remaining + " € (po započítaní skorších dobropisov)."));
+        }
+
+        String number = this.numbers.next("D" + org.invoicePattern(), issueDate.getYear());
+        this.invoices.latestIssueDate(issueDate.getYear())
+                .filter(issueDate::isBefore)
+                .ifPresent(last -> {
+                    throw new InvoiceValidationException(List.of(
+                            "Dátum vyhotovenia je starší než posledný doklad (" + last + ")."));
+                });
+        CreditNote cn = this.creditNote(orig, number, issueDate, lines, reason, org.dueDays());
+        String ubl = cn.validateForPeppol().isEmpty() ? UblInvoiceWriter.write(cn) : null;
+        Project project = null;
+        if (orig.projectCode() != null) {
+            project = this.projects.findAll().stream().filter(p -> p.code().equals(orig.projectCode())).findFirst()
+                    .orElse(null);
+        }
+        byte[] pdfBytes = this.pdf.render(cn.body(), cn, org.registrationNote(),
+                project == null ? null : project.name(), actor);
+        InvoiceTotals totals = cn.totals();
+        long customerId = this.invoices.customerIdOf(invoiceId);
+        long id = this.invoices.insert(new InvoiceRepository.NewInvoice(number, issueDate, cn.body().dueDate(),
+                customerId, project == null ? null : project.id(), orig.buyer().name(),
+                totals.lineExtensionAmount(), totals.vatAmount(), totals.payableAmount(), orig.currency(),
+                this.json.writeValueAsString(cn.body()), ubl, pdfBytes, actor, InvoiceSummary.CREDIT_NOTE, invoiceId,
+                reason.trim()));
+        this.audit.record(actor, "DOBROPIS", "faktura", id, number + " k " + orig.number() + " "
+                + totals.payableAmount() + " " + orig.currency() + ": " + reason.trim());
+        return id;
+    }
+
+    private CreditNote creditNote(Invoice orig, String number, LocalDate issueDate, List<InvoiceLine> lines,
+                                  String reason, int dueDays) {
+        Invoice body = new Invoice(number, issueDate, issueDate, issueDate.plusDays(dueDays), orig.currency(),
+                orig.seller(), orig.buyer(), lines, orig.variableSymbol(), orig.payeeIban(), orig.payeeBic(),
+                orig.buyerReference(), orig.projectCode(), null);
+        return new CreditNote(body, orig.number(), orig.issueDate(), reason == null ? null : reason.trim());
     }
 
     public Invoice load(long id) {

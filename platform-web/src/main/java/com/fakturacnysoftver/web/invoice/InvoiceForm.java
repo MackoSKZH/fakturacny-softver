@@ -18,6 +18,7 @@ public class InvoiceForm {
     private String variableSymbol;
     private String buyerReference;
     private String note;
+    private String reason;
     private List<LineForm> lines = new ArrayList<>();
 
     public static class LineForm {
@@ -76,6 +77,13 @@ public class InvoiceForm {
         if (this.customerId == null) {
             errors.add("Vyberte odberateľa.");
         }
+        List<InvoiceLine> parsed = this.parseLines(vatPayer, errors);
+        return new InvoiceDraft(this.customerId == null ? 0 : this.customerId, this.projectId, this.issueDate,
+                this.deliveryDate, this.dueDate, this.variableSymbol, this.buyerReference, this.note, parsed);
+    }
+
+    /** Polozky formulara; prazdne riadky preskoci. */
+    public List<InvoiceLine> parseLines(boolean vatPayer, List<String> errors) {
         List<InvoiceLine> parsed = new ArrayList<>();
         int no = 0;
         for (LineForm l : this.lines) {
@@ -102,8 +110,23 @@ public class InvoiceForm {
         if (no == 0) {
             errors.add("Pridajte aspoň jednu položku.");
         }
-        return new InvoiceDraft(this.customerId == null ? 0 : this.customerId, this.projectId, this.issueDate,
-                this.deliveryDate, this.dueDate, this.variableSymbol, this.buyerReference, this.note, parsed);
+        return parsed;
+    }
+
+    /** Predvyplni riadky z vystaveneho dokladu (napr. pre dobropis). */
+    public static InvoiceForm fromLines(List<InvoiceLine> source) {
+        InvoiceForm f = new InvoiceForm();
+        for (InvoiceLine l : source) {
+            LineForm lf = new LineForm();
+            lf.setDescription(l.description());
+            lf.setQuantity(l.quantity().stripTrailingZeros().toPlainString().replace('.', ','));
+            lf.setUnit(l.unitCode());
+            lf.setUnitPrice(l.unitPrice().toPlainString().replace('.', ','));
+            lf.setVat(l.vatCategory() == VatCategory.EXEMPT ? "E"
+                    : l.vatRate() == null ? "23" : l.vatRate().stripTrailingZeros().toPlainString());
+            f.getLines().add(lf);
+        }
+        return f;
     }
 
     static BigDecimal parse(String raw, String error, List<String> errors) {
@@ -185,6 +208,14 @@ public class InvoiceForm {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public String getReason() {
+        return this.reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
     }
 
     public List<LineForm> getLines() {

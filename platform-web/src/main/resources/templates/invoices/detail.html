@@ -1,17 +1,22 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="sk">
-<head th:replace="~{fragments :: head(title='Faktúra ' + ${s.number()})}"></head>
+<head th:replace="~{fragments :: head(title=(${s.isCreditNote()} ? 'Dobropis ' : 'Faktúra ') + ${s.number()})}"></head>
 <body>
 <header th:replace="~{fragments :: nav(active='faktury')}"></header>
 <main>
     <div class="page-head">
-        <h1>Faktúra <span th:text="${s.number()}"></span></h1>
+        <h1><span th:text="${s.isCreditNote()} ? 'Dobropis' : 'Faktúra'"></span> <span th:text="${s.number()}"></span></h1>
         <div class="row">
+            <a class="button" th:if="${!s.isCreditNote()}" th:href="@{/faktury/{id}/dobropis(id=${s.id()})}">Vystaviť dobropis</a>
             <a class="button primary" th:href="@{/faktury/{id}/pdf(id=${s.id()})}" target="_blank">PDF</a>
             <a class="button" th:if="${s.hasUbl()}" th:href="@{/faktury/{id}/xml(id=${s.id()})}">E-faktúra (XML)</a>
         </div>
     </div>
     <div th:replace="~{fragments :: messages}"></div>
+
+    <p class="warning" th:if="${s.isCreditNote()}">
+        Opravný doklad k faktúre <a th:href="@{/faktury/{id}(id=${s.correctsId()})}" th:text="${s.correctsNumber()}"></a>.
+        Dôvod: <span th:text="${s.correctionReason()}"></span></p>
 
     <section class="card">
         <div class="grid">
@@ -44,15 +49,30 @@
         <th:block th:if="${inv.seller().isVatRegistered()}">
             <dt>DPH</dt><dd th:text="${#numbers.formatDecimal(totals.vatAmount(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></dd>
         </th:block>
-        <dt>Na úhradu</dt><dd><strong th:text="${#numbers.formatDecimal(totals.payableAmount(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></strong></dd>
+        <dt th:text="${s.isCreditNote()} ? 'Na vrátenie' : 'Na úhradu'">Na úhradu</dt><dd><strong th:text="${#numbers.formatDecimal(totals.payableAmount(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></strong></dd>
     </dl>
 
+    <section class="card" th:if="${!creditNotes.isEmpty()}">
+        <h2>Dobropisy k tejto faktúre</h2>
+        <table>
+            <thead><tr><th>Číslo</th><th>Vystavený</th><th>Dôvod</th><th class="num">Suma</th></tr></thead>
+            <tbody>
+            <tr th:each="c : ${creditNotes}">
+                <td><a th:href="@{/faktury/{id}(id=${c.id()})}" th:text="${c.number()}"></a></td>
+                <td th:text="${#temporals.format(c.issueDate(), 'd. M. yyyy')}"></td>
+                <td th:text="${c.correctionReason()}"></td>
+                <td class="num" th:text="'-' + ${#numbers.formatDecimal(c.totalPayable(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
     <section class="card">
-        <h2>Úhrada</h2>
-        <p th:if="${s.paidOn() != null}">Uhradená <strong th:text="${#temporals.format(s.paidOn(), 'd. M. yyyy')}"></strong></p>
+        <h2 th:text="${s.isCreditNote()} ? 'Vrátenie peňazí' : 'Úhrada'">Úhrada</h2>
+        <p th:if="${s.paidOn() != null}"><span th:text="${s.isCreditNote()} ? 'Vrátené' : 'Uhradená'"></span> <strong th:text="${#temporals.format(s.paidOn(), 'd. M. yyyy')}"></strong></p>
         <form th:if="${s.paidOn() == null}" th:action="@{/faktury/{id}/uhrada(id=${s.id()})}" method="post" class="row">
-            <label>Dátum úhrady <input type="date" name="paidOn" required></label>
-            <button type="submit" class="primary">Označiť ako uhradenú</button>
+            <label>Dátum <input type="date" name="paidOn" required></label>
+            <button type="submit" class="primary" th:text="${s.isCreditNote()} ? 'Označiť ako vrátené' : 'Označiť ako uhradenú'">Označiť ako uhradenú</button>
         </form>
         <form th:if="${s.paidOn() != null}" th:action="@{/faktury/{id}/uhrada(id=${s.id()})}" method="post">
             <button type="submit" class="link">Zrušiť úhradu</button>

@@ -5,7 +5,7 @@
 <header th:replace="~{fragments :: nav(active='faktury')}"></header>
 <main>
     <div class="page-head">
-        <h1>Vystavené faktúry</h1>
+        <h1>Faktúry a dobropisy</h1>
         <a class="button primary" th:href="@{/faktury/nova}">+ Nová faktúra</a>
     </div>
     <div th:replace="~{fragments :: messages}"></div>
@@ -20,13 +20,14 @@
         </thead>
         <tbody>
         <tr th:each="s : ${invoices}">
-            <td><a th:href="@{/faktury/{id}(id=${s.id()})}" th:text="${s.number()}">20270001</a></td>
+            <td><a th:href="@{/faktury/{id}(id=${s.id()})}" th:text="${s.number()}">20270001</a>
+                <span th:if="${s.isCreditNote()}" class="badge">dobropis k <span th:text="${s.correctsNumber()}"></span></span></td>
             <td th:text="${#temporals.format(s.issueDate(), 'd. M. yyyy')}"></td>
             <td th:text="${s.buyerName()}"></td>
             <td th:text="${s.projectCode()} ?: '-'"></td>
-            <td class="num" th:text="${#numbers.formatDecimal(s.totalPayable(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></td>
+            <td class="num" th:text="${#numbers.formatDecimal(s.signedTotal(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></td>
             <td>
-                <span th:if="${s.paidOn() != null}" class="badge ok">Uhradená</span>
+                <span th:if="${s.paidOn() != null}" class="badge ok" th:text="${s.isCreditNote()} ? 'Vrátené' : 'Uhradená'">Uhradená</span>
                 <span th:if="${s.paidOn() == null and s.isOverdue()}" class="badge bad">Po splatnosti</span>
                 <span th:if="${s.paidOn() == null and !s.isOverdue()}" class="badge">Čaká na úhradu</span>
             </td>

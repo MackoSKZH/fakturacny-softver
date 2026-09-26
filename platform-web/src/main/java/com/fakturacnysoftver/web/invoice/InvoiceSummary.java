@@ -13,7 +13,23 @@ public record InvoiceSummary(
         BigDecimal totalPayable,
         String currency,
         LocalDate paidOn,
-        boolean hasUbl) {
+        boolean hasUbl,
+        String docType,
+        Long correctsId,
+        String correctsNumber,
+        String correctionReason) {
+
+    public static final String INVOICE = "FAKTURA";
+    public static final String CREDIT_NOTE = "DOBROPIS";
+
+    public boolean isCreditNote() {
+        return CREDIT_NOTE.equals(this.docType);
+    }
+
+    /** Suma so znamienkom - dobropis znizuje prijmy projektu. */
+    public BigDecimal signedTotal() {
+        return this.isCreditNote() ? this.totalPayable.negate() : this.totalPayable;
+    }
 
     public boolean isOverdue() {
         return this.paidOn == null && this.dueDate != null && this.dueDate.isBefore(LocalDate.now());

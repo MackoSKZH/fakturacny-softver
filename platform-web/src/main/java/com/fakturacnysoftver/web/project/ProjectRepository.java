@@ -11,7 +11,8 @@ import java.util.Optional;
 public class ProjectRepository {
     private static final String SELECT = """
             SELECT p.id, p.code, p.name, p.budget, p.active,
-                   COALESCE((SELECT sum(i.total_payable) FROM invoice i WHERE i.project_id = p.id), 0) AS invoiced
+                   COALESCE((SELECT sum(CASE WHEN i.doc_type = 'DOBROPIS' THEN -i.total_payable ELSE i.total_payable END)
+                             FROM invoice i WHERE i.project_id = p.id), 0) AS invoiced
             FROM project p""";
 
     private final JdbcClient jdbc;

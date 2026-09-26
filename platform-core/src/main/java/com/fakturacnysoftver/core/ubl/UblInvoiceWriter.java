@@ -1,5 +1,6 @@
 package com.fakturacnysoftver.core.ubl;
 
+import com.fakturacnysoftver.core.CreditNote;
 import com.fakturacnysoftver.core.Invoice;
 import com.fakturacnysoftver.core.InvoiceLine;
 import com.fakturacnysoftver.core.InvoiceTotals;
@@ -27,6 +28,7 @@ import java.time.format.DateTimeFormatter;
  */
 public final class UblInvoiceWriter {
     public static final String NS_INVOICE = "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2";
+    public static final String NS_CREDIT_NOTE = "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2";
     public static final String NS_CAC = "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2";
     public static final String NS_CBC = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2";
 
@@ -38,6 +40,10 @@ public final class UblInvoiceWriter {
 
     /** UNCL1001: 380 = obchodna faktura. */
     private static final String TYPE_COMMERCIAL_INVOICE = "380";
+    /** UNCL1001: 381 = dobropis. */
+    private static final String TYPE_CREDIT_NOTE = "381";
+    /** UNCL1001: 50 = projekt - v dobropise ide projekt cez AdditionalDocumentReference. */
+    private static final String DOC_TYPE_PROJECT = "50";
     /** UNCL4461: 58 = SEPA prevod. */
     private static final String PAYMENT_MEANS_SEPA = "58";
 
@@ -50,22 +56,34 @@ public final class UblInvoiceWriter {
     }
 
     public static String write(Invoice invoice) {
+        return write(invoice, null);
+    }
+
+    /** Dobropis ako UBL CreditNote podla Peppol BIS Billing 3.0. */
+    public static String write(CreditNote creditNote) {
+        return write(creditNote.body(), creditNote);
+    }
+
+    private static String write(Invoice invoice, CreditNote creditNote) {
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             dbf.setNamespaceAware(true);
             Document doc = dbf.newDocumentBuilder().newDocument();
-            new UblInvoiceWriter(doc, invoice.currency()).build(invoice);
+            new UblInvoiceWriter(doc, invoice.currency()).build(invoice, creditNote);
             return serialize(doc);
         } catch (ParserConfigurationException | TransformerException e) {
             throw new IllegalStateException("Nepodarilo sa vytvoriť UBL XML", e);
         }
     }
 
-    private void build(Invoice inv) {
+    private void build(Invoice inv, CreditNote cn) {
         InvoiceTotals totals = inv.totals();
         boolean onlyNotSubject = inv.lines().stream().allMatch(l -> l.vatCategory() == VatCategory.NOT_SUBJECT);
+        boolean credit = cn != null;
 
-        Element root = this.doc.createElementNS(NS_INVOICE, "Invoice");
+        Element root = credit
+                ? this.doc.createElementNS(NS_CREDIT_NOTE, "CreditNote")
+                : this.doc.createElementNS(NS_INVOICE, "Invoice");
         root.setAttributeNS(XMLNS, "xmlns:cac", NS_CAC);
         root.setAttributeNS(XMLNS, "xmlns:cbc", NS_CBC);
         this.doc.appendChild(root);
@@ -74,17 +92,34 @@ public final class UblInvoiceWriter {
         this.cbc(root, "ProfileID", PROFILE_ID);
         this.cbc(root, "ID", inv.number());
         this.cbc(root, "IssueDate", date(inv.issueDate()));
-        if (inv.dueDate() != null) {
+        // UBL CreditNote nema DueDate v hlavicke - splatnost ide do PaymentTerms.
+        if (inv.dueDate() != null && !credit) {
             this.cbc(root, "DueDate", date(inv.dueDate()));
         }
-        this.cbc(root, "InvoiceTypeCode", TYPE_COMMERCIAL_INVOICE);
+        this.cbc(root, credit ? "CreditNoteTypeCode" : "InvoiceTypeCode",
+                credit ? TYPE_CREDIT_NOTE : TYPE_COMMERCIAL_INVOICE);
+        if (credit) {
+            this.cbc(root, "Note", "Dôvod opravy: " + cn.reason());
+        }
         if (notBlank(inv.note())) {
             this.cbc(root, "Note", inv.note());
         }
         this.cbc(root, "DocumentCurrencyCode", this.currency);
         // Peppol vyzaduje BuyerReference alebo OrderReference (PEPPOL-EN16931-R003).
         this.cbc(root, "BuyerReference", notBlank(inv.buyerReference()) ? inv.buyerReference() : inv.number());
-        if (notBlank(inv.projectCode())) {
+        if (credit) {
+            Element billing = this.cac(root, "BillingReference");
+            Element ref = this.cac(billing, "InvoiceDocumentReference");
+            this.cbc(ref, "ID", cn.originalNumber());
+            if (cn.originalIssueDate() != null) {
+                this.cbc(ref, "IssueDate", date(cn.originalIssueDate()));
+            }
+            if (notBlank(inv.projectCode())) {
+                Element project = this.cac(root, "AdditionalDocumentReference");
+                this.cbc(project, "ID", inv.projectCode());
+                this.cbc(project, "DocumentTypeCode", DOC_TYPE_PROJECT);
+            }
+        } else if (notBlank(inv.projectCode())) {
             Element project = this.cac(root, "ProjectReference");
             this.cbc(project, "ID", inv.projectCode());
         }
@@ -99,7 +134,13 @@ public final class UblInvoiceWriter {
             this.cbc(delivery, "ActualDeliveryDate", date(inv.deliveryDate()));
         }
 
-        if (notBlank(inv.payeeIban())) {
+        if (credit) {
+            // Pri dobropise plati dodavatel odberatelovi - bez platobnych udajov dodavatela.
+            if (inv.dueDate() != null) {
+                Element terms = this.cac(root, "PaymentTerms");
+                this.cbc(terms, "Note", "Suma dobropisu bude vrátená do " + date(inv.dueDate()) + ".");
+            }
+        } else if (notBlank(inv.payeeIban())) {
             Element pm = this.cac(root, "PaymentMeans");
             this.cbc(pm, "PaymentMeansCode", PAYMENT_MEANS_SEPA);
             if (notBlank(inv.variableSymbol())) {
@@ -139,7 +180,7 @@ public final class UblInvoiceWriter {
 
         int lineNo = 1;
         for (InvoiceLine line : inv.lines()) {
-            this.invoiceLine(root, lineNo++, line);
+            this.invoiceLine(root, lineNo++, line, credit);
         }
     }
 
@@ -193,10 +234,10 @@ public final class UblInvoiceWriter {
         }
     }
 
-    private void invoiceLine(Element root, int lineNo, InvoiceLine line) {
-        Element il = this.cac(root, "InvoiceLine");
+    private void invoiceLine(Element root, int lineNo, InvoiceLine line, boolean credit) {
+        Element il = this.cac(root, credit ? "CreditNoteLine" : "InvoiceLine");
         this.cbc(il, "ID", String.valueOf(lineNo));
-        Element qty = this.cbc(il, "InvoicedQuantity", plain(line.quantity()));
+        Element qty = this.cbc(il, credit ? "CreditedQuantity" : "InvoicedQuantity", plain(line.quantity()));
         qty.setAttribute("unitCode", line.unitCode());
         this.amount(il, "LineExtensionAmount", line.netAmount());
 

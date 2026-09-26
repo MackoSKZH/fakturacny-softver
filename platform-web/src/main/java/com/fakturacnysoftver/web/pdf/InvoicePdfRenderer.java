@@ -1,5 +1,6 @@
 package com.fakturacnysoftver.web.pdf;
 
+import com.fakturacnysoftver.core.CreditNote;
 import com.fakturacnysoftver.core.Invoice;
 import com.fakturacnysoftver.core.InvoiceLine;
 import com.fakturacnysoftver.core.InvoiceTotals;
@@ -50,19 +51,22 @@ public class InvoicePdfRenderer {
     private static final Map<String, String> UNITS = Map.of("C62", "ks", "H87", "ks", "HUR", "hod", "DAY", "deň",
             "MON", "mes", "KGM", "kg", "MTR", "m", "LS", "paušál");
 
-    public byte[] render(Invoice inv, String registrationNote, String projectName, String issuedBy) {
+    /** @param cn dobropis, ku ktoremu patri {@code inv}; null pre obycajnu fakturu */
+    public byte[] render(Invoice inv, CreditNote cn, String registrationNote, String projectName, String issuedBy) {
         try (PDDocument doc = new PDDocument()) {
             Canvas c = new Canvas(doc, loadFont(doc, "/fonts/NotoSans-Regular.ttf"),
                     loadFont(doc, "/fonts/NotoSans-Bold.ttf"));
             boolean vatPayer = inv.seller().isVatRegistered();
             InvoiceTotals totals = inv.totals();
 
-            this.header(c, inv);
+            this.header(c, inv, cn);
             this.parties(c, inv, registrationNote);
-            this.details(c, inv, projectName);
+            this.details(c, inv, projectName, cn != null);
             this.lines(c, inv, vatPayer);
-            this.summary(c, inv, totals, vatPayer);
-            this.payment(c, inv, totals);
+            this.summary(c, inv, totals, vatPayer, cn != null);
+            if (cn == null) {
+                this.payment(c, inv, totals);
+            }
             if (inv.note() != null && !inv.note().isBlank()) {
                 c.ensureSpace(30, null);
                 c.y -= 8;
@@ -79,13 +83,20 @@ public class InvoicePdfRenderer {
         }
     }
 
-    private void header(Canvas c, Invoice inv) throws IOException {
-        c.text(MARGIN, c.y - 20, c.bold, 22, "Faktúra");
+    private void header(Canvas c, Invoice inv, CreditNote cn) throws IOException {
+        c.text(MARGIN, c.y - 20, c.bold, 22, cn == null ? "Faktúra" : "Dobropis");
         String no = "č. " + inv.number();
         c.text(PAGE.getWidth() - MARGIN - c.width(c.bold, 14, no), c.y - 18, c.bold, 14, no);
         c.y -= 30;
         c.hline(c.y, 1f);
         c.y -= 16;
+        if (cn != null) {
+            c.text(MARGIN, c.y, c.bold, 10, "Opravný doklad k faktúre č. " + cn.originalNumber()
+                    + (cn.originalIssueDate() == null ? "" : " zo dňa " + date(cn.originalIssueDate())));
+            c.y -= 4;
+            c.paragraph("Dôvod opravy: " + cn.reason(), c.regular, 9.5f, CONTENT_WIDTH);
+            c.y -= 12;
+        }
     }
 
     private void parties(Canvas c, Invoice inv, String registrationNote) throws IOException {
@@ -134,16 +145,17 @@ public class InvoicePdfRenderer {
         return y;
     }
 
-    private void details(Canvas c, Invoice inv, String projectName) throws IOException {
+    private void details(Canvas c, Invoice inv, String projectName, boolean credit) throws IOException {
         c.hline(c.y + 4, 0.4f);
         c.y -= 10;
         float colW = CONTENT_WIDTH / 3;
         String[][] cells = {
                 {"Dátum vyhotovenia", date(inv.issueDate())},
                 {"Dátum dodania", date(inv.deliveryDate())},
-                {"Dátum splatnosti", date(inv.dueDate())},
+                {credit ? "Vrátenie do" : "Dátum splatnosti", date(inv.dueDate())},
                 {"Variabilný symbol", orDash(inv.variableSymbol())},
-                {"Forma úhrady", inv.payeeIban() == null ? "-" : "Prevodom na účet"},
+                {"Forma úhrady", credit ? "Prevodom na účet odberateľa"
+                        : inv.payeeIban() == null ? "-" : "Prevodom na účet"},
                 {"Projekt", inv.projectCode() == null ? "-"
                         : inv.projectCode() + (projectName == null ? "" : " " + projectName)},
         };
@@ -154,7 +166,7 @@ public class InvoicePdfRenderer {
             c.text(x, y - 11, c.bold, 9.5f, c.fit(cells[i][1], c.bold, 9.5f, colW - 8));
         }
         c.y -= 52;
-        if (inv.payeeIban() != null) {
+        if (inv.payeeIban() != null && !credit) {
             c.text(MARGIN, c.y, c.regular, 9.5f, "IBAN: " + formatIban(inv.payeeIban())
                     + (inv.payeeBic() == null ? "" : "     BIC: " + inv.payeeBic()));
             c.y -= 13;
@@ -228,7 +240,8 @@ public class InvoicePdfRenderer {
         }
     }
 
-    private void summary(Canvas c, Invoice inv, InvoiceTotals totals, boolean vatPayer) throws IOException {
+    private void summary(Canvas c, Invoice inv, InvoiceTotals totals, boolean vatPayer, boolean credit)
+            throws IOException {
         float right = PAGE.getWidth() - MARGIN;
         if (vatPayer) {
             c.ensureSpace(30 + totals.vatBreakdown().size() * 13, null);
@@ -251,7 +264,7 @@ public class InvoicePdfRenderer {
         c.ensureSpace(30, null);
         c.hline(c.y + 6, 0.8f, right - 250, right);
         String total = money(totals.payableAmount()) + " " + currency(inv.currency());
-        c.text(right - 250, c.y - 10, c.bold, 12, "Spolu na úhradu");
+        c.text(right - 250, c.y - 10, c.bold, 12, credit ? "Na vrátenie odberateľovi" : "Spolu na úhradu");
         c.textRight(right, c.y - 10, c.bold, 13, total);
         c.y -= 22;
         if (!vatPayer) {

@@ -37,7 +37,7 @@ class InvoicePdfRendererTest {
                 List.of(InvoiceLine.notSubjectToVat("Charitatívna reklama", BigDecimal.ONE, new BigDecimal("1500"))),
                 "20270001", "SK3112000000198742637541", "TATRSKBX", null, null, null);
 
-        byte[] pdf = new InvoicePdfRenderer().render(inv, null, null, "test");
+        byte[] pdf = new InvoicePdfRenderer().render(inv, null, null, null, "test");
 
         BufferedImage page;
         try (PDDocument doc = Loader.loadPDF(pdf)) {

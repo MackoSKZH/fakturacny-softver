@@ -107,6 +107,25 @@ class WebFlowTest extends IntegrationTest {
                 .andExpect(content().string(containsString("1 500,50 €")));
         this.mvc.perform(get("/nastavenia")).andExpect(status().isOk())
                 .andExpect(content().string(containsString("VYSTAVENIE")));
+
+        this.mvc.perform(get(detailUrl + "/dobropis")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("value=\"Charitatívna reklama\"")))
+                .andExpect(content().string(containsString("1 500,50 €")));
+        this.mvc.perform(post(detailUrl + "/dobropis").with(csrf())
+                        .param("lines[0].description", "Charitatívna reklama").param("lines[0].quantity", "1")
+                        .param("lines[0].unit", "C62").param("lines[0].unitPrice", "500"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Uveďte dôvod opravy.")));
+        MvcResult credit = this.mvc.perform(post(detailUrl + "/dobropis").with(csrf())
+                        .param("reason", "Polovica reklamy sa nekonala")
+                        .param("lines[0].description", "Charitatívna reklama").param("lines[0].quantity", "1")
+                        .param("lines[0].unit", "C62").param("lines[0].unitPrice", "500"))
+                .andExpect(status().is3xxRedirection()).andReturn();
+        this.mvc.perform(get(credit.getResponse().getRedirectedUrl())).andExpect(status().isOk())
+                .andExpect(content().string(containsString("D20270001")))
+                .andExpect(content().string(containsString("Polovica reklamy sa nekonala")));
+        this.mvc.perform(get("/faktury")).andExpect(content().string(containsString("-500,00 €")));
+        this.mvc.perform(get("/projekty")).andExpect(content().string(containsString("1 000,50 €")));
     }
 
     @Test

@@ -88,7 +88,52 @@ class InvoiceController {
         model.addAttribute("s", summary);
         model.addAttribute("inv", invoice);
         model.addAttribute("totals", invoice.totals());
+        model.addAttribute("creditNotes", this.invoices.findCreditNotes(id));
         return "invoices/detail";
+    }
+
+    @GetMapping("/{id}/dobropis")
+    String newCreditNote(@PathVariable long id, Model model) {
+        InvoiceSummary original = this.invoices.findSummary(id).orElseThrow(NotFound::new);
+        if (original.isCreditNote()) {
+            throw new NotFound();
+        }
+        return this.creditForm(model, original, InvoiceForm.fromLines(this.service.load(id).lines()), List.of());
+    }
+
+    @PostMapping("/{id}/dobropis")
+    String issueCreditNote(@PathVariable long id, @ModelAttribute("form") InvoiceForm form, Authentication auth,
+                           Model model, RedirectAttributes redirect) {
+        InvoiceSummary original = this.invoices.findSummary(id).orElseThrow(NotFound::new);
+        Invoice orig = this.service.load(id);
+        List<String> errors = new ArrayList<>();
+        var lines = form.parseLines(orig.seller().isVatRegistered(), errors);
+        if (form.getReason() == null || form.getReason().isBlank()) {
+            errors.add("Uveďte dôvod opravy.");
+        }
+        if (errors.isEmpty()) {
+            try {
+                long creditId = this.service.issueCreditNote(id, lines, form.getReason(), form.getIssueDate(),
+                        CurrentUser.name(auth));
+                redirect.addFlashAttribute("message", "Dobropis bol vystavený.");
+                return "redirect:/faktury/" + creditId;
+            } catch (InvoiceValidationException e) {
+                errors.addAll(e.errors());
+            }
+        }
+        if (form.getLines().isEmpty()) {
+            form.getLines().add(new InvoiceForm.LineForm());
+        }
+        return this.creditForm(model, original, form, errors);
+    }
+
+    private String creditForm(Model model, InvoiceSummary original, InvoiceForm form, List<String> errors) {
+        model.addAttribute("original", original);
+        model.addAttribute("remaining", original.totalPayable().subtract(this.invoices.creditedTotal(original.id())));
+        model.addAttribute("form", form);
+        model.addAttribute("errors", errors);
+        model.addAttribute("vatPayer", this.service.load(original.id()).seller().isVatRegistered());
+        return "invoices/credit-form";
     }
 
     @GetMapping("/{id}/pdf")

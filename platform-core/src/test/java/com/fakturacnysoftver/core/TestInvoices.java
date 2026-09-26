@@ -42,6 +42,16 @@ public final class TestInvoices {
                 null);
     }
 
+    /** Ciastocny dobropis k fakture platitela DPH - vratenie montaze. */
+    public static CreditNote partialCreditNote() {
+        Invoice original = vatPayerMixedRates();
+        Invoice body = new Invoice("D2027-0001", LocalDate.of(2027, 2, 10), LocalDate.of(2027, 2, 10),
+                LocalDate.of(2027, 2, 24), "EUR", original.seller(), original.buyer(),
+                List.of(original.lines().get(1)), original.variableSymbol(), original.payeeIban(), null,
+                original.buyerReference(), "FGC-2027", null);
+        return new CreditNote(body, original.number(), original.issueDate(), "Montáž nebola vykonaná.");
+    }
+
     /** Platitel DPH so zmiesanymi sadzbami. */
     public static Invoice vatPayerMixedRates() {
         return new Invoice("FA2027-0042",
