@@ -146,11 +146,11 @@ public class DemoData {
         String iso = DateTimeFormatter.ISO_LOCAL_DATE.format(today);
         long grant = this.partners.createDeal(new PartnerService.DealInput(foundation, round, "Grant na národné kolo",
                 "GRANT", "DOHODNUTE", "4000", null, null, null, "Veda pre mladých", today.minusDays(40).toString(),
-                today.minusDays(60).toString(), today.plusDays(120).toString(), today.plusDays(20).toString(), null, null),
-                ACTOR);
+                today.minusDays(60).toString(), today.plusDays(120).toString(), today.plusDays(20).toString(), null, null,
+                null), ACTOR);
         long sponsor = this.partners.createDeal(new PartnerService.DealInput(company, round, "Hlavný partner kola",
                 "DAR", "DOHODNUTE", "3000", today.plusDays(10).toString(), "Poslať poďakovanie a fotky", iso, null, null,
-                null, null, null, null, null), ACTOR);
+                null, null, null, null, null, null), ACTOR);
         this.partners.addDeliverable(sponsor, "Logo na robote a dresoch", day.minusDays(7).toString());
         LedgerEntry grantIn = entry(today.minusDays(20), "Grant Nadácia Pre Vedu - 1. splátka", "PRIJEM", "2000", round, "VBU-07");
         LedgerEntry parts = entry(today.minusDays(12), "REV Control Hub 2x", "VYDAVOK", "780", round, "FA-2026-114");

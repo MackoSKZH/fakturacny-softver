@@ -115,11 +115,12 @@ public class PartnerService {
 
     public record DealInput(Long partnerId, Long projectId, String title, String kind, String stage, String amount,
                             String expectedOn, String nextStep, String nextStepOn, String program, String appliedOn,
-                            String periodFrom, String periodTo, String reportDueOn, String reportedOn, String note) {
+                            String periodFrom, String periodTo, String reportDueOn, String reportedOn, String note,
+                            String paymentVs) {
     }
 
     public long createDeal(DealInput in, String actor) {
-        PartnerRepository.DealRow row = this.validate(in);
+        PartnerRepository.DealRow row = this.validate(in, null);
         long id = this.repo.insertDeal(row);
         this.audit.record(actor, "VYTVORENIE", "dohoda", id, row.title() + " " + row.amount());
         return id;
@@ -129,7 +130,8 @@ public class PartnerService {
         Deal current = this.deal(id);
         PartnerRepository.DealRow row = this.validate(new DealInput(current.partnerId(), in.projectId(), in.title(),
                 in.kind(), in.stage(), in.amount(), in.expectedOn(), in.nextStep(), in.nextStepOn(), in.program(),
-                in.appliedOn(), in.periodFrom(), in.periodTo(), in.reportDueOn(), in.reportedOn(), in.note()));
+                in.appliedOn(), in.periodFrom(), in.periodTo(), in.reportDueOn(), in.reportedOn(), in.note(),
+                in.paymentVs()), id);
         if (!row.kind().equals(current.kind()) && this.repo.linkedCount(id) > 0
                 && (DealKind.GRANT.name().equals(current.kind()) || DealKind.GRANT.name().equals(row.kind()))) {
             throw new PartnerException(List.of("Dohoda má prepojené položky - typ z/na grant sa nedá zmeniť, "
@@ -154,7 +156,7 @@ public class PartnerService {
         return this.repo.deal(id, this.today()).orElseThrow(() -> new PartnerException(List.of("Dohoda neexistuje.")));
     }
 
-    private PartnerRepository.DealRow validate(DealInput in) {
+    private PartnerRepository.DealRow validate(DealInput in, Long dealId) {
         List<String> errors = new ArrayList<>();
         if (in.partnerId() == null || this.repo.findById(in.partnerId()).isEmpty()) {
             errors.add("Vyberte partnera.");
@@ -203,13 +205,23 @@ public class PartnerService {
         if (grant && stage != null && stage.isSecured() && (from == null || to == null)) {
             errors.add("Schválený grant potrebuje oprávnené obdobie (od - do) - bez neho nevieme skontrolovať čerpanie.");
         }
+        String vs = in.paymentVs() == null ? "" : in.paymentVs().replaceAll("\\s", "").replaceFirst("^0+", "");
+        if (!vs.isEmpty()) {
+            if (!vs.matches("[0-9]{1,10}")) {
+                errors.add("Variabilný symbol má 1 až 10 číslic.");
+            } else if (Long.parseLong(vs) >= Deal.VS_BASE && Long.parseLong(vs) < Deal.VS_BASE + 200000) {
+                errors.add("VS 700000 - 899999 sú vyhradené pre automatické symboly dohôd a zbierok - nechajte pole prázdne.");
+            } else if (this.repo.paymentVsTaken(vs, dealId)) {
+                errors.add("VS " + vs + " už má iná dohoda - platbu by sme nevedeli priradiť.");
+            }
+        }
         if (!errors.isEmpty()) {
             throw new PartnerException(errors);
         }
         return new PartnerRepository.DealRow(in.partnerId(), in.projectId(), title, in.kind(), stage.name(), amount,
                 expected, trim(in.nextStep()), nextOn, grant ? trim(in.program()) : null, grant ? applied : null,
                 grant ? from : null, grant ? to : null, grant ? reportDue : null, grant ? reported : null,
-                trim(in.note()));
+                trim(in.note()), vs.isEmpty() ? null : vs);
     }
 
     // ---------- protiplnenia a polozky ----------
@@ -240,6 +252,21 @@ public class PartnerService {
         }
         if (this.repo.link(entryId, dealId, actor) == 1) {
             this.audit.record(actor, "PREPOJENIE", "dohoda", dealId, "položka " + entryId);
+        }
+    }
+
+    /**
+     * Platba z banky k dohode: polozka sa prepoji a ked prijate pokryje dohodnutu sumu, dohoda prejde na Zaplatene
+     * (len z Dohodnute - rozpracovanu alebo odmietnutu dohodu zmeni clovek, nie vypis).
+     */
+    @Transactional
+    public void recordPayment(long dealId, long entryId, String actor) {
+        this.link(dealId, entryId, actor);
+        Deal d = this.deal(dealId);
+        if (DealStage.DOHODNUTE.name().equals(d.stage()) && d.amount().signum() > 0
+                && d.received().compareTo(d.amount()) >= 0) {
+            this.repo.setStage(dealId, DealStage.ZAPLATENE.name());
+            this.audit.record(actor, "ZMENA", "dohoda", dealId, "zaplatené v plnej výške (výpis z banky)");
         }
     }
 

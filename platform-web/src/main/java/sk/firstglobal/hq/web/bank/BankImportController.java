@@ -86,8 +86,8 @@ class BankImportController {
             } catch (IllegalArgumentException e) {
                 action = BankImportService.Action.PRESKOCIT;
             }
-            if ((action == BankImportService.Action.FAKTURA || action == BankImportService.Action.DOSLA)
-                    && action != pr.action()) {
+            if ((action == BankImportService.Action.FAKTURA || action == BankImportService.Action.DOSLA
+                    || action == BankImportService.Action.DOHODA) && action != pr.action()) {
                 action = BankImportService.Action.POLOZKA;
             }
             Long project = proj == null || proj.isBlank() || !proj.matches("\\d{1,18}") ? null : Long.valueOf(proj);
@@ -96,7 +96,8 @@ class BankImportController {
         try {
             BankImportService.Result r = this.service.apply(p, decisions, CurrentUser.name(auth));
             session.removeAttribute(SESSION);
-            redirect.addFlashAttribute("message", "Výpis je naimportovaný: uhradené faktúry (vydané aj došlé) " + r.invoices() + ", dary "
+            redirect.addFlashAttribute("message", "Výpis je naimportovaný: uhradené faktúry (vydané aj došlé) " + r.invoices()
+                    + (r.deals() > 0 ? ", platby k dohodám " + r.deals() : "") + ", dary "
                     + r.donations() + ", nové položky " + r.entries() + ", preskočené " + r.skipped() + ".");
             return "redirect:/polozky";
         } catch (BankImportException e) {

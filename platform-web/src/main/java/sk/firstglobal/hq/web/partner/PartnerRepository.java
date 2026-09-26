@@ -150,7 +150,8 @@ public class PartnerRepository {
                    (SELECT count(*) FROM deal_deliverable x WHERE x.deal_id = d.id)::int AS deliverables_total,
                    (SELECT count(*) FROM deal_deliverable x WHERE x.deal_id = d.id AND x.done)::int AS deliverables_done,
                    (SELECT count(*) FROM deal_deliverable x WHERE x.deal_id = d.id AND NOT x.done
-                     AND x.due_on < :today)::int AS deliverables_overdue
+                     AND x.due_on < :today)::int AS deliverables_overdue,
+                   COALESCE(d.payment_vs, (700000 + d.id)::text) AS payment_vs, d.payment_vs AS custom_vs
             FROM deal d JOIN partner pa ON pa.id = d.partner_id LEFT JOIN project pr ON pr.id = d.project_id
             """;
 
@@ -174,7 +175,7 @@ public class PartnerRepository {
     public record DealRow(long partnerId, Long projectId, String title, String kind, String stage, BigDecimal amount,
                           LocalDate expectedOn, String nextStep, LocalDate nextStepOn, String program,
                           LocalDate appliedOn, LocalDate periodFrom, LocalDate periodTo, LocalDate reportDueOn,
-                          LocalDate reportedOn, String note) {
+                          LocalDate reportedOn, String note, String paymentVs) {
     }
 
     private static Map<String, Object> params(DealRow r) {
@@ -195,6 +196,7 @@ public class PartnerRepository {
         m.put("reportDueOn", r.reportDueOn());
         m.put("reportedOn", r.reportedOn());
         m.put("note", r.note());
+        m.put("paymentVs", r.paymentVs());
         return m;
     }
 
@@ -202,9 +204,9 @@ public class PartnerRepository {
         return this.jdbc.sql("""
                         INSERT INTO deal (partner_id, project_id, title, kind, stage, amount, expected_on, next_step,
                                           next_step_on, program, applied_on, period_from, period_to, report_due_on,
-                                          reported_on, note)
+                                          reported_on, note, payment_vs)
                         VALUES (:partner, :project, :title, :kind, :stage, :amount, :expectedOn, :nextStep, :nextStepOn,
-                                :program, :appliedOn, :periodFrom, :periodTo, :reportDueOn, :reportedOn, :note)
+                                :program, :appliedOn, :periodFrom, :periodTo, :reportDueOn, :reportedOn, :note, :paymentVs)
                         RETURNING id""")
                 .params(params(r)).query(Long.class).single();
     }
@@ -215,9 +217,20 @@ public class PartnerRepository {
                                amount = :amount, expected_on = :expectedOn, next_step = :nextStep,
                                next_step_on = :nextStepOn, program = :program, applied_on = :appliedOn,
                                period_from = :periodFrom, period_to = :periodTo, report_due_on = :reportDueOn,
-                               reported_on = :reportedOn, note = :note, updated_at = now()
+                               reported_on = :reportedOn, note = :note, payment_vs = :paymentVs, updated_at = now()
                         WHERE id = :id""")
                 .params(params(r)).param("id", id).update();
+    }
+
+    /** Je vlastny VS uz pouzity inou dohodou? */
+    public boolean paymentVsTaken(String vs, Long exceptDealId) {
+        return this.jdbc.sql("SELECT count(*) FROM deal WHERE payment_vs = :vs AND id <> :id")
+                .param("vs", vs).param("id", exceptDealId == null ? -1 : exceptDealId).query(Long.class).single() > 0;
+    }
+
+    public void setStage(long id, String stage) {
+        this.jdbc.sql("UPDATE deal SET stage = :s, updated_at = now() WHERE id = :id").param("s", stage).param("id", id)
+                .update();
     }
 
     public int deleteDeal(long id) {

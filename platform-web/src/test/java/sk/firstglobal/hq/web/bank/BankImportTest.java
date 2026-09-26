@@ -49,6 +49,8 @@ class BankImportTest extends IntegrationTest {
     ProjectRepository projects;
     @Autowired
     MockMvc mvc;
+    @Autowired
+    sk.firstglobal.hq.web.partner.PartnerService partners;
 
     TestData.Ids ids;
     long invoiceId;
@@ -115,7 +117,7 @@ class BankImportTest extends IntegrationTest {
                 new BankImportService.Decision(2, BankImportService.Action.POLOZKA, this.ids.projectId()),
                 new BankImportService.Decision(3, BankImportService.Action.POLOZKA, this.ids.projectId()));
         BankImportService.Result r = this.service.apply(p, d, "pokladnik");
-        assertEquals(new BankImportService.Result(1, 1, 2, 0), r);
+        assertEquals(new BankImportService.Result(1, 0, 1, 2, 0), r);
 
         assertEquals(LocalDate.of(2027, 1, 12), this.jdbc.sql("SELECT paid_on FROM invoice WHERE id = :i")
                 .param("i", this.invoiceId).query(LocalDate.class).single());
@@ -126,7 +128,7 @@ class BankImportTest extends IntegrationTest {
 
         BankImportService.Preview again = this.service.preview(Camt053Parser.parse(statement().getBytes(StandardCharsets.UTF_8)));
         assertTrue(actions(again).stream().allMatch(a -> a == BankImportService.Action.DUPLIKAT), actions(again).toString());
-        assertEquals(new BankImportService.Result(0, 0, 0, 4), this.service.apply(again, d, "pokladnik"),
+        assertEquals(new BankImportService.Result(0, 0, 0, 0, 4), this.service.apply(again, d, "pokladnik"),
                 "ani keď niekto pošle staré rozhodnutia, nič sa nezdvojí");
     }
 
@@ -167,5 +169,61 @@ class BankImportTest extends IntegrationTest {
         this.mvc.perform(get("/polozky/banka").with(rada)).andExpect(status().isForbidden());
         this.mvc.perform(get("/polozky").with(rada)).andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.not(containsString("Výpis z banky"))));
+    }
+
+    @Test
+    void sponsorAndGrantPaymentsMatchDealVsAndSettleTheDeal() {
+        long company = this.partners.createPartner(new sk.firstglobal.hq.web.partner.PartnerService.PartnerInput(
+                "Tech s.r.o.", "FIRMA", null, null, null, null, null, null, null, null, null), "pokladnik");
+        long foundation = this.partners.createPartner(new sk.firstglobal.hq.web.partner.PartnerService.PartnerInput(
+                "Nadácia", "NADACIA", null, null, null, null, null, null, null, null, null), "pokladnik");
+        long gift = this.partners.createDeal(new sk.firstglobal.hq.web.partner.PartnerService.DealInput(company,
+                this.ids.projectId(), "Dar na robota", "DAR", "DOHODNUTE", "1000", null, null, null, null, null, null,
+                null, null, null, null, null), "pokladnik");
+        long grant = this.partners.createDeal(new sk.firstglobal.hq.web.partner.PartnerService.DealInput(foundation,
+                null, "Grant cesta", "GRANT", "DOHODNUTE", "5000", null, null, null, "Veda", null, "2027-01-01",
+                "2027-12-31", null, null, null, "0042017"), "pokladnik");
+        assertEquals("42017", this.partners.deal(grant).paymentVs(), "vlastný VS bez úvodných núl");
+        String giftVs = this.partners.deal(gift).paymentVs();
+        assertEquals(String.valueOf(700000 + gift), giftVs);
+
+        String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.02"><BkToCstmrStmt><Stmt>
+                  <Acct><Id><IBAN>%s</IBAN></Id></Acct>
+                """.formatted(TestData.IBAN)
+                + entry("D1", "600.00", "CRDT", "<Sts>BOOK</Sts>", "2027-01-12", "Tech s.r.o.", "SK0511000000002600000054",
+                "/VS" + giftVs, "1. splatka")
+                + entry("D2", "400.00", "CRDT", "<Sts>BOOK</Sts>", "2027-01-13", "Tech s.r.o.", "SK0511000000002600000054",
+                "/VS" + giftVs, "2. splatka")
+                + entry("D3", "2500.00", "CRDT", "<Sts>BOOK</Sts>", "2027-01-14", "Nadácia", "SK0511000000002600000055",
+                "/VS0042017", "grant")
+                + "</Stmt></BkToCstmrStmt></Document>";
+        BankImportService.Preview p = this.service.preview(Camt053Parser.parse(xml.getBytes(StandardCharsets.UTF_8)));
+        assertEquals(List.of(BankImportService.Action.DOHODA, BankImportService.Action.DOHODA, BankImportService.Action.DOHODA),
+                actions(p));
+        assertEquals(this.ids.projectId(), p.proposals().getFirst().projectId(), "aktivita podľa dohody");
+        assertTrue(p.proposals().getFirst().reason().contains("Tech s.r.o. - Dar na robota"));
+
+        BankImportService.Result r = this.service.apply(p, List.of(
+                new BankImportService.Decision(0, BankImportService.Action.DOHODA, null),
+                new BankImportService.Decision(1, BankImportService.Action.DOHODA, null),
+                new BankImportService.Decision(2, BankImportService.Action.DOHODA, null)), "pokladnik");
+        assertEquals(new BankImportService.Result(0, 3, 0, 0, 0), r);
+        var g = this.partners.deal(gift);
+        assertEquals(0, new BigDecimal("1000.00").compareTo(g.received()));
+        assertEquals("ZAPLATENE", g.stage(), "plná suma prijatá = zaplatené");
+        var gr = this.partners.deal(grant);
+        assertEquals(0, new BigDecimal("2500.00").compareTo(gr.received()));
+        assertEquals("DOHODNUTE", gr.stage(), "polovica grantu ešte nie je zaplatená");
+
+        assertThrows(sk.firstglobal.hq.web.partner.PartnerException.class, () -> this.partners.createDeal(
+                new sk.firstglobal.hq.web.partner.PartnerService.DealInput(company, null, "Iný", "DAR", "ROKUJEME", "1",
+                        null, null, null, null, null, null, null, null, null, null, "42017"), "pokladnik"),
+                "VS už má iná dohoda");
+        assertThrows(sk.firstglobal.hq.web.partner.PartnerException.class, () -> this.partners.createDeal(
+                new sk.firstglobal.hq.web.partner.PartnerService.DealInput(company, null, "Iný", "DAR", "ROKUJEME", "1",
+                        null, null, null, null, null, null, null, null, null, null, "800123"), "pokladnik"),
+                "vyhradený rozsah");
     }
 }

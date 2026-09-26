@@ -31,7 +31,12 @@ public final class QrSvg {
             }
         }
         return "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 " + m.getWidth() + " " + m.getHeight()
-                + "\" shape-rendering=\"crispEdges\" role=\"img\" aria-label=\"" + label.replace("\"", "") + "\">"
+                + "\" shape-rendering=\"crispEdges\" role=\"img\" aria-label=\"" + label.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "") + "\">"
                 + "<rect width=\"100%\" height=\"100%\" fill=\"#fff\"/><path fill=\"#000\" d=\"" + path + "\"/></svg>";
+    }
+
+    /** SK12 3456 ... - IBAN po stvoriciach na citanie. */
+    public static String formatIban(String iban) {
+        return iban.replace(" ", "").replaceAll("(.{4})(?!$)", "$1 ");
     }
 }

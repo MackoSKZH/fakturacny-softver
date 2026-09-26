@@ -113,7 +113,7 @@
         <form th:action="@{/aktivity/{id}/pozvanky(id=${a.id()})}" method="post" class="grid">
             <label>Rola / smena <select name="shiftId" required>
                 <option th:each="r : ${roles}" th:value="${r.id()}"
-                        th:text="${r.name()} + ' (' + ${r.confirmed()} + '/' + ${r.needed()} + ')'"></option>
+                        th:text="${r.name()} + ' (' + ${r.confirmed()} + '/' + ${r.needed()} + (${r.isFull()} ? ', plná - len čakajúci' : '') + ')'"></option>
             </select></label>
             <label>Prístup <select name="roleId">
                 <option th:each="r : ${inviteRoles}" th:value="${r.id()}" th:text="${r.name()}"

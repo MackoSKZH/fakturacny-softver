@@ -1,6 +1,10 @@
 package sk.firstglobal.hq.web.partner;
 
+import sk.firstglobal.hq.core.PayBySquare;
 import sk.firstglobal.hq.web.attachment.AttachmentRepository;
+import sk.firstglobal.hq.web.donation.QrSvg;
+import sk.firstglobal.hq.web.organization.Organization;
+import sk.firstglobal.hq.web.organization.OrganizationRepository;
 import sk.firstglobal.hq.web.project.ProjectRepository;
 import sk.firstglobal.hq.web.security.CurrentUser;
 
@@ -31,10 +35,12 @@ class FundingController {
     private final PartnerRepository repo;
     private final ProjectRepository projects;
     private final AttachmentRepository attachments;
+    private final OrganizationRepository organizations;
 
     FundingController(PartnerService service, PartnerRepository repo, ProjectRepository projects,
-                      AttachmentRepository attachments) {
+                      AttachmentRepository attachments, OrganizationRepository organizations) {
         this.attachments = attachments;
+        this.organizations = organizations;
         this.service = service;
         this.repo = repo;
         this.projects = projects;
@@ -93,7 +99,28 @@ class FundingController {
         model.addAttribute("dealKinds", DealKind.values());
         model.addAttribute("stages", DealStage.values());
         model.addAttribute("projects", this.projects.findAll());
+        this.payment(this.service.deal(id), model);
         return "funding/detail";
+    }
+
+    /** Platobne udaje pre partnera: VS dohody (import vypisu podla neho platbu priradi) a QR na zvysnu sumu. */
+    private void payment(Deal d, Model model) {
+        Organization org = this.organizations.find().orElse(null);
+        boolean payable = !DealKind.VECNE.name().equals(d.kind()) && !DealStage.ODMIETNUTE.name().equals(d.stage());
+        if (!payable || org == null || org.iban() == null || org.iban().isBlank()) {
+            model.addAttribute("payQr", null);
+            return;
+        }
+        BigDecimal rest = d.amount().subtract(d.received());
+        BigDecimal amount = rest.signum() > 0 ? rest : null;
+        String message = d.title().length() > 60 ? d.title().substring(0, 60) : d.title();
+        String city = String.join(" ", org.postalCode() == null ? "" : org.postalCode(), org.city() == null ? "" : org.city()).trim();
+        PayBySquare.Payment p = new PayBySquare.Payment(amount, "EUR", null, d.paymentVs(), null, null, message,
+                org.iban(), org.bic() == null || org.bic().isBlank() ? null : org.bic(), org.name(),
+                org.street() == null || org.street().isBlank() ? null : org.street(), city.isEmpty() ? null : city);
+        model.addAttribute("payQr", QrSvg.svg(PayBySquare.encode(p), "QR platba " + message));
+        model.addAttribute("payAmount", amount);
+        model.addAttribute("payIban", QrSvg.formatIban(org.iban()));
     }
 
     @PostMapping("/financovanie/{id}")

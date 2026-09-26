@@ -66,7 +66,7 @@ class PartnerTest extends IntegrationTest {
     private PartnerService.DealInput deal(long partner, String kind, String stage, String amount, String from, String to,
                                           String reportDue) {
         return new PartnerService.DealInput(partner, this.ids.projectId(), kind + " test", kind, stage, amount, null, null,
-                null, "Veda pre mladých", null, from, to, reportDue, null, null);
+                null, "Veda pre mladých", null, from, to, reportDue, null, null, null);
     }
 
     private LedgerEntry entry(String date, String direction, String amount) {
@@ -123,7 +123,7 @@ class PartnerTest extends IntegrationTest {
     void sponsorWarningsAndLinkRules() {
         long gift = this.service.createDeal(new PartnerService.DealInput(this.company, this.ids.projectId(), "Dar na robota",
                 "DAR", "DOHODNUTE", "3000", "2027-01-10", "Poslať poďakovanie", "2027-01-12", null, null, null, null, null,
-                null, null), "pokladnik");
+                null, null, null), "pokladnik");
         this.service.addDeliverable(gift, "Logo na robote", "2027-01-05");
         List<String> w = this.service.deal(gift).warnings(this.service.today());
         assertTrue(w.stream().anyMatch(x -> x.startsWith("Dar s protiplnením")), w.toString());

@@ -31,7 +31,12 @@ public record Deal(
         int outOfPeriod,
         int deliverablesTotal,
         int deliverablesDone,
-        int deliverablesOverdue) {
+        int deliverablesOverdue,
+        String paymentVs,
+        String customVs) {
+
+    /** Predvoleny VS dohody je VS_BASE + id; 800000+ su zbierky aktivit. */
+    public static final long VS_BASE = 700000;
 
     public String kindLabel() {
         return DealKind.labelOf(this.kind);

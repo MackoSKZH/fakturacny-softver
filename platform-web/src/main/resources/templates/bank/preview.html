@@ -25,6 +25,7 @@
                         <select th:name="'action_' + ${x.index()}" aria-label="Akcia">
                             <option th:if="${x.action().name() == 'FAKTURA'}" value="FAKTURA" selected th:text="'Úhrada ' + ${x.invoiceNumber()}"></option>
                             <option th:if="${x.action().name() == 'DOSLA'}" value="DOSLA" selected th:text="'Úhrada došlej ' + ${x.invoiceNumber()}"></option>
+                            <option th:if="${x.action().name() == 'DOHODA'}" value="DOHODA" selected>Platba k dohode</option>
                             <option th:if="${l.credit()}" value="DAR" th:selected="${x.action().name() == 'DAR'}">Dar</option>
                             <option value="POLOZKA" th:selected="${x.action().name() == 'POLOZKA'}" th:text="${l.credit()} ? 'Príjem' : 'Výdavok'"></option>
                             <option value="PRESKOCIT">Preskočiť</option>
@@ -41,7 +42,7 @@
                 </tbody>
             </table>
         </div>
-        <p class="muted">Po potvrdení sa všetko zapíše naraz. Úhrady faktúr sa označia na faktúrach, dary sa započítajú do zbierky aktivity.</p>
+        <p class="muted">Po potvrdení sa všetko zapíše naraz. Úhrady faktúr sa označia na faktúrach, platby k dohodám sa prepoja so sponzorom či grantom, dary sa započítajú do zbierky aktivity.</p>
         <button type="submit" class="primary" th:disabled="${p.proposals().isEmpty()}">Potvrdiť a zapísať</button>
     </form>
 </main>

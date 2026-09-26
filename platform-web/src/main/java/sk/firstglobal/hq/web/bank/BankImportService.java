@@ -7,6 +7,7 @@ import sk.firstglobal.hq.web.ledger.LedgerEntry;
 import sk.firstglobal.hq.web.ledger.LedgerInput;
 import sk.firstglobal.hq.web.ledger.LedgerService;
 import sk.firstglobal.hq.web.organization.OrganizationRepository;
+import sk.firstglobal.hq.web.partner.PartnerService;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
@@ -26,9 +27,9 @@ import java.util.Optional;
  */
 @Service
 public class BankImportService {
-    public enum Action { FAKTURA, DOSLA, DAR, POLOZKA, PRESKOCIT, DUPLIKAT }
+    public enum Action { FAKTURA, DOSLA, DOHODA, DAR, POLOZKA, PRESKOCIT, DUPLIKAT }
 
-    /** Navrh pre jeden riadok vypisu. */
+    /** Navrh pre jeden riadok vypisu. Pri DOHODA je invoiceId id dohody a invoiceNumber jej nazov. */
     public record Proposal(int index, Camt053Parser.Line line, Action action, Long invoiceId, String invoiceNumber,
                            Long projectId, String reason) implements Serializable {
     }
@@ -41,7 +42,11 @@ public class BankImportService {
     public record Decision(int index, Action action, Long projectId) {
     }
 
-    public record Result(int invoices, int donations, int entries, int skipped) {
+    public record Result(int invoices, int deals, int donations, int entries, int skipped) {
+    }
+
+    private record OpenDeal(long id, String vs, String label, Long projectId, String kind, BigDecimal amount,
+                            BigDecimal received) {
     }
 
     private record UnpaidInvoice(long id, String number, BigDecimal totalPayable, String vs, Long projectId) {
@@ -53,6 +58,7 @@ public class BankImportService {
 
     private final JdbcClient jdbc;
     private final sk.firstglobal.hq.web.received.ReceivedInvoiceService received;
+    private final PartnerService partners;
     private final InvoiceService invoices;
     private final LedgerService ledger;
     private final OrganizationRepository organizations;
@@ -61,8 +67,9 @@ public class BankImportService {
 
     public BankImportService(JdbcClient jdbc, InvoiceService invoices, LedgerService ledger,
                              OrganizationRepository organizations, AuditLog audit, Clock clock,
-                             sk.firstglobal.hq.web.received.ReceivedInvoiceService received) {
+                             sk.firstglobal.hq.web.received.ReceivedInvoiceService received, PartnerService partners) {
         this.jdbc = jdbc;
+        this.partners = partners;
         this.received = received;
         this.invoices = invoices;
         this.ledger = ledger;
@@ -92,6 +99,14 @@ public class BankImportService {
                                supplier_iban AS iban
                         FROM received_invoice WHERE paid_on IS NULL AND doc_type = 'FAKTURA'""")
                 .query(UnpaidReceived.class).list();
+        List<OpenDeal> deals = this.jdbc.sql("""
+                        SELECT d.id, COALESCE(d.payment_vs, (700000 + d.id)::text) AS vs, pa.name || ' - ' || d.title AS label,
+                               d.project_id, d.kind, d.amount,
+                               COALESCE((SELECT sum(amount) FROM ledger_entry l WHERE l.deal_id = d.id
+                                         AND l.direction = 'PRIJEM'), 0) AS received
+                        FROM deal d JOIN partner pa ON pa.id = d.partner_id
+                        WHERE d.stage <> 'ODMIETNUTE' AND d.kind <> 'VECNE'""")
+                .query(OpenDeal.class).list();
         List<Proposal> out = new ArrayList<>();
         java.util.Set<Long> usedReceived = new java.util.HashSet<>();
         java.util.Set<Long> used = new java.util.HashSet<>();
@@ -99,7 +114,7 @@ public class BankImportService {
         for (int i = 0; i < st.lines().size(); i++) {
             Camt053Parser.Line l = st.lines().get(i);
             Proposal p = !refs.add(l.ref()) ? new Proposal(i, l, Action.DUPLIKAT, null, null, null, "rovnaký pohyb je vo výpise dvakrát")
-                    : this.propose(i, l, unpaid);
+                    : this.propose(i, l, unpaid, deals);
             if (p.action() == Action.POLOZKA && !l.credit()) {
                 p = this.proposePayable(p, l, payables, usedReceived);
             }
@@ -112,7 +127,7 @@ public class BankImportService {
         return new Preview(st, out, warnings);
     }
 
-    private Proposal propose(int i, Camt053Parser.Line l, List<UnpaidInvoice> unpaid) {
+    private Proposal propose(int i, Camt053Parser.Line l, List<UnpaidInvoice> unpaid, List<OpenDeal> deals) {
         if (this.bankRefExists(l.ref())) {
             return new Proposal(i, l, Action.DUPLIKAT, null, null, null, "už je v položkách");
         }
@@ -128,6 +143,16 @@ public class BankImportService {
                 }
                 return new Proposal(i, l, Action.POLOZKA, null, null, u.projectId(), "VS faktúry " + u.number()
                         + ", ale suma nesedí (" + u.totalPayable().toPlainString() + " €) - čiastočná úhrada? Faktúru neoznačíme ako uhradenú.");
+            }
+            Optional<OpenDeal> deal = deals.stream().filter(d -> l.vs().equals(d.vs())).findFirst();
+            if (deal.isPresent()) {
+                OpenDeal d = deal.get();
+                BigDecimal after = d.received().add(l.amount());
+                String note = d.amount().signum() > 0 && after.compareTo(d.amount()) > 0
+                        ? " - spolu " + after.toPlainString() + " € je viac ako dohodnutých " + d.amount().toPlainString() + " €, skontrolujte"
+                        : d.amount().signum() > 0 ? " (prijaté spolu " + after.toPlainString() + " z " + d.amount().toPlainString() + " €)" : "";
+                String kindNote = "REKLAMA".equals(d.kind()) ? " - reklama sa má platiť na faktúru, vystavte ju" : "";
+                return new Proposal(i, l, Action.DOHODA, d.id(), d.label(), d.projectId(), "VS dohody " + d.label() + note + kindNote);
             }
             long vs = Long.parseLong(l.vs());
             long projectId = vs - DonationRepository.VS_BASE;
@@ -159,6 +184,7 @@ public class BankImportService {
     @Transactional
     public Result apply(Preview preview, List<Decision> decisions, String actor) {
         int inv = 0;
+        int dea = 0;
         int don = 0;
         int ent = 0;
         int skip = 0;
@@ -192,6 +218,24 @@ public class BankImportService {
                             .param("r", l.ref()).param("i", p.invoiceId()).update();
                     inv++;
                 }
+                case DOHODA -> {
+                    if (p.action() != Action.DOHODA || p.invoiceId() == null) {
+                        throw new BankImportException("Riadok " + (d.index() + 1) + ": k pohybu nie je navrhnutá dohoda.");
+                    }
+                    String kind = this.jdbc.sql("SELECT kind FROM deal WHERE id = :id").param("id", p.invoiceId())
+                            .query(String.class).optional()
+                            .orElseThrow(() -> new BankImportException("Riadok " + (d.index() + 1) + ": dohoda medzitým zmizla."));
+                    String category = switch (kind) {
+                        case "GRANT" -> "Grant";
+                        case "REKLAMA" -> "Reklama";
+                        case "DAR" -> "Dar";
+                        default -> null;
+                    };
+                    long entry = this.create(l, d.projectId() != null ? d.projectId() : p.projectId(),
+                            "Platba - " + p.invoiceNumber(), category, actor);
+                    this.partners.recordPayment(p.invoiceId(), entry, actor);
+                    dea++;
+                }
                 case DAR -> {
                     this.create(l, d.projectId() != null ? d.projectId() : p.projectId(), "Dar - " + nz(l.counterparty(), "darca"),
                             "Dar", actor);
@@ -204,15 +248,16 @@ public class BankImportService {
             }
         }
         this.audit.record(actor, "IMPORT", "vypis", preview.statement().iban(),
-                "faktúry " + inv + ", dary " + don + ", položky " + ent + ", preskočené " + skip);
-        return new Result(inv, don, ent, skip);
+                "faktúry " + inv + ", dohody " + dea + ", dary " + don + ", položky " + ent + ", preskočené " + skip);
+        return new Result(inv, dea, don, ent, skip);
     }
 
-    private void create(Camt053Parser.Line l, Long projectId, String description, String category, String actor) {
+    private long create(Camt053Parser.Line l, Long projectId, String description, String category, String actor) {
         LedgerEntry e = this.ledger.create(new LedgerInput(l.date().toString(), description, l.credit() ? "PRIJEM" : "VYDAVOK",
                 l.amount().toPlainString(), projectId, List.of(), category, l.counterparty(), l.vs(), "BANKA",
                 l.message(), null), actor);
         this.jdbc.sql("UPDATE ledger_entry SET bank_ref = :r WHERE id = :id").param("r", l.ref()).param("id", e.id()).update();
+        return e.id();
     }
 
     private static String description(Camt053Parser.Line l) {

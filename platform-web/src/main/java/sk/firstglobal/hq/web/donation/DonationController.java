@@ -99,7 +99,7 @@ class DonationController {
     }
 
     static String formatIban(String iban) {
-        return iban.replace(" ", "").replaceAll("(.{4})(?!$)", "$1 ");
+        return QrSvg.formatIban(iban);
     }
 
     private static String nz(String s) {

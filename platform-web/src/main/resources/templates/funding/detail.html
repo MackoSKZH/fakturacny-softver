@@ -32,6 +32,20 @@
             <small th:if="${d.reportDueOn() != null}" th:text="'vyúčtovanie do ' + ${#temporals.format(d.reportDueOn(), 'd. M. yyyy')}"></small></div>
     </section>
 
+    <section class="card" id="platba" th:if="${payQr != null}">
+        <h2>Platobné údaje pre partnera</h2>
+        <div class="row">
+            <div class="qr" th:utext="${payQr}"></div>
+            <dl class="pay">
+                <dt>IBAN</dt><dd class="mono" th:text="${payIban}"></dd>
+                <dt>Variabilný symbol</dt><dd class="mono" th:text="${d.paymentVs()}"></dd>
+                <dt>Suma</dt><dd th:text="${payAmount == null} ? 'podľa dohody' : ${#numbers.formatDecimal(payAmount, 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></dd>
+            </dl>
+        </div>
+        <p class="muted">Pošlite partnerovi tento VS (alebo QR). Pri importe výpisu z banky sa platba s ním sama priradí k tejto
+            dohode a keď prijaté pokryje dohodnutú sumu, dohoda prejde na Zaplatené.</p>
+    </section>
+
     <section class="card" id="protiplnenia">
         <h2>Protiplnenia</h2>
         <p class="muted" th:if="${d.kind() == 'DAR'}">Pri dare len poďakovanie. Ak sľúbite logo či reklamu, ide o reklamu - zmeňte typ a vystavte faktúru.</p>
