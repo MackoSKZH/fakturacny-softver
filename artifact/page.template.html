@@ -1,0 +1,916 @@
+<title>Účto OZ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root {
+    --bg: #f5f6f3;
+    --surface: #ffffff;
+    --ink: #17212b;
+    --muted: #5b6673;
+    --line: #dde1e3;
+    --accent: #0e6b5c;
+    --accent-ink: #ffffff;
+    --accent-soft: #e2f0ec;
+    --ok: #1e7a3c;
+    --bad: #b42318;
+    --warn-bg: #fff3d1;
+    --warn-ink: #5c4300;
+    --radius: 10px;
+    --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --f-body: "Instrument Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #101417; --surface: #192025; --ink: #e7ecef; --muted: #98a4ae; --line: #2b343b;
+        --accent: #4fc1a8; --accent-ink: #062019; --accent-soft: #173a33;
+        --ok: #5cc27d; --bad: #f2877d; --warn-bg: #3a3014; --warn-ink: #f3dca0;
+    }
+}
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #101417; --surface: #192025; --ink: #e7ecef; --muted: #98a4ae; --line: #2b343b;
+    --accent: #4fc1a8; --accent-ink: #062019; --accent-soft: #173a33;
+    --ok: #5cc27d; --bad: #f2877d; --warn-bg: #3a3014; --warn-ink: #f3dca0;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--f-body); padding-inline: 16px; padding-block: 0 48px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.2rem; }
+.wrap { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+.mono, .num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.num { text-align: right; white-space: nowrap; }
+.muted { color: var(--muted); }
+small { color: var(--muted); font-size: 0.8rem; }
+a { color: var(--accent); }
+
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg);
+    border-bottom: 1px solid var(--line); margin-inline: -16px; padding: 12px 16px; }
+header.top .wrap { flex-direction: row; align-items: center; gap: 20px; flex-wrap: wrap; }
+.brand { font-family: var(--f-display); font-weight: 700; font-size: 1.3rem; letter-spacing: -0.01em; }
+.brand span { color: var(--accent); }
+nav.tabs { display: flex; gap: 4px; overflow-x: auto; flex: 1; }
+nav.tabs button { border: 0; background: none; color: var(--muted); padding: 7px 12px; border-radius: 8px; font: inherit; cursor: pointer; white-space: nowrap; }
+nav.tabs button[aria-current="page"] { background: var(--surface); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+.org { font-size: 0.85rem; color: var(--muted); }
+
+.banner { border-radius: var(--radius); padding: 12px 14px; background: var(--warn-bg); color: var(--warn-ink); }
+.banner b { font-weight: 600; }
+.flash { border-radius: var(--radius); padding: 10px 14px; border: 1px solid var(--ok); color: var(--ok); }
+.errors { border-radius: var(--radius); padding: 10px 14px 10px 32px; border: 1px solid var(--bad); color: var(--bad); margin: 0; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px 16px; }
+.span2 { grid-column: span 2; }
+@media (max-width: 520px) { .span2 { grid-column: auto; } }
+label { display: flex; flex-direction: column; gap: 4px; font-size: 0.88rem; font-weight: 500; }
+input, select, textarea { font: inherit; color: inherit; background: var(--surface); border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; width: 100%; }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+button.btn { font: inherit; font-weight: 500; cursor: pointer; padding: 9px 15px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+button.link { border: 0; background: none; color: var(--accent); cursor: pointer; font: inherit; padding: 4px; }
+button:disabled { opacity: 0.55; cursor: not-allowed; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; }
+tr.click { cursor: pointer; }
+tr.click:hover td { background: var(--accent-soft); }
+.pill { font-size: 0.78rem; padding: 2px 9px; border-radius: 99px; border: 1px solid var(--line); white-space: nowrap; }
+.pill.ok { color: var(--ok); border-color: var(--ok); }
+.pill.bad { color: var(--bad); border-color: var(--bad); }
+.chip { font-family: var(--f-mono); font-size: 0.78rem; background: var(--accent-soft); color: var(--ink); padding: 1px 7px; border-radius: 5px; }
+.empty { color: var(--muted); padding: 18px 0; }
+
+.compose { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; align-items: start; }
+@media (max-width: 880px) { .compose { grid-template-columns: 1fr; } }
+.lines { display: flex; flex-direction: column; gap: 8px; }
+.line { display: grid; grid-template-columns: minmax(0, 1fr) 84px 90px 110px var(--vatcol, 0px) 120px 32px; gap: 8px; align-items: center; }
+.line.headrow { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; }
+.line .total { text-align: right; font-family: var(--f-mono); white-space: nowrap; }
+.line input.n { text-align: right; font-family: var(--f-mono); }
+@media (max-width: 720px) {
+    .line.headrow { display: none; }
+    .line { grid-template-columns: 1fr 1fr 1fr auto; padding: 10px; border: 1px solid var(--line); border-radius: 8px; }
+    .line > :first-child { grid-column: 1 / -1; }
+}
+.summary { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 72px); }
+dl.sums { display: grid; grid-template-columns: 1fr auto; gap: 6px 14px; margin: 0; }
+dl.sums dt { color: var(--muted); }
+dl.sums dd { margin: 0; text-align: right; font-family: var(--f-mono); }
+dl.sums .grand { font-weight: 600; font-size: 1.15rem; color: var(--ink); }
+.qr { background: #ffffff; padding: 10px; border-radius: 8px; width: max-content; max-width: 100%; }
+.qr svg { display: block; width: 150px; height: 150px; }
+.qr-cap { font-size: 0.75rem; color: var(--muted); }
+.kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px 16px; }
+.kv div small { display: block; }
+.kv strong { font-weight: 600; }
+.bar { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); }
+.steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+@media (prefers-reduced-motion: no-preference) { .panel { animation: fade .18s ease-out; } @keyframes fade { from { opacity: .6; } to { opacity: 1; } } }
+</style>
+
+<header class="top">
+    <div class="wrap">
+        <div class="brand">Účto<span>.</span></div>
+        <nav class="tabs" id="tabs">
+            <button data-tab="list" aria-current="page">Faktúry</button>
+            <button data-tab="new">Nová faktúra</button>
+            <button data-tab="customers">Odberatelia</button>
+            <button data-tab="projects">Projekty</button>
+            <button data-tab="settings">Nastavenia</button>
+        </nav>
+        <div class="org" id="org-name"></div>
+    </div>
+</header>
+
+<main class="wrap" id="app">
+    <div class="banner" id="mode-banner" hidden></div>
+    <div class="flash" id="flash" hidden></div>
+
+    <!-- FAKTURY -->
+    <section id="tab-list" class="panel">
+        <div class="head">
+            <h1>Vystavené faktúry</h1>
+            <button class="btn primary" data-goto="new">+ Nová faktúra</button>
+        </div>
+        <div id="onboarding" hidden>
+            <p>Na začiatok treba tri kroky:</p>
+            <ol class="steps">
+                <li><button class="link" data-goto="settings">Vyplniť údaje združenia</button> (názov, IČO, DIČ, IBAN)</li>
+                <li><button class="link" data-goto="customers">Pridať odberateľa</button> (napr. sponzora)</li>
+                <li><button class="link" data-goto="projects">Založiť projekt s rozpočtom</button> (voliteľné)</li>
+            </ol>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Číslo</th><th>Vystavená</th><th>Odberateľ</th><th>Projekt</th><th class="num">Suma</th><th>Stav</th><th>E-faktúra</th></tr></thead>
+                <tbody id="invoice-rows"></tbody>
+            </table>
+        </div>
+        <p class="empty" id="invoice-empty" hidden>Zatiaľ žiadne faktúry.</p>
+    </section>
+
+    <!-- DETAIL -->
+    <section id="tab-detail" class="panel" hidden>
+        <div class="head">
+            <div>
+                <small><button class="link" data-goto="list">&larr; Faktúry</button></small>
+                <h1>Faktúra <span class="mono" id="d-number"></span></h1>
+            </div>
+            <div class="row">
+                <button class="btn primary" id="d-pdf">Stiahnuť PDF</button>
+                <button class="btn" id="d-xml">Stiahnuť e-faktúru (XML)</button>
+            </div>
+        </div>
+        <div class="compose">
+            <div class="panel" id="d-body"></div>
+            <div class="panel summary" id="d-side"></div>
+        </div>
+    </section>
+
+    <!-- NOVA FAKTURA -->
+    <section id="tab-new" hidden>
+        <div class="compose">
+            <form class="panel" id="invoice-form" novalidate>
+                <h1>Nová faktúra</h1>
+                <div class="grid">
+                    <label>Odberateľ <select id="f-customer"></select></label>
+                    <label>Projekt (rozpočet) <select id="f-project"></select></label>
+                    <label>Dátum vyhotovenia <input type="date" id="f-issue"><small>prázdne = dnes</small></label>
+                    <label>Dátum dodania <input type="date" id="f-delivery"><small>prázdne = dátum vyhotovenia</small></label>
+                    <label>Splatnosť <input type="date" id="f-due"><small>prázdne = podľa nastavení</small></label>
+                    <label>Variabilný symbol <input id="f-vs" inputmode="numeric" maxlength="10"><small>prázdne = číslo faktúry</small></label>
+                    <label class="span2">Referencia odberateľa (zmluva, objednávka) <input id="f-ref"></label>
+                </div>
+                <div class="lines" id="lines"></div>
+                <div class="row"><button type="button" class="btn" id="add-line">+ Pridať položku</button>
+                    <span class="muted" id="vat-note"></span></div>
+                <label>Poznámka na faktúre <textarea id="f-note" rows="2"></textarea></label>
+                <ul class="errors" id="form-errors" hidden></ul>
+                <div class="row">
+                    <button type="submit" class="btn primary" id="issue-btn">Vystaviť faktúru</button>
+                    <span class="muted">Vystavenú faktúru už nejde upraviť - opravuje sa dobropisom.</span>
+                </div>
+            </form>
+            <aside class="panel summary">
+                <h2>Súhrn</h2>
+                <dl class="sums" id="sums"></dl>
+                <div id="qr-preview"></div>
+            </aside>
+        </div>
+    </section>
+
+    <!-- ODBERATELIA -->
+    <section id="tab-customers" class="panel" hidden>
+        <h1>Odberatelia</h1>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Názov</th><th>Obec</th><th>IČO</th><th>DIČ</th><th>IČ DPH</th><th>Doručenie</th></tr></thead>
+                <tbody id="customer-rows"></tbody>
+            </table>
+        </div>
+        <p class="empty" id="customer-empty" hidden>Zatiaľ žiadni odberatelia.</p>
+        <h2>Nový odberateľ</h2>
+        <form id="customer-form" class="grid" novalidate>
+            <label class="span2">Názov / meno <input id="c-name"></label>
+            <label>Ulica a číslo <input id="c-street"></label>
+            <label>Obec <input id="c-city"></label>
+            <label>PSČ <input id="c-zip"></label>
+            <label>Krajina <input id="c-country" maxlength="2" value="SK"></label>
+            <label>IČO <input id="c-ico" inputmode="numeric"></label>
+            <label>DIČ <input id="c-dic" inputmode="numeric"><small>bez DIČ nejde e-faktúra, len PDF</small></label>
+            <label>IČ DPH <input id="c-icdph"></label>
+            <label>E-mail <input id="c-email" type="email"></label>
+            <ul class="errors span2" id="customer-errors" hidden></ul>
+            <div class="span2"><button class="btn primary" type="submit">Pridať odberateľa</button></div>
+        </form>
+    </section>
+
+    <!-- PROJEKTY -->
+    <section id="tab-projects" class="panel" hidden>
+        <h1>Projekty a rozpočty</h1>
+        <p class="muted">Zatiaľ sa započítavajú vystavené faktúry (príjmy). Výdavky pribudnú s prijatými e-faktúrami.</p>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Kód</th><th>Názov</th><th class="num">Rozpočet</th><th class="num">Vyfakturované</th><th>Plnenie</th></tr></thead>
+                <tbody id="project-rows"></tbody>
+            </table>
+        </div>
+        <p class="empty" id="project-empty" hidden>Zatiaľ žiadne projekty.</p>
+        <h2>Nový projekt</h2>
+        <form id="project-form" class="grid" novalidate>
+            <label>Kód <input id="p-code" placeholder="FGC-2027"></label>
+            <label>Názov <input id="p-name" placeholder="FIRST Global Challenge 2027"></label>
+            <label>Rozpočet (€) <input id="p-budget" inputmode="decimal" value="0"></label>
+            <ul class="errors span2" id="project-errors" hidden></ul>
+            <div class="span2"><button class="btn primary" type="submit">Vytvoriť projekt</button></div>
+        </form>
+    </section>
+
+    <!-- NASTAVENIA -->
+    <section id="tab-settings" class="panel" hidden>
+        <h1>Údaje združenia</h1>
+        <form id="settings-form" class="grid" novalidate>
+            <label class="span2">Názov <input id="s-name" placeholder="FIRST Global Slovakia, o. z."></label>
+            <label>Ulica a číslo <input id="s-street"></label>
+            <label>Obec <input id="s-city"></label>
+            <label>PSČ <input id="s-zip"></label>
+            <label>IČO <input id="s-ico" inputmode="numeric"></label>
+            <label>DIČ <input id="s-dic" inputmode="numeric"><small>zároveň Peppol ID 0245:DIČ</small></label>
+            <label>IČ DPH <input id="s-icdph"><small>len ak ste platiteľ DPH, inak prázdne</small></label>
+            <label>E-mail <input id="s-email" type="email"></label>
+            <label>IBAN <input id="s-iban"></label>
+            <label>BIC <input id="s-bic"></label>
+            <label class="span2">Registrácia (tlačí sa na faktúre) <input id="s-reg" placeholder="Registrované na MV SR pod č. VVS/1-900/90-..."></label>
+            <label>Vzor čísla faktúry <input id="s-pattern" value="{YYYY}{NNNN}"><small>{YYYY} rok, {NNNN} poradové číslo</small></label>
+            <label>Splatnosť (dni) <input id="s-due" type="number" min="0" max="365" value="14"></label>
+            <ul class="errors span2" id="settings-errors" hidden></ul>
+            <div class="span2 row"><button class="btn primary" type="submit">Uložiť</button>
+                <span class="muted">Zmena sa neprejaví na už vystavených faktúrach.</span></div>
+        </form>
+    </section>
+</main>
+
+<script charset="utf-8" src="lib/jspdf.umd.min.js"></script>
+<script charset="utf-8" src="lib/qrcode.js"></script>
+<script charset="utf-8" src="lib/lzma_worker-min.js"></script>
+<script>
+/*__UCTO_CORE__*/
+</script>
+<script>
+/*__UCTO_PDF__*/
+</script>
+<script>
+(function () {
+    'use strict';
+    var C = window.UctoCore;
+    var $ = function (id) { return document.getElementById(id); };
+    var state = {org: null, customers: [], projects: [], invoices: [], payments: {}, readOnly: false};
+    var store = null;       // db namespace alebo pamatova nahrada
+    var downloads = null;
+    var demo = false;
+    var detailId = null;
+    var fontsPromise = null;
+    var tabId = 't' + Math.random().toString(36).slice(2);
+
+    // ---------- pomocne ----------
+    function today() {
+        return new Intl.DateTimeFormat('sv-SE', {timeZone: 'Europe/Bratislava'}).format(new Date());
+    }
+    function addDays(iso, n) {
+        var d = new Date(iso + 'T12:00:00Z');
+        d.setUTCDate(d.getUTCDate() + n);
+        return d.toISOString().slice(0, 10);
+    }
+    function fmtDate(iso) {
+        if (!iso) { return '-'; }
+        var p = iso.split('-');
+        return Number(p[2]) + '. ' + Number(p[1]) + '. ' + p[0];
+    }
+    function money(cents) { return C.formatMoney(BigInt(cents)) + ' €'; }
+    function segment(s) {
+        return String(s).replace(/[^A-Za-z0-9_\-:@+]/g, function (c) { return '~' + c.charCodeAt(0).toString(16); });
+    }
+    function el(tag, attrs, children) {
+        var e = document.createElement(tag);
+        Object.keys(attrs || {}).forEach(function (k) {
+            if (k === 'text') { e.textContent = attrs[k]; } else if (k === 'class') { e.className = attrs[k]; } else { e.setAttribute(k, attrs[k]); }
+        });
+        (children || []).forEach(function (c) { if (c) { e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); } });
+        return e;
+    }
+    function showErrors(id, errors) {
+        var ul = $(id);
+        ul.replaceChildren.apply(ul, errors.map(function (m) { return el('li', {text: m}); }));
+        ul.hidden = !errors.length;
+    }
+    var flashTimer;
+    function flash(msg) {
+        var f = $('flash');
+        f.textContent = msg;
+        f.hidden = false;
+        clearTimeout(flashTimer);
+        flashTimer = setTimeout(function () { f.hidden = true; }, 5000);
+    }
+    function sortByName(a, b) { return String(a.name).localeCompare(String(b.name), 'sk'); }
+
+    // ---------- ukladanie ----------
+    function memoryStore() {
+        var docs = {};
+        var listeners = [];
+        function notify() { listeners.forEach(function (fn) { fn(); }); }
+        function snapDoc(path) {
+            var d = docs[path];
+            return {id: path.split('/').pop(), exists: !!d, data: function () { return d ? JSON.parse(JSON.stringify(d)) : undefined; }};
+        }
+        function ref(path) {
+            return {
+                path: path,
+                get: function () { return Promise.resolve(snapDoc(path)); },
+                set: function (data) { docs[path] = JSON.parse(JSON.stringify(data)); notify(); return Promise.resolve(); },
+                delete: function () { delete docs[path]; notify(); return Promise.resolve(); },
+                acquire: function () { return Promise.resolve({acquired: true}); },
+                onSnapshot: function (next) { var fn = function () { next(snapDoc(path)); }; listeners.push(fn); fn(); return function () {}; }
+            };
+        }
+        function coll(path) {
+            function snap() {
+                var list = Object.keys(docs).filter(function (p) { return p.indexOf(path + '/') === 0 && p.split('/').length === path.split('/').length + 1; })
+                    .map(snapDoc);
+                return {docs: list, size: list.length, empty: !list.length};
+            }
+            return {
+                doc: function (id) { return ref(path + '/' + (id || Math.random().toString(36).slice(2))); },
+                get: function () { return Promise.resolve(snap()); },
+                onSnapshot: function (next) { var fn = function () { next(snap()); }; listeners.push(fn); fn(); return function () {}; }
+            };
+        }
+        return {doc: ref, collection: coll};
+    }
+
+    function seedDemo(db) {
+        var y = today().slice(0, 4);
+        db.doc('settings/org').set({name: 'Ukážkové združenie, o. z.', street: 'Hlavná 1', city: 'Bratislava', postalCode: '81101', country: 'SK',
+            ico: '12345678', dic: '2120000000', icDph: '', email: 'info@example.sk', iban: 'SK3112000000198742637541', bic: 'TATRSKBX',
+            registrationNote: 'Registrované na MV SR pod č. VVS/1-900/90-00000 (ukážka)', pattern: '{YYYY}{NNNN}', dueDays: 14});
+        db.doc('customers/demo1').set({name: 'Ukážkový sponzor s.r.o.', street: 'Priemyselná 5', city: 'Košice', postalCode: '04001', country: 'SK',
+            ico: '87654321', dic: '2020000000', icDph: 'SK2020000000', email: ''});
+        db.doc('projects/demo1').set({code: 'FGC-' + y, name: 'FIRST Global Challenge ' + y, budgetCents: '1200000'});
+    }
+
+    function subscribe() {
+        var err = function (e) { console.warn('db', e && e.code); };
+        store.doc('settings/org').onSnapshot(function (s) { state.org = s.exists ? s.data() : null; render(); }, err);
+        store.collection('customers').onSnapshot(function (s) {
+            state.customers = s.docs.map(function (d) { var x = d.data(); x.id = d.id; return x; }).sort(sortByName); render();
+        }, err);
+        store.collection('projects').onSnapshot(function (s) {
+            state.projects = s.docs.map(function (d) { var x = d.data(); x.id = d.id; return x; })
+                .sort(function (a, b) { return a.code.localeCompare(b.code); }); render();
+        }, err);
+        store.collection('invoices').onSnapshot(function (s) {
+            state.invoices = s.docs.map(function (d) { var x = d.data(); x.id = d.id; return x; })
+                .sort(function (a, b) { return (b.inv.issueDate + b.inv.number).localeCompare(a.inv.issueDate + a.inv.number); });
+            render();
+        }, err);
+        store.collection('payments').onSnapshot(function (s) {
+            var p = {};
+            s.docs.forEach(function (d) { p[d.id] = d.data().paidOn; });
+            state.payments = p; render();
+        }, err);
+    }
+
+    async function write(ref, data) {
+        try {
+            await ref.set(data);
+            return true;
+        } catch (e) {
+            if (e && e.code === 'invalid_argument') {
+                state.readOnly = true;
+                render();
+                flash('Nemáte oprávnenie meniť údaje - požiadajte autora o prístup Contributor.');
+            } else {
+                flash('Uloženie zlyhalo (' + (e && e.code || 'chyba') + '). Skúste znova.');
+            }
+            return false;
+        }
+    }
+
+    // ---------- navigacia ----------
+    var current = 'list';
+    function go(tab, id) {
+        current = tab;
+        if (tab === 'detail') { detailId = id; }
+        ['list', 'detail', 'new', 'customers', 'projects', 'settings'].forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
+        document.querySelectorAll('#tabs button').forEach(function (b) {
+            if ((b.dataset.tab === tab) || (tab === 'detail' && b.dataset.tab === 'list')) { b.setAttribute('aria-current', 'page'); } else { b.removeAttribute('aria-current'); }
+        });
+        if (tab === 'new' && !$('lines').children.length) { resetForm(); }
+        render();
+        window.scrollTo(0, 0);
+    }
+    document.addEventListener('click', function (e) {
+        var t = e.target.closest('[data-tab],[data-goto]');
+        if (t) { go(t.dataset.tab || t.dataset.goto); }
+    });
+
+    // ---------- vykreslenie ----------
+    function vatPayer() { return !!(state.org && state.org.icDph); }
+
+    function render() {
+        var org = state.org;
+        $('org-name').textContent = org ? org.name : '';
+        $('onboarding').hidden = !!(org && state.customers.length);
+        renderInvoices();
+        renderCustomers();
+        renderProjects();
+        if (current === 'settings') { fillSettings(); }
+        if (current === 'new') { renderSelects(); recalc(); }
+        if (current === 'detail') { renderDetail(); }
+        document.querySelectorAll('form button[type=submit]').forEach(function (b) { b.disabled = state.readOnly; });
+    }
+
+    function statusPill(rec) {
+        var paid = state.payments[rec.id];
+        if (paid) { return el('span', {class: 'pill ok', text: 'Uhradená ' + fmtDate(paid)}); }
+        if (rec.inv.dueDate && rec.inv.dueDate < today()) { return el('span', {class: 'pill bad', text: 'Po splatnosti'}); }
+        return el('span', {class: 'pill', text: 'Čaká na úhradu'});
+    }
+
+    function renderInvoices() {
+        var rows = state.invoices.map(function (r) {
+            var tr = el('tr', {class: 'click', tabindex: '0'}, [
+                el('td', {class: 'mono', text: r.inv.number}),
+                el('td', {text: fmtDate(r.inv.issueDate)}),
+                el('td', {text: r.inv.buyer.name}),
+                el('td', {text: r.inv.projectCode || '-'}),
+                el('td', {class: 'num', text: money(r.payableCents)}),
+                el('td', {}, [statusPill(r)]),
+                el('td', {text: r.ubl ? 'áno' : 'len PDF'})
+            ]);
+            tr.addEventListener('click', function () { go('detail', r.id); });
+            tr.addEventListener('keydown', function (e) { if (e.key === 'Enter') { go('detail', r.id); } });
+            return tr;
+        });
+        $('invoice-rows').replaceChildren.apply($('invoice-rows'), rows);
+        $('invoice-empty').hidden = rows.length > 0;
+    }
+
+    function renderCustomers() {
+        var rows = state.customers.map(function (c) {
+            var pid = C.peppolId(c);
+            return el('tr', {}, [el('td', {text: c.name}), el('td', {text: c.city || ''}), el('td', {class: 'mono', text: c.ico || ''}),
+                el('td', {class: 'mono', text: c.dic || ''}), el('td', {class: 'mono', text: c.icDph || ''}),
+                el('td', {}, [pid ? el('span', {class: 'chip', text: pid}) : el('span', {class: 'muted', text: 'len PDF'})])]);
+        });
+        $('customer-rows').replaceChildren.apply($('customer-rows'), rows);
+        $('customer-empty').hidden = rows.length > 0;
+    }
+
+    function projectInvoiced(p) {
+        return state.invoices.filter(function (r) { return r.projectId === p.id; })
+            .reduce(function (s, r) { return s + BigInt(r.payableCents); }, 0n);
+    }
+
+    function renderProjects() {
+        var rows = state.projects.map(function (p) {
+            var inv = projectInvoiced(p);
+            var budget = BigInt(p.budgetCents || '0');
+            var pct = budget > 0n ? Number(inv * 1000n / budget) / 10 : 0;
+            var bar = el('div', {class: 'bar', title: pct.toFixed(1) + ' %'}, [el('i')]);
+            bar.firstChild.style.width = Math.min(100, pct) + '%';
+            return el('tr', {}, [el('td', {class: 'mono', text: p.code}), el('td', {text: p.name}),
+                el('td', {class: 'num', text: money(budget)}), el('td', {class: 'num', text: money(inv)}), el('td', {}, [bar])]);
+        });
+        $('project-rows').replaceChildren.apply($('project-rows'), rows);
+        $('project-empty').hidden = rows.length > 0;
+    }
+
+    // ---------- nastavenia ----------
+    var settingsFilled = false;
+    function fillSettings() {
+        if (settingsFilled || !state.org) { return; }
+        var o = state.org;
+        $('s-name').value = o.name || ''; $('s-street').value = o.street || ''; $('s-city').value = o.city || '';
+        $('s-zip').value = o.postalCode || ''; $('s-ico').value = o.ico || ''; $('s-dic').value = o.dic || '';
+        $('s-icdph').value = o.icDph || ''; $('s-email').value = o.email || ''; $('s-iban').value = o.iban || '';
+        $('s-bic').value = o.bic || ''; $('s-reg').value = o.registrationNote || ''; $('s-pattern').value = o.pattern || '{YYYY}{NNNN}';
+        $('s-due').value = o.dueDays == null ? 14 : o.dueDays;
+        settingsFilled = true;
+    }
+    $('settings-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var s = function (id) { return C.strip($(id).value).toUpperCase(); };
+        var o = {name: $('s-name').value.trim(), street: $('s-street').value.trim(), city: $('s-city').value.trim(),
+            postalCode: $('s-zip').value.trim(), country: 'SK', ico: s('s-ico'), dic: s('s-dic'), icDph: s('s-icdph'),
+            email: $('s-email').value.trim(), iban: s('s-iban'), bic: s('s-bic'), registrationNote: $('s-reg').value.trim(),
+            pattern: $('s-pattern').value.trim() || '{YYYY}{NNNN}', dueDays: parseInt($('s-due').value, 10)};
+        var errors = [];
+        if (!o.name) { errors.push('Názov je povinný.'); }
+        if (!o.city) { errors.push('Obec je povinná.'); }
+        if (o.ico && !C.isIco(o.ico)) { errors.push('IČO musí mať 8 číslic.'); }
+        if (o.dic && !C.isDic(o.dic)) { errors.push('DIČ musí mať 10 číslic.'); }
+        if (o.icDph && !C.isIcDph(o.icDph)) { errors.push('IČ DPH musí byť v tvare SK1234567890 (len platiteľ DPH).'); }
+        if (o.iban && !C.isIban(o.iban)) { errors.push('IBAN nie je platný - skontrolujte ho.'); }
+        if (!(o.dueDays >= 0 && o.dueDays <= 365)) { errors.push('Splatnosť musí byť 0 až 365 dní.'); }
+        try { C.formatNumber(o.pattern, 2027, 1); } catch (x) { errors.push('Vzor čísla musí obsahovať {NNNN}, napr. {YYYY}{NNNN}.'); }
+        showErrors('settings-errors', errors);
+        if (errors.length) { return; }
+        if (await write(store.doc('settings/org'), o)) { flash('Údaje združenia sú uložené.'); }
+    });
+
+    // ---------- odberatelia ----------
+    $('customer-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var s = function (id) { return C.strip($(id).value).toUpperCase(); };
+        var c = {name: $('c-name').value.trim(), street: $('c-street').value.trim(), city: $('c-city').value.trim(),
+            postalCode: $('c-zip').value.trim(), country: (s('c-country') || 'SK'), ico: s('c-ico'), dic: s('c-dic'),
+            icDph: s('c-icdph'), email: $('c-email').value.trim()};
+        var errors = [];
+        if (!c.name) { errors.push('Názov je povinný.'); }
+        if (c.ico && !C.isIco(c.ico)) { errors.push('IČO musí mať 8 číslic.'); }
+        if (c.dic && c.country === 'SK' && !C.isDic(c.dic)) { errors.push('DIČ musí mať 10 číslic.'); }
+        if (c.icDph && c.country === 'SK' && !C.isIcDph(c.icDph)) { errors.push('IČ DPH musí byť v tvare SK1234567890.'); }
+        showErrors('customer-errors', errors);
+        if (errors.length) { return; }
+        if (await write(store.collection('customers').doc(), c)) {
+            $('customer-form').reset();
+            $('c-country').value = 'SK';
+            flash('Odberateľ ' + c.name + ' je pridaný.');
+        }
+    });
+
+    // ---------- projekty ----------
+    $('project-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var code = $('p-code').value.trim().toUpperCase();
+        var name = $('p-name').value.trim();
+        var budget = C.parseScaled($('p-budget').value || '0', 2);
+        var errors = [];
+        if (!/^[A-Z0-9][A-Z0-9_-]{1,29}$/.test(code)) { errors.push('Kód: 2 až 30 znakov, písmená bez diakritiky, čísla, - a _.'); }
+        if (state.projects.some(function (p) { return p.code === code; })) { errors.push('Projekt ' + code + ' už existuje.'); }
+        if (!name) { errors.push('Názov je povinný.'); }
+        if (budget === null || budget < 0n) { errors.push('Rozpočet musí byť kladné číslo (napr. 12000 alebo 12 000,50).'); }
+        showErrors('project-errors', errors);
+        if (errors.length) { return; }
+        if (await write(store.collection('projects').doc(segment(code)), {code: code, name: name, budgetCents: budget.toString()})) {
+            $('project-form').reset();
+            $('p-budget').value = '0';
+            flash('Projekt ' + code + ' je vytvorený.');
+        }
+    });
+
+    // ---------- nova faktura ----------
+    var UNITS = [['C62', 'ks'], ['HUR', 'hod'], ['DAY', 'deň'], ['LS', 'paušál']];
+    function lineRow(values) {
+        values = values || {};
+        var unit = el('select', {'aria-label': 'Merná jednotka', 'data-f': 'unit'}, UNITS.map(function (u) { return el('option', {value: u[0], text: u[1]}); }));
+        var vat = el('select', {'aria-label': 'Sadzba DPH', 'data-f': 'vat'}, [['23', '23 %'], ['19', '19 %'], ['5', '5 %'], ['E', 'oslobodené']]
+            .map(function (v) { return el('option', {value: v[0], text: v[1]}); }));
+        var row = el('div', {class: 'line'}, [
+            el('input', {'aria-label': 'Popis položky', placeholder: 'Popis položky', 'data-f': 'description'}),
+            el('input', {'aria-label': 'Množstvo', placeholder: 'Množstvo', class: 'n', inputmode: 'decimal', 'data-f': 'quantity'}),
+            unit,
+            el('input', {'aria-label': 'Cena za jednotku', placeholder: 'Cena/MJ', class: 'n', inputmode: 'decimal', 'data-f': 'unitPrice'}),
+            vat,
+            el('div', {class: 'total', text: '0,00 €'}),
+            el('button', {type: 'button', class: 'link', 'aria-label': 'Odstrániť položku', text: '×'})
+        ]);
+        row.querySelector('[data-f=quantity]').value = values.quantity || '1';
+        row.querySelector('[data-f=description]').value = values.description || '';
+        row.querySelector('[data-f=unitPrice]').value = values.unitPrice || '';
+        row.lastChild.addEventListener('click', function () {
+            if ($('lines').querySelectorAll('.line:not(.headrow)').length > 1) { row.remove(); recalc(); }
+        });
+        return row;
+    }
+    function resetForm() {
+        var head = el('div', {class: 'line headrow'}, [el('span', {text: 'Popis'}), el('span', {text: 'Množstvo'}), el('span', {text: 'MJ'}),
+            el('span', {text: 'Cena/MJ'}), el('span', {text: 'DPH'}), el('span', {text: 'Spolu', style: 'text-align:right'}), el('span')]);
+        $('lines').replaceChildren(head, lineRow());
+        ['f-issue', 'f-delivery', 'f-due', 'f-vs', 'f-ref', 'f-note'].forEach(function (id) { $(id).value = ''; });
+        showErrors('form-errors', []);
+    }
+    $('add-line').addEventListener('click', function () {
+        var r = lineRow();
+        $('lines').appendChild(r);
+        r.firstChild.focus();
+        recalc();
+    });
+    $('invoice-form').addEventListener('input', recalc);
+    $('invoice-form').addEventListener('change', recalc);
+
+    function renderSelects() {
+        var cSel = $('f-customer');
+        var cv = cSel.value;
+        cSel.replaceChildren.apply(cSel, [el('option', {value: '', text: '- vyberte -'})].concat(state.customers.map(function (c) {
+            return el('option', {value: c.id, text: c.name});
+        })));
+        cSel.value = cv;
+        var pSel = $('f-project');
+        var pv = pSel.value;
+        pSel.replaceChildren.apply(pSel, [el('option', {value: '', text: '- bez projektu -'})].concat(state.projects.map(function (p) {
+            return el('option', {value: p.id, text: p.code + ' ' + p.name});
+        })));
+        pSel.value = pv;
+    }
+
+    /** Z formulara zostavi fakturu (bez cisla alebo s danym cislom). */
+    function buildInvoice(number, errors) {
+        var org = state.org;
+        var payer = vatPayer();
+        var customer = state.customers.find(function (c) { return c.id === $('f-customer').value; });
+        var project = state.projects.find(function (p) { return p.id === $('f-project').value; });
+        if (!org) { errors.push('Najprv vyplňte údaje združenia v Nastaveniach.'); }
+        if (!customer) { errors.push('Vyberte odberateľa.'); }
+        var lines = [];
+        var no = 0;
+        $('lines').querySelectorAll('.line:not(.headrow)').forEach(function (row) {
+            var v = {};
+            row.querySelectorAll('[data-f]').forEach(function (i) { v[i.dataset.f] = i.value; });
+            if (!v.description.trim() && !v.unitPrice.trim()) { return; }
+            no++;
+            var l = C.parseLine(v, payer, no, errors);
+            if (l) { lines.push(l); }
+        });
+        if (!no) { errors.push('Pridajte aspoň jednu položku.'); }
+        if (!org || !customer) { return null; }
+        var issue = $('f-issue').value || today();
+        var vs = $('f-vs').value.trim() || C.vsOf(number) || null;
+        return {
+            inv: {
+                number: number, issueDate: issue, deliveryDate: $('f-delivery').value || issue,
+                dueDate: $('f-due').value || addDays(issue, org.dueDays == null ? 14 : org.dueDays), currency: 'EUR',
+                seller: {name: org.name, street: org.street, city: org.city, postalCode: org.postalCode, country: 'SK', ico: org.ico,
+                    dic: org.dic, icDph: org.icDph, email: org.email, phone: ''},
+                buyer: {name: customer.name, street: customer.street, city: customer.city, postalCode: customer.postalCode,
+                    country: customer.country || 'SK', ico: customer.ico, dic: customer.dic, icDph: customer.icDph, email: customer.email, phone: ''},
+                lines: lines, variableSymbol: vs, payeeIban: org.iban || null, payeeBic: org.bic || null,
+                buyerReference: $('f-ref').value.trim() || null, projectCode: project ? project.code : null, note: $('f-note').value.trim() || null
+            },
+            project: project || null,
+            customer: customer
+        };
+    }
+
+    function qrBox(inv) {
+        if (!inv.payeeIban || !window.LZMA || !window.qrcode) { return null; }
+        var t = C.totals(inv);
+        if (t.payable <= 0n) { return null; }
+        var q = window.qrcode(0, 'M');
+        q.addData(C.payBySquare(inv, window.LZMA), 'Alphanumeric');
+        q.make();
+        var box = el('div', {class: 'qr'});
+        box.innerHTML = q.createSvgTag({cellSize: 4, margin: 0, scalable: true});
+        return el('div', {}, [box, el('div', {class: 'qr-cap', text: 'PAY by square - naskenujte bankovou appkou'})]);
+    }
+
+    function recalc() {
+        var payer = vatPayer();
+        $('lines').style.setProperty('--vatcol', payer ? '110px' : '0px');
+        $('lines').querySelectorAll('[data-f=vat]').forEach(function (s) { s.hidden = !payer; });
+        $('lines').querySelectorAll('.headrow span:nth-child(5)').forEach(function (s) { s.hidden = !payer; });
+        $('vat-note').textContent = payer ? '' : 'Združenie nie je platiteľ DPH - položky sú bez DPH.';
+        var errors = [];
+        var b = buildInvoice('NAHLAD', errors);
+        $('lines').querySelectorAll('.line:not(.headrow)').forEach(function (row) {
+            var q = C.parseScaled(row.querySelector('[data-f=quantity]').value, 3);
+            var p = C.parseScaled(row.querySelector('[data-f=unitPrice]').value, 2);
+            row.querySelector('.total').textContent = q !== null && p !== null ? money(C.lineNet({qtyMilli: q.toString(), priceCents: p.toString()})) : '-';
+        });
+        var dl = $('sums');
+        var items = [];
+        if (b && b.inv.lines.length) {
+            var t = C.totals(b.inv);
+            items.push(el('dt', {text: 'Bez DPH'}), el('dd', {text: money(t.net)}));
+            if (payer) {
+                t.groups.forEach(function (g) {
+                    items.push(el('dt', {text: 'DPH ' + (g.category === 'S' ? g.rate + ' %' : 'oslob.')}), el('dd', {text: money(g.tax)}));
+                });
+            }
+            items.push(el('dt', {class: 'grand', text: 'Na úhradu'}), el('dd', {class: 'grand', text: money(t.payable)}));
+            items.push(el('dt', {text: 'Splatnosť'}), el('dd', {text: fmtDate(b.inv.dueDate)}));
+            items.push(el('dt', {text: 'E-faktúra'}), el('dd', {text: C.peppolId(b.inv.buyer) ? 'áno' : 'len PDF'}));
+            var box = qrBox(b.inv);
+            $('qr-preview').replaceChildren.apply($('qr-preview'), box ? [box] : []);
+        } else {
+            items.push(el('dt', {text: 'Na úhradu'}), el('dd', {text: '0,00 €'}));
+            $('qr-preview').replaceChildren();
+        }
+        dl.replaceChildren.apply(dl, items);
+    }
+
+    function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+    $('invoice-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var btn = $('issue-btn');
+        var errors = [];
+        var draft = buildInvoice('NEPRIDELENE', errors);
+        if (draft) {
+            if (draft.inv.issueDate > today()) { errors.push('Dátum vyhotovenia nemôže byť v budúcnosti.'); }
+            C.validate(draft.inv).forEach(function (m) { errors.push(m); });
+        }
+        showErrors('form-errors', errors);
+        if (errors.length) { return; }
+        btn.disabled = true;
+        btn.textContent = 'Vystavujem…';
+        try {
+            var id = await issue(draft);
+            if (id) {
+                resetForm();
+                flash('Faktúra je vystavená.');
+                go('detail', id);
+            }
+        } catch (x) {
+            showErrors('form-errors', [x.message || String(x)]);
+        } finally {
+            btn.disabled = state.readOnly;
+            btn.textContent = 'Vystaviť faktúru';
+        }
+    });
+
+    /**
+     * Pridelenie cisla bez medzier: zamok (lease) na pocitadle radu, overenie chronologie
+     * a ze cislo este neexistuje, zapis faktury, az potom posun pocitadla.
+     */
+    async function issue(draft) {
+        var org = state.org;
+        var year = Number(draft.inv.issueDate.slice(0, 4));
+        var counter = store.doc('counters/' + year + '_' + segment(org.pattern || '{YYYY}{NNNN}'));
+        var lease = null;
+        for (var i = 0; i < 10; i++) {
+            lease = await counter.acquire({holder: tabId, ttlMs: 20000});
+            if (lease.acquired) { break; }
+            await sleep(700 + Math.random() * 600);
+        }
+        if (!lease || !lease.acquired) { throw new Error('Iná faktúra sa práve vystavuje. Skúste o chvíľu znova.'); }
+
+        var existing = (await store.collection('invoices').get()).docs.map(function (d) { return d.data(); });
+        var latest = existing.filter(function (r) { return r.inv.issueDate.slice(0, 4) === String(year); })
+            .reduce(function (m, r) { return r.inv.issueDate > m ? r.inv.issueDate : m; }, '');
+        if (latest && draft.inv.issueDate < latest) {
+            throw new Error('Dátum vyhotovenia je starší než posledná faktúra roka (' + fmtDate(latest) + ').');
+        }
+        var snap = await counter.get();
+        var last = snap.exists ? Number(snap.data().last || 0) : 0;
+        var number = C.formatNumber(org.pattern || '{YYYY}{NNNN}', year, last + 1);
+        var id = segment(number);
+        if ((await store.doc('invoices/' + id).get()).exists) {
+            throw new Error('Číslo ' + number + ' už existuje - počítadlo radu nesedí. Kontaktujte správcu.');
+        }
+        var errors = [];
+        var full = buildInvoice(number, errors);
+        full.inv.issueDate = draft.inv.issueDate;
+        errors = errors.concat(C.validate(full.inv));
+        if (errors.length) { throw new Error(errors.join(' ')); }
+        var t = C.totals(full.inv);
+        var ubl = C.validateForPeppol(full.inv).length ? null : C.ublXml(full.inv);
+        var rec = {inv: full.inv, ubl: ubl, payableCents: t.payable.toString(), projectId: full.project ? full.project.id : null,
+            projectName: full.project ? full.project.name : null, registrationNote: org.registrationNote || null, issuedAt: new Date().toISOString()};
+        if (!(await write(store.doc('invoices/' + id), rec))) { return null; }
+        await write(counter, {last: last + 1, number: number});
+        return id;
+    }
+
+    // ---------- detail ----------
+    function renderDetail() {
+        var r = state.invoices.find(function (x) { return x.id === detailId; });
+        if (!r) { return; }
+        var inv = r.inv;
+        var t = C.totals(inv);
+        $('d-number').textContent = inv.number;
+        $('d-xml').hidden = !r.ubl;
+        var kv = el('div', {class: 'kv'}, [
+            ['Odberateľ', inv.buyer.name], ['Vystavená', fmtDate(inv.issueDate)], ['Dodanie', fmtDate(inv.deliveryDate)],
+            ['Splatnosť', fmtDate(inv.dueDate)], ['Variabilný symbol', inv.variableSymbol || '-'],
+            ['Projekt', inv.projectCode ? inv.projectCode + ' ' + (r.projectName || '') : '-'],
+            ['E-faktúra', r.ubl ? 'Peppol BIS 3.0, ' + C.peppolId(inv.buyer) : 'nie - odberateľ nemá DIČ']
+        ].map(function (p) { return el('div', {}, [el('small', {text: p[0]}), el('strong', {text: p[1]})]); }));
+        var rows = inv.lines.map(function (l) {
+            return el('tr', {}, [el('td', {text: l.description}), el('td', {class: 'num', text: C.milliToPlain(BigInt(l.qtyMilli)).replace('.', ',')}),
+                el('td', {class: 'num', text: money(l.priceCents)}),
+                el('td', {class: 'num', text: l.category === 'S' ? l.rate + ' %' : (l.category === 'E' ? 'oslob.' : '-')}),
+                el('td', {class: 'num', text: money(C.lineNet(l))})]);
+        });
+        var table = el('div', {class: 'table-wrap'}, [el('table', {}, [
+            el('thead', {}, [el('tr', {}, ['Popis', 'Množstvo', 'Cena/MJ', 'DPH', 'Bez DPH'].map(function (h, i) { return el('th', {class: i ? 'num' : '', text: h}); }))]),
+            el('tbody', {}, rows)])]);
+        $('d-body').replaceChildren(kv, table);
+
+        var sums = el('dl', {class: 'sums'}, [el('dt', {text: 'Bez DPH'}), el('dd', {text: money(t.net)}),
+            el('dt', {text: 'DPH'}), el('dd', {text: money(t.vat)}),
+            el('dt', {class: 'grand', text: 'Na úhradu'}), el('dd', {class: 'grand', text: money(t.payable)})]);
+        var paid = state.payments[r.id];
+        var payBox;
+        if (paid) {
+            var undo = el('button', {class: 'link', type: 'button', text: 'Zrušiť úhradu'});
+            undo.addEventListener('click', async function () {
+                try { await store.doc('payments/' + r.id).delete(); flash('Úhrada je zrušená.'); } catch (x) { flash('Zmena zlyhala.'); }
+            });
+            payBox = el('div', {}, [el('p', {text: 'Uhradená ' + fmtDate(paid)}), undo]);
+        } else {
+            var dateIn = el('input', {type: 'date', id: 'paid-on'});
+            dateIn.value = today();
+            var mark = el('button', {class: 'btn', type: 'button', text: 'Označiť ako uhradenú'});
+            mark.disabled = state.readOnly;
+            mark.addEventListener('click', async function () {
+                if (dateIn.value && await write(store.doc('payments/' + r.id), {paidOn: dateIn.value})) { flash('Úhrada je zaznamenaná.'); }
+            });
+            payBox = el('div', {class: 'row'}, [el('label', {}, ['Dátum úhrady', dateIn]), mark]);
+        }
+        var side = [el('h2', {text: 'Úhrada'}), sums];
+        var q = qrBox(inv);
+        if (q && !paid) { side.push(q); }
+        side.push(payBox);
+        $('d-side').replaceChildren.apply($('d-side'), side);
+    }
+
+    async function loadFonts() {
+        if (!fontsPromise) {
+            var b64 = async function (name) {
+                var buf = new Uint8Array(await (await fetch('lib/' + name)).arrayBuffer());
+                var s = '';
+                for (var i = 0; i < buf.length; i += 0x8000) { s += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000)); }
+                return btoa(s);
+            };
+            fontsPromise = Promise.all([b64('NotoSans-Regular.ttf'), b64('NotoSans-Bold.ttf')])
+                .then(function (f) { return {regular: f[0], bold: f[1]}; });
+        }
+        return fontsPromise;
+    }
+
+    async function save(filename, data) {
+        if (!downloads) {
+            flash('Sťahovanie súborov tu nie je dostupné. Otvorte stránku v prehliadači na claude.ai.');
+            return;
+        }
+        try {
+            await downloads.save({filename: filename, data: data});
+        } catch (e) {
+            if (e && e.code !== 'declined') { flash('Súbor sa nepodarilo uložiť (' + (e.code || 'chyba') + ').'); }
+        }
+    }
+
+    $('d-pdf').addEventListener('click', async function () {
+        var r = state.invoices.find(function (x) { return x.id === detailId; });
+        if (!r) { return; }
+        var fonts = await loadFonts();
+        var pdf = window.UctoPdf.render({jsPDF: window.jspdf.jsPDF, qrcode: window.qrcode, core: C, lzma: window.LZMA, fonts: fonts}, r.inv,
+            {registrationNote: r.registrationNote, projectName: r.projectName});
+        await save('faktura-' + r.inv.number.replace(/[^A-Za-z0-9_-]/g, '_') + '.pdf', new Blob([pdf], {type: 'application/pdf'}));
+    });
+    $('d-xml').addEventListener('click', async function () {
+        var r = state.invoices.find(function (x) { return x.id === detailId; });
+        if (r && r.ubl) { await save('efaktura-' + r.inv.number.replace(/[^A-Za-z0-9_-]/g, '_') + '.xml', new Blob([r.ubl], {type: 'application/xml'})); }
+    });
+
+    // ---------- start ----------
+    resetForm();
+    render();
+    (async function () {
+        var db = window.claude && window.claude.use ? await window.claude.use('db') : null;
+        downloads = window.claude && window.claude.use ? await window.claude.use('downloads') : null;
+        if (db) {
+            store = db;
+        } else {
+            demo = true;
+            store = memoryStore();
+            seedDemo(store);
+            var bn = $('mode-banner');
+            bn.hidden = false;
+            bn.replaceChildren(el('b', {text: 'Ukážkový režim. '}),
+                'Zdieľaná databáza tu nie je dostupná, takže sa nič neukladá a údaje sú vymyslené. Po obnovení stránky zmiznú.');
+        }
+        subscribe();
+    })();
+})();
+</script>
