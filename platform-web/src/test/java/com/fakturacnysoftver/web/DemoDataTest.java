@@ -60,6 +60,6 @@ class DemoDataTest extends IntegrationTest {
                 .andExpect(content().string(containsString("Mám požičané")));
         this.mvc.perform(get("/ludia").with(eva)).andExpect(status().isForbidden());
         this.mvc.perform(formLogin().user("pokladnik").password(PASSWORD))
-                .andExpect(authenticated().withRoles("USER", "EDITOR"));
+                .andExpect(authenticated().withUsername("pokladnik"));
     }
 }

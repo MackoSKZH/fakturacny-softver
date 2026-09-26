@@ -1,6 +1,14 @@
 package com.fakturacnysoftver.web.activity;
 
+import com.fakturacnysoftver.web.access.AccessFilter;
+import com.fakturacnysoftver.web.access.AccessInfo;
+import com.fakturacnysoftver.web.access.AccessRepository;
+import com.fakturacnysoftver.web.access.AccessService;
+import com.fakturacnysoftver.web.access.AccessException;
 import com.fakturacnysoftver.web.attachment.AttachmentRepository;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import com.fakturacnysoftver.web.audit.AuditLog;
 import com.fakturacnysoftver.web.donation.DonationRepository;
 import com.fakturacnysoftver.web.people.PersonRepository;
@@ -47,12 +55,17 @@ class ActivityController {
     private final AttachmentRepository attachments;
     private final DonationRepository donations;
     private final VolunteerConfirmation confirmations;
+    private final AccessRepository access;
+    private final AccessService accessService;
     private final Clock clock;
 
     ActivityController(ActivityRepository activities, StaffingRepository staffing, TaskRepository tasks,
                        PersonRepository people, AuditLog audit, AttachmentRepository attachments,
-                       DonationRepository donations, VolunteerConfirmation confirmations, Clock clock) {
+                       DonationRepository donations, VolunteerConfirmation confirmations, AccessRepository access,
+                       AccessService accessService, Clock clock) {
         this.confirmations = confirmations;
+        this.access = access;
+        this.accessService = accessService;
         this.attachments = attachments;
         this.donations = donations;
         this.activities = activities;
@@ -106,7 +119,8 @@ class ActivityController {
     }
 
     @GetMapping("/{id}")
-    String detail(@PathVariable long id, Model model, Authentication auth) {
+    String detail(@PathVariable long id, Model model, HttpServletRequest request) {
+        AccessInfo acc = AccessFilter.of(request);
         Activity a = this.activities.findById(id, this.today()).orElseThrow(NotFound::new);
         List<TaskRepository.Task> all = this.tasks.tasksOf(id);
         Map<String, List<TaskRepository.Task>> bySection = new LinkedHashMap<>();
@@ -122,8 +136,13 @@ class ActivityController {
         model.addAttribute("templateSize", this.tasks.templateSize(a.kind()));
         model.addAttribute("attendees", this.staffing.rolesOf(id).stream().flatMap(r -> r.seats().stream())
                 .filter(x -> x.status().equals("ZUCASTNIL_SA")).map(StaffingRepository.Seat::personId).distinct().count());
-        model.addAttribute("attachments", this.attachments.visible(AttachmentRepository.Owner.PROJECT, id,
-                CurrentUser.isEditor(auth)));
+        model.addAttribute("attachments", this.attachments.visible(AttachmentRepository.Owner.PROJECT, id, acc));
+        model.addAttribute("canEditActivity", acc.canEditActivity(id));
+        model.addAttribute("canSeeBudget", acc.canSeeActivityBudget(id));
+        model.addAttribute("canSeeTeam", acc.canSeeTeamContacts(id));
+        model.addAttribute("owners", this.access.ownersOf(id));
+        model.addAttribute("users", acc.isActivitiesWrite() ? this.access.users().stream()
+                .filter(AccessRepository.User::active).toList() : List.of());
         model.addAttribute("uploadUrl", "/aktivity/" + id + "/prilohy");
         model.addAttribute("donation", this.donations.of(id).orElseThrow());
         model.addAttribute("donationUrl", ServletUriComponentsBuilder.fromCurrentContextPath()
@@ -171,6 +190,34 @@ class ActivityController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"potvrdenia-" + a.code() + ".zip\"")
                 .contentType(MediaType.parseMediaType("application/zip")).body(zip);
+    }
+
+    // ---------- vlastnici (projektovi manazeri) ----------
+
+    /** Vlastnika pridava ten, kto smie upravovat vsetky aktivity (koordinator, admin) - nie vlastnik sam sebe. */
+    @PostMapping("/{id}/vlastnici")
+    String addOwner(@PathVariable long id, @RequestParam(required = false) Long userId, HttpServletRequest request,
+                    Authentication auth, RedirectAttributes redirect) {
+        this.activities.findById(id, this.today()).orElseThrow(NotFound::new);
+        if (!AccessFilter.of(request).isActivitiesWrite()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        try {
+            this.accessService.addOwner(userId == null ? -1 : userId, id, CurrentUser.name(auth));
+            redirect.addFlashAttribute("message", "Vlastník je pridaný - môže upravovať túto aktivitu.");
+        } catch (AccessException e) {
+            redirect.addFlashAttribute("errors", e.errors());
+        }
+        return "redirect:/aktivity/" + id + "#vlastnici";
+    }
+
+    @PostMapping("/{id}/vlastnici/{userId}/odobrat")
+    String removeOwner(@PathVariable long id, @PathVariable long userId, HttpServletRequest request, Authentication auth) {
+        if (!AccessFilter.of(request).isActivitiesWrite()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        this.accessService.removeOwner(userId, id, CurrentUser.name(auth));
+        return "redirect:/aktivity/" + id + "#vlastnici";
     }
 
     // ---------- roly a obsadenie ----------

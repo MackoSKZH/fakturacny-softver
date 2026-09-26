@@ -12,18 +12,19 @@
 <header th:fragment="nav(active)" class="topbar">
     <a class="brand" th:href="@{/}">FGS <span>HQ</span></a>
     <nav>
-        <a th:href="@{/aktivity}" th:classappend="${active == 'aktivity' or active == 'projekty'} ? 'active'">Aktivity</a>
+        <a th:if="${acc.activitiesRead}" th:href="@{/aktivity}" th:classappend="${active == 'aktivity' or active == 'projekty'} ? 'active'">Aktivity</a>
         <a th:href="@{/moj-program}" th:classappend="${active == 'program'} ? 'active'">Môj program</a>
-        <a th:if="${canEdit}" th:href="@{/ludia}" th:classappend="${active == 'ludia'} ? 'active'">Ľudia</a>
-        <a th:if="${canEdit}" th:href="@{/partneri}" th:classappend="${active == 'partneri'} ? 'active'">Partneri</a>
-        <a th:href="@{/financovanie}" th:classappend="${active == 'financovanie'} ? 'active'">Financovanie</a>
-        <a th:if="${canEdit}" th:href="@{/dochadzka}" th:classappend="${active == 'dochadzka'} ? 'active'">Dochádzka</a>
-        <a th:unless="${canEdit}" th:href="@{/moja-dochadzka}" th:classappend="${active == 'dochadzka'} ? 'active'">Moja dochádzka</a>
-        <a th:href="@{/polozky}" th:classappend="${active == 'polozky'} ? 'active'">Položky</a>
-        <a th:href="@{/faktury}" th:classappend="${active == 'faktury'} ? 'active'">Faktúry</a>
-        <a th:href="@{/majetok}" th:classappend="${active == 'majetok'} ? 'active'">Majetok</a>
-        <a th:if="${canEdit}" th:href="@{/exporty}" th:classappend="${active == 'exporty'} ? 'active'">Exporty</a>
-        <a th:href="@{/nastavenia}" th:classappend="${active == 'nastavenia'} ? 'active'">Nastavenia</a>
+        <a th:if="${acc.people}" th:href="@{/ludia}" th:classappend="${active == 'ludia'} ? 'active'">Ľudia</a>
+        <a th:if="${acc.partners}" th:href="@{/partneri}" th:classappend="${active == 'partneri'} ? 'active'">Partneri</a>
+        <a th:if="${acc.financeRead}" th:href="@{/financovanie}" th:classappend="${active == 'financovanie'} ? 'active'">Financovanie</a>
+        <a th:if="${acc.timesheets}" th:href="@{/dochadzka}" th:classappend="${active == 'dochadzka'} ? 'active'">Dochádzka</a>
+        <a th:unless="${acc.timesheets}" th:href="@{/moja-dochadzka}" th:classappend="${active == 'dochadzka'} ? 'active'">Moja dochádzka</a>
+        <a th:if="${acc.financeRead}" th:href="@{/polozky}" th:classappend="${active == 'polozky'} ? 'active'">Položky</a>
+        <a th:if="${acc.financeRead}" th:href="@{/faktury}" th:classappend="${active == 'faktury'} ? 'active'">Faktúry</a>
+        <a th:if="${acc.activitiesRead or acc.assets}" th:href="@{/majetok}" th:classappend="${active == 'majetok'} ? 'active'">Majetok</a>
+        <a th:if="${acc.exports}" th:href="@{/exporty}" th:classappend="${active == 'exporty'} ? 'active'">Exporty</a>
+        <a th:if="${acc.admin}" th:href="@{/sprava/pouzivatelia}" th:classappend="${active == 'sprava'} ? 'active'">Správa</a>
+        <a th:if="${acc.admin}" th:href="@{/nastavenia}" th:classappend="${active == 'nastavenia'} ? 'active'">Nastavenia</a>
     </nav>
     <form th:action="@{/logout}" method="post" class="logout">
         <span th:text="${currentUser}">user</span>
@@ -35,7 +36,7 @@
     <a class="button" th:href="@{${base + '.pdf' + query}}" title="Na tlač a pre partnerov">PDF</a>
     <a class="button link" th:href="@{${base + '.csv' + query}}" title="Na import do iných nástrojov">CSV</a>
 </span>
-<section th:fragment="attachments(list, uploadUrl, restricted)" class="card" id="podklady">
+<section th:fragment="attachments(list, uploadUrl, restricted, canWrite)" class="card" id="podklady">
     <h2>Podklady</h2>
     <p class="empty" th:if="${list.isEmpty()}">Zatiaľ žiadne súbory.</p>
     <ul class="files" th:unless="${list.isEmpty()}">
@@ -44,13 +45,13 @@
             <span class="chip" th:text="${f.categoryLabel()}"></span>
             <span class="badge" th:if="${f.editorsOnly()}">len editori</span>
             <small class="muted" th:text="${f.sizeLabel()} + ' · ' + ${f.uploadedBy()} + ' · ' + ${#temporals.format(f.uploadedAt(), 'd. M. yyyy')}"></small>
-            <form th:if="${canEdit}" class="inline" th:action="@{/prilohy/{id}/zmazat(id=${f.id()})}" method="post">
+            <form th:if="${canWrite}" class="inline" th:action="@{/prilohy/{id}/zmazat(id=${f.id()})}" method="post">
                 <button type="submit" class="link danger" aria-label="Zmazať súbor">×</button>
             </form>
             <div class="note muted" th:if="${f.note() != null}" th:text="${f.note()}"></div>
         </li>
     </ul>
-    <form th:if="${canEdit}" th:action="@{${uploadUrl}}" method="post" enctype="multipart/form-data" class="grid add-task">
+    <form th:if="${canWrite}" th:action="@{${uploadUrl}}" method="post" enctype="multipart/form-data" class="grid add-task">
         <label class="span2">Súbor (najviac 10 MB) <input type="file" name="file" required
                accept=".pdf,.docx,.xlsx,.pptx,.doc,.xls,.odt,.ods,.png,.jpg,.jpeg,.zip,.txt,.csv"></label>
         <label>Druh <select name="category">

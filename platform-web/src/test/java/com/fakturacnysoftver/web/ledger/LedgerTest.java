@@ -193,6 +193,7 @@ class LedgerTest extends IntegrationTest {
     @Test
     @WithMockUser(value = "clen", roles = "USER")
     void readerCanSeeButNotWrite() throws Exception {
+        grant("clen", "VEDENIE");
         this.mvc.perform(get("/api/polozky")).andExpect(status().isOk());
         this.mvc.perform(post("/api/polozky").with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(status().isForbidden());

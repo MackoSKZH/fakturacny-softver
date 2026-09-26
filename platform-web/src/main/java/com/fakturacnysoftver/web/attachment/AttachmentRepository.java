@@ -36,8 +36,8 @@ public class AttachmentRepository {
     }
 
     /** Len subory, ktore dany pouzivatel smie vidiet. */
-    public List<Attachment> visible(Owner owner, long ownerId, boolean editor) {
-        return this.of(owner, ownerId).stream().filter(a -> a.visibleTo(editor)).toList();
+    public List<Attachment> visible(Owner owner, long ownerId, com.fakturacnysoftver.web.access.AccessInfo access) {
+        return this.of(owner, ownerId).stream().filter(a -> a.visibleTo(access)).toList();
     }
 
     public Optional<Attachment> find(long id) {

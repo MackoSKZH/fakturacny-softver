@@ -32,14 +32,14 @@
                 <dd><progress th:value="${a.tasksDone()}" th:max="${a.tasksTotal() > 0 ? a.tasksTotal() : 1}"></progress>
                     <span th:text="${a.tasksDone()} + ' / ' + ${a.tasksTotal()}"></span>
                     <span class="over" th:if="${a.tasksOverdue() > 0}" th:text="${a.tasksOverdue()} + ' po termíne'"></span></dd>
-                <dt>Rozpočet</dt>
-                <dd><span th:text="${#numbers.formatDecimal(a.spent(), 1, 'WHITESPACE', 2, 'COMMA')}"></span> z
+                <dt th:if="${acc.canSeeActivityBudget(a.id())}">Rozpočet</dt>
+                <dd th:if="${acc.canSeeActivityBudget(a.id())}"><span th:text="${#numbers.formatDecimal(a.spent(), 1, 'WHITESPACE', 2, 'COMMA')}"></span> z
                     <span th:text="${#numbers.formatDecimal(a.budget(), 1, 'WHITESPACE', 0, 'COMMA')} + ' €'"></span></dd>
             </dl>
         </a>
     </div>
 
-    <section class="card" th:if="${canEdit}">
+    <section class="card" th:if="${acc.activitiesWrite}">
         <h2>Nová aktivita</h2>
         <form th:action="@{/aktivity}" method="post" class="grid">
             <label>Kód <input name="code" required placeholder="FGS-2027" maxlength="30"></label>

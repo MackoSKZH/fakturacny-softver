@@ -5,7 +5,7 @@
 <header th:replace="~{fragments :: nav(active='financovanie')}"></header>
 <main class="wide">
     <p><a th:href="@{/financovanie}">&larr; Financovanie</a>
-        <span th:if="${canEdit}"> · <a th:href="@{/partneri/{id}(id=${d.partnerId()})}" th:text="${d.partnerName()}"></a></span></p>
+        <span th:if="${acc.partners}"> · <a th:href="@{/partneri/{id}(id=${d.partnerId()})}" th:text="${d.partnerName()}"></a></span></p>
     <div class="page-head">
         <div>
             <span class="kind" th:text="${d.kindLabel()}"></span>
@@ -37,19 +37,19 @@
         <p class="muted" th:if="${d.kind() == 'DAR'}">Pri dare len poďakovanie. Ak sľúbite logo či reklamu, ide o reklamu - zmeňte typ a vystavte faktúru.</p>
         <ul class="tasks">
             <li th:each="x : ${deliverables}" th:classappend="${x.isOverdue(today)} ? 'overdue'">
-                <form th:if="${canEdit}" class="inline" th:action="@{/financovanie/{id}/protiplnenia/{xid}/hotovo(id=${d.id()},xid=${x.id()})}" method="post">
+                <form th:if="${acc.financeWrite}" class="inline" th:action="@{/financovanie/{id}/protiplnenia/{xid}/hotovo(id=${d.id()},xid=${x.id()})}" method="post">
                     <button type="submit" class="check-btn" th:text="${x.done()} ? '☑' : '☐'" th:aria-label="${x.done()} ? 'Vrátiť' : 'Splnené'"></button>
                 </form>
                 <span class="title" th:classappend="${x.done()} ? 'muted'" th:text="${x.title()}"></span>
                 <span class="due" th:if="${x.dueOn() != null}" th:text="${#temporals.format(x.dueOn(), 'd. M. yyyy')}"></span>
                 <small th:if="${x.doneBy() != null}" th:text="${x.doneBy()}"></small>
-                <form th:if="${canEdit}" class="inline" th:action="@{/financovanie/{id}/protiplnenia/{xid}/zmazat(id=${d.id()},xid=${x.id()})}" method="post">
+                <form th:if="${acc.financeWrite}" class="inline" th:action="@{/financovanie/{id}/protiplnenia/{xid}/zmazat(id=${d.id()},xid=${x.id()})}" method="post">
                     <button type="submit" class="link danger" aria-label="Zmazať">×</button>
                 </form>
             </li>
         </ul>
         <p class="empty" th:if="${deliverables.isEmpty()}">Žiadne protiplnenia.</p>
-        <form th:if="${canEdit}" th:action="@{/financovanie/{id}/protiplnenia(id=${d.id()})}" method="post" class="grid add-task">
+        <form th:if="${acc.financeWrite}" th:action="@{/financovanie/{id}/protiplnenia(id=${d.id()})}" method="post" class="grid add-task">
             <label class="span2">Protiplnenie <input name="title" required placeholder="Logo na robote a dresoch, poďakovanie na sieťach, správa po akcii"></label>
             <label>Termín <input type="date" name="dueOn"></label>
             <div><button type="submit" class="primary">Pridať</button></div>
@@ -67,13 +67,13 @@
                 <td th:text="${e.documentRef()}"></td>
                 <td th:text="${e.projectCode()}"></td>
                 <td class="num" th:text="(${e.isIncome()} ? '+' : '-') + ${#numbers.formatDecimal(e.amount(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
-                <td><form th:if="${canEdit}" class="inline" th:action="@{/financovanie/{id}/polozky/{eid}/odpojit(id=${d.id()},eid=${e.id()})}" method="post">
+                <td><form th:if="${acc.financeWrite}" class="inline" th:action="@{/financovanie/{id}/polozky/{eid}/odpojit(id=${d.id()},eid=${e.id()})}" method="post">
                     <button type="submit" class="link danger">odpojiť</button></form></td>
             </tr>
             </tbody>
         </table>
         <p class="empty" th:if="${entries.isEmpty()}" th:text="${d.isGrant()} ? 'Priraďte príjem grantu a výdavky, ktoré z neho hradíte.' : 'Priraďte príjem z bankového výpisu.'"></p>
-        <details th:if="${canEdit and !candidates.isEmpty()}">
+        <details th:if="${acc.financeWrite and !candidates.isEmpty()}">
             <summary>+ Priradiť položky</summary>
             <form th:action="@{/financovanie/{id}/polozky(id=${d.id()})}" method="post">
                 <div class="table-wrap pick">
@@ -94,9 +94,9 @@
         </details>
     </section>
 
-    <section th:replace="~{fragments :: attachments(${attachments}, ${uploadUrl}, false)}"></section>
+    <section th:replace="~{fragments :: attachments(${attachments}, ${uploadUrl}, false, ${acc.financeWrite})}"></section>
 
-    <details class="card" th:if="${canEdit}">
+    <details class="card" th:if="${acc.financeWrite}">
         <summary><h2 class="inline">Upraviť dohodu</h2></summary>
         <form th:action="@{/financovanie/{id}(id=${d.id()})}" method="post" class="grid">
             <th:block th:replace="~{funding/deal-fields :: fields(${d})}"></th:block>

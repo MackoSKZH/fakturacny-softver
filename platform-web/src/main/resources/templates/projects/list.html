@@ -27,7 +27,7 @@
         </tbody>
     </table>
 
-    <section class="card" th:if="${canEdit}">
+    <section class="card" th:if="${acc.financeWrite}">
         <h2>Nový projekt</h2>
         <form th:action="@{/projekty}" method="post" class="grid">
             <label>Kód <input name="code" required placeholder="FGC-2027"></label>

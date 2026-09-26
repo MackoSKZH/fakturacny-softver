@@ -68,7 +68,10 @@ class ScheduleController {
     @GetMapping("/aktivity/{id}/harmonogram")
     String activity(@PathVariable long id, @RequestParam(required = false) String pre,
                     @RequestParam(required = false) Long owner, @RequestParam(required = false) Long osoba,
-                    Model model) {
+                    Model model, jakarta.servlet.http.HttpServletRequest request) {
+        com.fakturacnysoftver.web.access.AccessInfo acc = com.fakturacnysoftver.web.access.AccessFilter.of(request);
+        model.addAttribute("canEditActivity", acc.canEditActivity(id));
+        model.addAttribute("canSeeTeam", acc.canSeeTeamContacts(id));
         Activity a = this.activity(id);
         ScheduleService.Filter f = new ScheduleService.Filter(pre, owner, osoba);
         List<ScheduleEntry> entries = this.service.activity(id, f);

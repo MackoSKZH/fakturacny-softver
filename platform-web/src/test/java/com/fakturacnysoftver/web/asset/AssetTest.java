@@ -128,6 +128,7 @@ class AssetTest extends IntegrationTest {
     @Test
     @WithMockUser(value = "tomas@fgs.example", roles = "USER")
     void memberSeesRegisterAndOwnLoansButCannotChange() throws Exception {
+        grant("tomas@fgs.example", "MENTOR");
         long hub = this.service.create(input(null, "REV Control Hub", "250", null), "pokladnik");
         this.service.lend(hub, this.student, null, null, null, "pokladnik");
         this.mvc.perform(get("/majetok")).andExpect(status().isOk());

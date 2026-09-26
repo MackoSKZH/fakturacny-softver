@@ -54,7 +54,7 @@
                     <div class="muted" th:if="${e.location() != null}" th:text="${e.location()}"></div>
                     <div class="muted" th:if="${e.people() != null}" th:text="${e.people()}"></div>
                     <div class="note" th:if="${e.note() != null}" th:text="${e.note()}"></div>
-                    <details th:if="${canEdit and e.kind().name() == 'PROGRAM'}" class="edit">
+                    <details th:if="${canEditActivity and e.kind().name() == 'PROGRAM'}" class="edit">
                         <summary>upraviť</summary>
                         <form th:action="@{/aktivity/{id}/program/{iid}(id=${a.id()},iid=${e.sourceId()})}" method="post" class="grid">
                             <label>Začiatok <input type="datetime-local" name="startsAt" required th:value="${#temporals.format(e.startsAt(), 'yyyy-MM-dd''T''HH:mm')}"></label>
@@ -81,7 +81,7 @@
         </table>
     </section>
 
-    <section class="card" th:if="${canEdit}">
+    <section class="card" th:if="${canEditActivity}">
         <h2>Pridať bod programu</h2>
         <form th:action="@{/aktivity/{id}/program(id=${a.id()})}" method="post" class="grid">
             <label>Začiatok <input type="datetime-local" name="startsAt" required th:value="${defaultDay} + 'T09:00'"></label>
@@ -101,7 +101,7 @@
         </form>
     </section>
 
-    <section class="card" th:if="${canEdit}">
+    <section class="card" th:if="${canSeeTeam}">
         <h2>Rozpis pre každého</h2>
         <p class="muted">Jeden riadok = jedna osoba a jej bod programu, s e-mailom. Hodí sa na hromadný e-mail alebo vytlačenie po ľuďoch.</p>
         <span th:replace="~{fragments :: exports('/aktivity/' + ${a.id()} + '/rozpis', '')}"></span>

@@ -14,14 +14,17 @@ class HomeController {
         this.security = security;
     }
 
+    /** Dobrovolnik bez pristupu k aktivitam zacina svojim programom. */
     @GetMapping("/")
-    String home() {
-        return "redirect:/aktivity";
+    String home(jakarta.servlet.http.HttpServletRequest request) {
+        return com.fakturacnysoftver.web.access.AccessFilter.of(request).isActivitiesRead() ? "redirect:/aktivity"
+                : "redirect:/moj-program";
     }
 
     @GetMapping("/login")
-    String login(Model model) {
+    String login(Model model, @org.springframework.web.bind.annotation.RequestParam(required = false) String disabled) {
         model.addAttribute("googleLogin", this.security.mode() == AppSecurityProperties.Mode.GOOGLE);
+        model.addAttribute("disabled", disabled != null);
         return "login";
     }
 }

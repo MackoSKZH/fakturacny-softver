@@ -154,6 +154,7 @@ class ScheduleTest extends IntegrationTest {
     @Test
     @WithMockUser(value = "jana@fgs.example", roles = "USER")
     void memberSeesOwnProgramAndSubscribesWithoutEditorRights() throws Exception {
+        grant("jana@fgs.example", "MENTOR");
         this.mvc.perform(get("/moj-program")).andExpect(status().isOk())
                 .andExpect(content().string(containsString("Školenie rozhodcov")))
                 .andExpect(content().string(not(containsString("Stavba ihriska"))));

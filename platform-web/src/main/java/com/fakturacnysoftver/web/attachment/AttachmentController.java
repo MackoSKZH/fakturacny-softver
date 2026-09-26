@@ -1,6 +1,10 @@
 package com.fakturacnysoftver.web.attachment;
 
+import com.fakturacnysoftver.web.access.AccessFilter;
 import com.fakturacnysoftver.web.activity.ActivityRepository;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import com.fakturacnysoftver.web.partner.PartnerRepository;
 import com.fakturacnysoftver.web.security.CurrentUser;
 
@@ -82,9 +86,9 @@ class AttachmentController {
     }
 
     @GetMapping("/prilohy/{id}")
-    ResponseEntity<byte[]> download(@PathVariable long id, Authentication auth) {
+    ResponseEntity<byte[]> download(@PathVariable long id, HttpServletRequest request) {
         Attachment a = this.repo.find(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        if (!a.visibleTo(CurrentUser.isEditor(auth))) {
+        if (!a.visibleTo(AccessFilter.of(request))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         return ResponseEntity.ok()
@@ -96,7 +100,11 @@ class AttachmentController {
     }
 
     @PostMapping("/prilohy/{id}/zmazat")
-    String delete(@PathVariable long id, Authentication auth, RedirectAttributes redirect) {
+    String delete(@PathVariable long id, Authentication auth, HttpServletRequest request, RedirectAttributes redirect) {
+        Attachment found = this.repo.find(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (!found.deletableBy(AccessFilter.of(request))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
         Attachment a = this.service.delete(id, CurrentUser.name(auth));
         redirect.addFlashAttribute("message", "Súbor " + a.fileName() + " je zmazaný.");
         return "redirect:" + a.ownerUrl() + "#podklady";

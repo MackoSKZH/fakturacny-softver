@@ -7,6 +7,7 @@
     <p class="muted">Aktivity, tím, úlohy a financie združenia</p>
     <p class="errors" th:if="${param.error}">Prihlásenie zlyhalo alebo účet nemá prístup.</p>
     <p class="flash" th:if="${param.logout}">Boli ste odhlásený.</p>
+    <p class="errors" th:if="${param.disabled}">Váš účet je deaktivovaný. Ak ide o omyl, ozvite sa adminovi združenia.</p>
 
     <a th:if="${googleLogin}" class="button primary wide" th:href="@{/oauth2/authorization/google}">
         Prihlásiť sa Google účtom</a>

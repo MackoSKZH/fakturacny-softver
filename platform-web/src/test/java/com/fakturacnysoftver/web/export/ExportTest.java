@@ -140,6 +140,7 @@ class ExportTest extends IntegrationTest {
     @Test
     @WithMockUser(value = "clen", roles = "USER")
     void bulkExportsAreEditorOnly() throws Exception {
+        grant("clen", "VEDENIE");
         this.mvc.perform(get("/exporty")).andExpect(status().isForbidden());
         this.mvc.perform(get("/exporty/ludia.xlsx")).andExpect(status().isForbidden());
         this.mvc.perform(get("/exporty/vsetko.zip")).andExpect(status().isForbidden());

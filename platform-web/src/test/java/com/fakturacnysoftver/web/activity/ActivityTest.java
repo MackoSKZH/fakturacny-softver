@@ -131,6 +131,7 @@ class ActivityTest extends IntegrationTest {
     @Test
     @WithMockUser(value = "clen", roles = "USER")
     void memberSeesActivitiesButNotPeopleDirectory() throws Exception {
+        grant("clen", "MENTOR");
         this.mvc.perform(get("/aktivity")).andExpect(status().isOk())
                 .andExpect(content().string(not(containsString("Nová aktivita"))))
                 .andExpect(content().string(not(containsString("href=\"/ludia\""))));

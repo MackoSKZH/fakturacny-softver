@@ -3,12 +3,12 @@
 <head th:replace="~{fragments :: head(title='Položky')}"></head>
 <body>
 <header th:replace="~{fragments :: nav(active='polozky')}"></header>
-<main id="ledger" class="wide" th:data-can-edit="${canEdit}">
+<main id="ledger" class="wide" th:data-can-edit="${acc.financeWrite}">
     <div class="page-head">
         <h1>Položky <small class="inline">príjmy a výdavky</small></h1>
         <div class="row">
-            <button type="button" class="primary" id="new-entry" th:if="${canEdit}">+ Nová položka</button>
-            <button type="button" id="open-import" th:if="${canEdit}">Import z Excelu / banky</button>
+            <button type="button" class="primary" id="new-entry" th:if="${acc.financeWrite}">+ Nová položka</button>
+            <button type="button" id="open-import" th:if="${acc.financeWrite}">Import z Excelu / banky</button>
             <span th:replace="~{fragments :: exports('/api/polozky/export', '')}"></span>
         </div>
     </div>

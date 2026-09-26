@@ -89,6 +89,7 @@ class AttachmentTest extends IntegrationTest {
 
     @Test
     void membersDownloadOnlyWhatTheyMaySee() throws Exception {
+        grant("clen", "MENTOR");
         long sheet = upload("harok.pdf", PDF, "VYZVA", false);
         long secret = upload("rozpocet.pdf", "%PDF-1.7 interny".getBytes(), "INE", true);
         long partner = this.partners.createPartner(new PartnerService.PartnerInput("Tech s.r.o.", "FIRMA", null, null,

@@ -20,7 +20,7 @@
         </tbody>
     </table>
 
-    <section class="card" th:if="${canEdit}">
+    <section class="card" th:if="${acc.financeWrite}">
         <h2>Nový odberateľ</h2>
         <form th:action="@{/odberatelia}" method="post" class="grid">
             <label class="span2">Názov / meno <input name="name" required th:value="${c.name()}"></label>

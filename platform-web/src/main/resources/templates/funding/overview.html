@@ -9,7 +9,7 @@
             <h1>Financovanie</h1>
             <p class="muted">Pipeline dohôd s partnermi, granty a krytie rozpočtu jednotlivých aktivít. Investície do NTE startupov sa do krytia nepočítajú - nie sú príjmom združenia.</p>
         </div>
-        <a class="button" th:if="${canEdit}" th:href="@{/partneri}">Partneri</a>
+        <a class="button" th:if="${acc.partners}" th:href="@{/partneri}">Partneri</a>
     </div>
     <div th:replace="~{fragments :: messages}"></div>
 
@@ -64,8 +64,8 @@
                 <tbody>
                 <tr th:each="d : ${deals}">
                     <td><span class="badge" th:classappend="${d.stage() == 'ZAPLATENE'} ? 'ok' : (${d.stage() == 'ODMIETNUTE'} ? 'bad' : '')" th:text="${d.stageLabel()}"></span></td>
-                    <td><a th:if="${canEdit}" th:href="@{/partneri/{id}(id=${d.partnerId()})}" th:text="${d.partnerName()}"></a>
-                        <span th:unless="${canEdit}" th:text="${d.partnerName()}"></span></td>
+                    <td><a th:if="${acc.partners}" th:href="@{/partneri/{id}(id=${d.partnerId()})}" th:text="${d.partnerName()}"></a>
+                        <span th:unless="${acc.partners}" th:text="${d.partnerName()}"></span></td>
                     <td><a th:href="@{/financovanie/{id}(id=${d.id()})}" th:text="${d.title()}"></a></td>
                     <td th:text="${d.kindLabel()}"></td>
                     <td th:text="${d.projectCode()}"></td>
@@ -80,7 +80,7 @@
             </table>
         </div>
         <p class="empty" th:if="${deals.isEmpty()}">Žiadne dohody.</p>
-        <details th:if="${canEdit and !partners.isEmpty()}">
+        <details th:if="${acc.financeWrite and !partners.isEmpty()}">
             <summary>+ Nová dohoda</summary>
             <form th:action="@{/financovanie}" method="post" class="grid">
                 <label class="span2">Partner <select name="partnerId" required>

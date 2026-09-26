@@ -42,6 +42,7 @@ class WebFlowTest extends IntegrationTest {
     @Test
     @WithMockUser(value = "clen", roles = "USER")
     void readOnlyMemberCanBrowseButNotChangeAnything() throws Exception {
+        grant("clen", "VEDENIE");
         this.mvc.perform(get("/faktury")).andExpect(status().isOk())
                 .andExpect(content().string(not(containsString("Nová faktúra"))));
         this.mvc.perform(get("/projekty")).andExpect(status().isOk())

@@ -32,12 +32,12 @@
         <h2>Výpožička</h2>
         <th:block th:if="${a.isLent()}">
             <p>Má to <strong th:text="${a.borrowerName()}"></strong><span th:text="' od ' + ${#temporals.format(a.lentOn(), 'd. M. yyyy')} + (${a.loanDueOn() != null} ? ', vrátiť do ' + ${#temporals.format(a.loanDueOn(), 'd. M. yyyy')} : '') + '.'"></span></p>
-            <form th:if="${canEdit}" th:action="@{/majetok/{id}/vratit(id=${a.id()})}" method="post" class="toolbar">
+            <form th:if="${acc.assets}" th:action="@{/majetok/{id}/vratit(id=${a.id()})}" method="post" class="toolbar">
                 <label>Vrátené <input type="date" name="returnedOn" th:value="${today}"></label>
                 <button type="submit" class="primary">Zapísať vrátenie</button>
             </form>
         </th:block>
-        <form th:if="${canEdit and !a.isLent()}" th:action="@{/majetok/{id}/pozicat(id=${a.id()})}" method="post" class="grid">
+        <form th:if="${acc.assets and !a.isLent()}" th:action="@{/majetok/{id}/pozicat(id=${a.id()})}" method="post" class="grid">
             <label>Komu <select name="personId" required>
                 <option value="">-</option>
                 <option th:each="p : ${people}" th:value="${p.id()}" th:text="${p.fullName()}"></option>
@@ -50,7 +50,7 @@
             <label>Poznámka <input name="note" placeholder="s nabíjačkou, 2 batérie"></label>
             <div><button type="submit" class="primary">Požičať</button></div>
         </form>
-        <p class="muted" th:unless="${canEdit or a.isLent()}">K dispozícii.</p>
+        <p class="muted" th:unless="${acc.assets or a.isLent()}">K dispozícii.</p>
     </section>
 
     <section class="card">
@@ -74,7 +74,7 @@
 
     <p class="warning" th:if="${a.isRetired()}" th:text="'Vyradené ' + ${#temporals.format(a.retiredOn(), 'd. M. yyyy')} + ': ' + ${a.retiredReason()}"></p>
 
-    <details class="card" th:if="${canEdit and !a.isRetired()}">
+    <details class="card" th:if="${acc.assets and !a.isRetired()}">
         <summary><h2 class="inline">Upraviť, oprava, vyradenie</h2></summary>
         <form th:action="@{/majetok/{id}(id=${a.id()})}" method="post" class="grid">
             <th:block th:replace="~{assets/form-fields :: fields(${a})}"></th:block>

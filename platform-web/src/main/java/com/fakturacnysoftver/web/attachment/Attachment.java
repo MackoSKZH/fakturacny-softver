@@ -33,8 +33,23 @@ public record Attachment(
         return this.partnerId != null ? "/partneri/" + this.partnerId : "/financovanie/" + this.dealId;
     }
 
-    /** Prilohy partnerov su vzdy len pre editorov - rovnako ako cela karta partnera. */
-    public boolean visibleTo(boolean editor) {
-        return editor || (!this.editorsOnly && this.partnerId == null);
+    /**
+     * Kto subor vidi: podklady aktivity kazdy, kto vidi aktivitu (subory "len pre vedenie" len ten, kto ju smie
+     * upravovat, alebo financie); dohody financie; partneri len opravnenie na partnerov.
+     */
+    public boolean visibleTo(com.fakturacnysoftver.web.access.AccessInfo a) {
+        if (this.projectId != null) {
+            return this.editorsOnly ? a.canEditActivity(this.projectId) || a.isFinanceRead()
+                    : a.isActivitiesRead() || a.owns(this.projectId);
+        }
+        return this.dealId != null ? a.isFinanceRead() && (!this.editorsOnly || a.isFinanceWrite()) : a.isPartners();
+    }
+
+    /** Kto smie subor zmazat - ten, kto smie upravovat vec, ku ktorej patri. */
+    public boolean deletableBy(com.fakturacnysoftver.web.access.AccessInfo a) {
+        if (this.projectId != null) {
+            return a.canEditActivity(this.projectId);
+        }
+        return this.dealId != null ? a.isFinanceWrite() : a.isPartners();
     }
 }

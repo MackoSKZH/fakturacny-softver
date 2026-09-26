@@ -1,8 +1,11 @@
 package com.fakturacnysoftver.web;
 
+import com.fakturacnysoftver.web.access.AccessFilter;
+import com.fakturacnysoftver.web.access.AccessInfo;
 import com.fakturacnysoftver.web.attachment.AttachmentCategory;
+
+import jakarta.servlet.http.HttpServletRequest;
 import com.fakturacnysoftver.web.security.CurrentUser;
-import com.fakturacnysoftver.web.security.SecurityConfig;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -12,11 +15,10 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 @ControllerAdvice
 class CurrentUserAdvice {
 
-    /** Ci prihlaseny smie zapisovat - sablony podla toho skryvaju akcie. */
-    @ModelAttribute("canEdit")
-    boolean canEdit(Authentication auth) {
-        return auth != null && auth.getAuthorities().stream()
-                .anyMatch(a -> ("ROLE_" + SecurityConfig.EDITOR).equals(a.getAuthority()));
+    /** Co smie prihlaseny - sablony podla toho zobrazuju menu a akcie (${acc.financeWrite}, ...). */
+    @ModelAttribute("acc")
+    AccessInfo access(HttpServletRequest request) {
+        return AccessFilter.of(request);
     }
 
     /** Druhy podkladov pre formular nahravania (Thymeleaf 3.1 nepovoluje T() na nase triedy). */

@@ -6,7 +6,7 @@
 <main>
     <h1>Údaje organizácie</h1>
     <div th:replace="~{fragments :: messages}"></div>
-    <p class="muted" th:unless="${canEdit}">Máte prístup len na čítanie. Údaje mení pokladník alebo predseda.</p>
+    <p class="muted" th:unless="${acc.admin}">Máte prístup len na čítanie. Údaje mení pokladník alebo predseda.</p>
     <form th:action="@{/nastavenia}" method="post" class="card grid">
         <label class="span2">Názov <input name="name" required th:value="${org.name()}"></label>
         <label>Ulica a číslo <input name="street" th:value="${org.street()}"></label>
@@ -27,7 +27,7 @@
         <label>Vzor čísla faktúry <input name="invoicePattern" th:value="${org.invoicePattern()}">
             <small>{YYYY} rok, {NNNN} poradové číslo</small></label>
         <label>Splatnosť (dni) <input name="dueDays" type="number" min="0" max="365" th:value="${org.dueDays()}"></label>
-        <div class="span2" th:if="${canEdit}"><button type="submit" class="primary">Uložiť</button>
+        <div class="span2" th:if="${acc.admin}"><button type="submit" class="primary">Uložiť</button>
             <span class="muted">Zmena sa neprejaví na už vystavených faktúrach.</span></div>
     </form>
 

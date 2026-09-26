@@ -9,7 +9,7 @@
             <h1>Majetok a hardvér</h1>
             <p class="muted">Robotické sady, počítače, náradie a vybavenie: kde to je, kto to má požičané a z čoho sme to kúpili.</p>
         </div>
-        <th:block th:if="${canEdit}"><span th:replace="~{fragments :: exports('/exporty/majetok', '')}"></span></th:block>
+        <th:block th:if="${acc.exports}"><span th:replace="~{fragments :: exports('/exporty/majetok', '')}"></span></th:block>
     </div>
     <div th:replace="~{fragments :: messages}"></div>
     <form class="toolbar" method="get" th:action="@{/majetok}">
@@ -45,7 +45,7 @@
     </div>
     <p class="empty" th:if="${assets.isEmpty()}">Nič nezodpovedá filtru.</p>
 
-    <section class="card" th:if="${canEdit}">
+    <section class="card" th:if="${acc.assets}">
         <h2>Nová vec</h2>
         <form th:action="@{/majetok}" method="post" class="grid">
             <th:block th:replace="~{assets/form-fields :: fields(null)}"></th:block>

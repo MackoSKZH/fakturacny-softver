@@ -48,6 +48,17 @@ public abstract class IntegrationTest {
                 + "RESTART IDENTITY CASCADE").update();
     }
 
+    /** Zalozi pouzivatela s rolami (kody z app_role), napr. grant("clen", "MENTOR"). */
+    protected void grant(String identity, String... roleCodes) {
+        long id = this.jdbc.sql("INSERT INTO app_user (email, created_by) VALUES (lower(:e), 'test') "
+                        + "ON CONFLICT (email) DO UPDATE SET active = true RETURNING id")
+                .param("e", identity).query(Long.class).single();
+        for (String code : roleCodes) {
+            this.jdbc.sql("INSERT INTO user_role (user_id, role_id) SELECT :u, id FROM app_role WHERE code = :c "
+                    + "ON CONFLICT DO NOTHING").param("u", id).param("c", code).update();
+        }
+    }
+
     @TestConfiguration
     static class FixedClock {
         @Bean

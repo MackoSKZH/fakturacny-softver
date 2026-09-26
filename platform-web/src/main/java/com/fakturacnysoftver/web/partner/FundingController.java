@@ -83,11 +83,11 @@ class FundingController {
     }
 
     @GetMapping("/financovanie/{id}")
-    String detail(@PathVariable long id, Model model, Authentication auth) {
+    String detail(@PathVariable long id, Model model, jakarta.servlet.http.HttpServletRequest request) {
         this.repo.deal(id, this.service.today()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         model.addAllAttributes(this.service.dealModel(id));
         model.addAttribute("attachments", this.attachments.visible(AttachmentRepository.Owner.DEAL, id,
-                CurrentUser.isEditor(auth)));
+                com.fakturacnysoftver.web.access.AccessFilter.of(request)));
         model.addAttribute("uploadUrl", "/financovanie/" + id + "/prilohy");
         model.addAttribute("today", this.service.today());
         model.addAttribute("dealKinds", DealKind.values());

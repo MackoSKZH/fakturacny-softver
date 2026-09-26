@@ -203,6 +203,7 @@ class PartnerTest extends IntegrationTest {
     @Test
     @WithMockUser(value = "clen", roles = "USER")
     void membersSeeFundingButNotPartnerContacts() throws Exception {
+        grant("clen", "VEDENIE");
         long d = this.service.createDeal(deal(this.foundation, "GRANT", "ROKUJEME", "5000", null, null, null), "x");
         this.mvc.perform(get("/financovanie")).andExpect(status().isOk())
                 .andExpect(content().string(containsString("Nadácia Pre Vedu")))
