@@ -156,7 +156,7 @@ class BankImportTest extends IntegrationTest {
         this.mvc.perform(post("/polozky/banka/potvrdit").session(session).with(fin).with(csrf())
                         .param("action_3", "PRESKOCIT"))
                 .andExpect(redirectedUrl("/polozky"))
-                .andExpect(flash().attribute("message", "Výpis je naimportovaný: uhradené faktúry 1, dary 1, nové položky 1, preskočené 1."));
+                .andExpect(flash().attribute("message", "Výpis je naimportovaný: uhradené faktúry (vydané aj došlé) 1, dary 1, nové položky 1, preskočené 1."));
         this.mvc.perform(get("/polozky").with(fin).flashAttr("message", "Výpis je naimportovaný: test"))
                 .andExpect(content().string(containsString("Výpis je naimportovaný: test")));
         this.mvc.perform(multipart("/polozky/banka").file(new MockMultipartFile("file", "x.xml", "text/xml",

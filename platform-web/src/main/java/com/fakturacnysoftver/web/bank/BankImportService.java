@@ -26,7 +26,7 @@ import java.util.Optional;
  */
 @Service
 public class BankImportService {
-    public enum Action { FAKTURA, DAR, POLOZKA, PRESKOCIT, DUPLIKAT }
+    public enum Action { FAKTURA, DOSLA, DAR, POLOZKA, PRESKOCIT, DUPLIKAT }
 
     /** Navrh pre jeden riadok vypisu. */
     public record Proposal(int index, Camt053Parser.Line line, Action action, Long invoiceId, String invoiceNumber,
@@ -47,7 +47,12 @@ public class BankImportService {
     private record UnpaidInvoice(long id, String number, BigDecimal totalPayable, String vs, Long projectId) {
     }
 
+    private record UnpaidReceived(long id, String number, String supplierName, BigDecimal totalPayable, String vs,
+                                  String iban) {
+    }
+
     private final JdbcClient jdbc;
+    private final com.fakturacnysoftver.web.received.ReceivedInvoiceService received;
     private final InvoiceService invoices;
     private final LedgerService ledger;
     private final OrganizationRepository organizations;
@@ -55,8 +60,10 @@ public class BankImportService {
     private final Clock clock;
 
     public BankImportService(JdbcClient jdbc, InvoiceService invoices, LedgerService ledger,
-                             OrganizationRepository organizations, AuditLog audit, Clock clock) {
+                             OrganizationRepository organizations, AuditLog audit, Clock clock,
+                             com.fakturacnysoftver.web.received.ReceivedInvoiceService received) {
         this.jdbc = jdbc;
+        this.received = received;
         this.invoices = invoices;
         this.ledger = ledger;
         this.organizations = organizations;
@@ -80,13 +87,22 @@ public class BankImportService {
                         SELECT id, number, total_payable, ltrim(COALESCE(document->>'variableSymbol', ''), '0') AS vs, project_id
                         FROM invoice WHERE paid_on IS NULL AND doc_type = 'FAKTURA'""")
                 .query(UnpaidInvoice.class).list();
+        List<UnpaidReceived> payables = this.jdbc.sql("""
+                        SELECT id, number, supplier_name, total_payable, ltrim(COALESCE(payment_ref, ''), '0') AS vs,
+                               supplier_iban AS iban
+                        FROM received_invoice WHERE paid_on IS NULL AND doc_type = 'FAKTURA'""")
+                .query(UnpaidReceived.class).list();
         List<Proposal> out = new ArrayList<>();
+        java.util.Set<Long> usedReceived = new java.util.HashSet<>();
         java.util.Set<Long> used = new java.util.HashSet<>();
         java.util.Set<String> refs = new java.util.HashSet<>();
         for (int i = 0; i < st.lines().size(); i++) {
             Camt053Parser.Line l = st.lines().get(i);
             Proposal p = !refs.add(l.ref()) ? new Proposal(i, l, Action.DUPLIKAT, null, null, null, "rovnaký pohyb je vo výpise dvakrát")
                     : this.propose(i, l, unpaid);
+            if (p.action() == Action.POLOZKA && !l.credit()) {
+                p = this.proposePayable(p, l, payables, usedReceived);
+            }
             if (p.action() == Action.FAKTURA && !used.add(p.invoiceId())) {
                 p = new Proposal(i, l, Action.POLOZKA, null, null, p.projectId(), "faktúru " + p.invoiceNumber()
                         + " už uhrádza iný riadok výpisu - druhá platba? Skontrolujte.");
@@ -122,6 +138,24 @@ public class BankImportService {
         return new Proposal(i, l, Action.POLOZKA, null, null, null, l.vs() == null ? "bez VS" : "VS " + l.vs() + " nepoznáme");
     }
 
+    /** Odchadzajuca platba: dossla faktura podla VS a sumy, inak podla IBAN dodavatela a sumy. */
+    private Proposal proposePayable(Proposal p, Camt053Parser.Line l, List<UnpaidReceived> payables, java.util.Set<Long> used) {
+        Optional<UnpaidReceived> byVs = l.vs() == null ? Optional.empty() : payables.stream()
+                .filter(r -> !used.contains(r.id()) && l.vs().equals(r.vs()) && r.totalPayable().compareTo(l.amount()) == 0)
+                .findFirst();
+        Optional<UnpaidReceived> match = byVs.isPresent() ? byVs : payables.stream()
+                .filter(r -> !used.contains(r.id()) && r.iban() != null && r.iban().equalsIgnoreCase(l.counterpartyIban())
+                        && r.totalPayable().compareTo(l.amount()) == 0)
+                .findFirst();
+        if (match.isEmpty()) {
+            return p;
+        }
+        UnpaidReceived r = match.get();
+        used.add(r.id());
+        return new Proposal(p.index(), l, Action.DOSLA, r.id(), r.number(), null, "došlá faktúra " + r.supplierName()
+                + " " + r.number() + (byVs.isPresent() ? " (VS a suma)" : " (IBAN a suma)"));
+    }
+
     @Transactional
     public Result apply(Preview preview, List<Decision> decisions, String actor) {
         int inv = 0;
@@ -146,6 +180,15 @@ public class BankImportService {
                     }
                     this.invoices.markPaid(p.invoiceId(), l.date(), actor);
                     this.jdbc.sql("UPDATE ledger_entry SET bank_ref = :r WHERE invoice_id = :i")
+                            .param("r", l.ref()).param("i", p.invoiceId()).update();
+                    inv++;
+                }
+                case DOSLA -> {
+                    if (p.action() != Action.DOSLA || p.invoiceId() == null) {
+                        throw new BankImportException("Riadok " + (d.index() + 1) + ": k pohybu nie je navrhnutá došlá faktúra.");
+                    }
+                    this.received.markPaid(p.invoiceId(), l.date(), actor);
+                    this.jdbc.sql("UPDATE ledger_entry SET bank_ref = :r WHERE received_invoice_id = :i")
                             .param("r", l.ref()).param("i", p.invoiceId()).update();
                     inv++;
                 }

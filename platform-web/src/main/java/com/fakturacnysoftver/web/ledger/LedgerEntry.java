@@ -24,7 +24,18 @@ public record LedgerEntry(
         String note,
         Long invoiceId,
         String invoiceNumber,
+        Long receivedInvoiceId,
         int version) {
+
+    /** Suma, datum a typ tejto polozky patria fakture (vydanej alebo dosslej) - menia sa len tam. */
+    public boolean isLockedByInvoice() {
+        return this.invoiceId != null || this.receivedInvoiceId != null;
+    }
+
+    public String lockReason() {
+        return this.receivedInvoiceId != null ? "úhrada došlej faktúry " + this.invoiceNumber
+                : "úhrada faktúry " + this.invoiceNumber;
+    }
 
     public static final String INCOME = "PRIJEM";
     public static final String EXPENSE = "VYDAVOK";

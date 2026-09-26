@@ -19,10 +19,11 @@ public class LedgerRepository {
     private static final String SELECT = """
             SELECT l.id, l.entry_date, l.description, l.direction, l.amount, l.project_id, p.code AS project_code,
                    l.tags, l.category, l.counterparty, l.document_ref, l.payment_method, l.note, l.invoice_id,
-                   i.number AS invoice_number, l.version
+                   COALESCE(i.number, ri.number) AS invoice_number, l.received_invoice_id, l.version
             FROM ledger_entry l
             LEFT JOIN project p ON p.id = l.project_id
-            LEFT JOIN invoice i ON i.id = l.invoice_id""";
+            LEFT JOIN invoice i ON i.id = l.invoice_id
+            LEFT JOIN received_invoice ri ON ri.id = l.received_invoice_id""";
 
     private static final RowMapper<LedgerEntry> MAPPER = (rs, n) -> new LedgerEntry(
             rs.getLong("id"),
@@ -40,6 +41,7 @@ public class LedgerRepository {
             rs.getString("note"),
             nullableLong(rs, "invoice_id"),
             rs.getString("invoice_number"),
+            nullableLong(rs, "received_invoice_id"),
             rs.getInt("version"));
 
     private final JdbcClient jdbc;
@@ -76,15 +78,16 @@ public class LedgerRepository {
 
     public record Row(LocalDate entryDate, String description, String direction, BigDecimal amount, Long projectId,
                       String[] tags, String category, String counterparty, String documentRef, String paymentMethod,
-                      String note, Long invoiceId) {
+                      String note, Long invoiceId, Long receivedInvoiceId) {
     }
 
     public long insert(Row r) {
         return this.jdbc.sql("""
                         INSERT INTO ledger_entry (entry_date, description, direction, amount, project_id, tags, category,
-                                                  counterparty, document_ref, payment_method, note, invoice_id)
+                                                  counterparty, document_ref, payment_method, note, invoice_id,
+                                                  received_invoice_id)
                         VALUES (:entryDate, :description, :direction, :amount, :projectId, :tags, :category,
-                                :counterparty, :documentRef, :paymentMethod, :note, :invoiceId)
+                                :counterparty, :documentRef, :paymentMethod, :note, :invoiceId, :receivedInvoiceId)
                         RETURNING id""")
                 .paramSource(r)
                 .query(Long.class)
@@ -125,6 +128,15 @@ public class LedgerRepository {
     public boolean delete(long id, int version) {
         return this.jdbc.sql("DELETE FROM ledger_entry WHERE id = :id AND version = :version")
                 .param("id", id).param("version", version).update() == 1;
+    }
+
+    public void deleteByReceivedInvoice(long receivedInvoiceId) {
+        this.jdbc.sql("DELETE FROM ledger_entry WHERE received_invoice_id = :id").param("id", receivedInvoiceId).update();
+    }
+
+    public Optional<LedgerEntry> findByReceivedInvoice(long receivedInvoiceId) {
+        return this.jdbc.sql(SELECT + " WHERE l.received_invoice_id = :id").param("id", receivedInvoiceId)
+                .query(MAPPER).optional();
     }
 
     public void deleteByInvoice(long invoiceId) {

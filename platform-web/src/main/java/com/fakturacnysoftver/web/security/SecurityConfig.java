@@ -70,10 +70,11 @@ public class SecurityConfig {
                 .requestMatchers("/faktury/nova", "/faktury/*/dobropis", "/polozky/banka", "/polozky/banka/**").hasAuthority(perm(Permission.FINANCE_WRITE))
                 .requestMatchers(HttpMethod.GET, "/polozky", "/polozky/**", "/api/polozky", "/api/polozky/**",
                         "/faktury", "/faktury/**", "/odberatelia", "/odberatelia/**", "/projekty", "/projekty/**",
-                        "/financovanie", "/financovanie/**").hasAuthority(perm(Permission.FINANCE_READ))
+                        "/financovanie", "/financovanie/**", "/prijate-faktury", "/prijate-faktury/**")
+                        .hasAuthority(perm(Permission.FINANCE_READ))
                 .requestMatchers("/polozky", "/polozky/**", "/api/polozky", "/api/polozky/**", "/faktury", "/faktury/**",
                         "/odberatelia", "/odberatelia/**", "/projekty", "/projekty/**", "/financovanie",
-                        "/financovanie/**").hasAuthority(perm(Permission.FINANCE_WRITE))
+                        "/financovanie/**", "/prijate-faktury", "/prijate-faktury/**").hasAuthority(perm(Permission.FINANCE_WRITE))
                 .requestMatchers(HttpMethod.GET, "/majetok", "/majetok/**")
                         .hasAnyAuthority(perm(Permission.ACTIVITIES_READ), perm(Permission.ASSETS))
                 .requestMatchers("/majetok", "/majetok/**").hasAuthority(perm(Permission.ASSETS))

@@ -205,7 +205,7 @@
             case 'tags': return el('span', {class: 'chips'}, e.tags.map(function (t) { return el('span', {class: 'chip', text: '#' + t}); }));
             case 'paymentMethod': return el('span', {text: e.paymentMethod === 'POKLADNA' ? 'Pokladňa' : 'Banka'});
             case 'description':
-                return el('span', {}, [e.description, e.invoiceNumber ? el('span', {class: 'badge', text: 'faktúra ' + e.invoiceNumber}) : null]);
+                return el('span', {}, [e.description, e.invoiceNumber ? el('span', {class: 'badge', text: (e.receivedInvoiceId ? 'došlá faktúra ' : 'faktúra ') + e.invoiceNumber}) : null]);
             default: return el('span', {text: e[col] || ''});
         }
     }
@@ -222,13 +222,13 @@
         tr.appendChild(el('td', {class: 'sel'}, [box]));
         COLUMNS.forEach(function (col) {
             var td = el('td', {class: 'cell c-' + col + (col === 'amount' ? ' num' : ''), 'data-col': col}, [display(e, col)]);
-            var editable = canEdit && !(e.invoiceId && LOCKED_FOR_INVOICE[col]);
+            var editable = canEdit && !((e.invoiceId || e.receivedInvoiceId) && LOCKED_FOR_INVOICE[col]);
             if (editable) {
                 td.tabIndex = 0;
                 td.classList.add('editable');
                 td.addEventListener('click', function () { edit(td, e, col); });
                 td.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); edit(td, e, col); } });
-            } else if (e.invoiceId && LOCKED_FOR_INVOICE[col]) {
+            } else if ((e.invoiceId || e.receivedInvoiceId) && LOCKED_FOR_INVOICE[col]) {
                 td.title = 'Určuje úhrada faktúry ' + e.invoiceNumber;
             }
             tr.appendChild(td);
@@ -237,7 +237,7 @@
         var hist = el('button', {type: 'button', class: 'link', title: 'História zmien', text: 'História'});
         hist.addEventListener('click', function () { showHistory(e); });
         menu.appendChild(hist);
-        if (canEdit && !e.invoiceId) {
+        if (canEdit && !e.invoiceId && !e.receivedInvoiceId) {
             var del = el('button', {type: 'button', class: 'link danger', text: 'Zmazať'});
             del.addEventListener('click', function () { confirmDelete(menu, e); });
             menu.appendChild(del);

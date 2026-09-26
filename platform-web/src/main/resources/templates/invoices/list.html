@@ -7,6 +7,7 @@
     <div class="page-head">
         <h1>Faktúry a dobropisy</h1>
         <div class="row">
+            <a class="button" th:href="@{/prijate-faktury}">Prijaté faktúry</a>
             <a class="button" th:href="@{/odberatelia}">Odberatelia</a>
             <a class="button primary" th:if="${acc.financeWrite}" th:href="@{/faktury/nova}">+ Nová faktúra</a>
         </div>

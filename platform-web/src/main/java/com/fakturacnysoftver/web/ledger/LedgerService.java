@@ -70,9 +70,8 @@ public class LedgerService {
     public void delete(long id, int version, String actor) {
         LedgerEntry current = this.ledger.findById(id)
                 .orElseThrow(() -> LedgerException.invalid("Položka už neexistuje."));
-        if (current.invoiceId() != null) {
-            throw LedgerException.invalid("Položka vznikla z úhrady faktúry " + current.invoiceNumber()
-                    + " - zrušte úhradu na faktúre.");
+        if (current.isLockedByInvoice()) {
+            throw LedgerException.invalid("Položka vznikla z " + current.lockReason() + " - zrušte úhradu na faktúre.");
         }
         this.ledger.setActor(actor);
         if (!this.ledger.delete(id, version)) {
@@ -148,7 +147,23 @@ public class LedgerService {
         this.ledger.insert(new LedgerRepository.Row(paidOn,
                 (creditNote ? "Vrátenie dobropisu " : "Úhrada faktúry ") + number,
                 creditNote ? LedgerEntry.EXPENSE : LedgerEntry.INCOME, amount, projectId, new String[0],
-                creditNote ? "Vrátenie" : "Úhrada faktúry", counterparty, number, LedgerEntry.BANK, null, invoiceId));
+                creditNote ? "Vrátenie" : "Úhrada faktúry", counterparty, number, LedgerEntry.BANK, null, invoiceId, null));
+    }
+
+    /** Uhrada dosslej faktury = vydavok (pri dobropise od dodavatela prijem). Zrusenie uhrady polozku zmaze. */
+    public long recordReceivedInvoicePayment(long receivedInvoiceId, String number, boolean creditNote, BigDecimal amount,
+                                             LocalDate paidOn, Long projectId, String supplier, String category,
+                                             String paymentRef, String actor) {
+        this.ledger.setActor(actor);
+        this.ledger.deleteByReceivedInvoice(receivedInvoiceId);
+        if (paidOn == null) {
+            return 0;
+        }
+        return this.ledger.insert(new LedgerRepository.Row(paidOn,
+                (creditNote ? "Dobropis od " : "Faktúra ") + supplier + " " + number,
+                creditNote ? LedgerEntry.INCOME : LedgerEntry.EXPENSE, amount, projectId, new String[0],
+                category, supplier, paymentRef == null ? number : paymentRef, LedgerEntry.BANK, null, null,
+                receivedInvoiceId));
     }
 
     private LedgerRepository.Row validate(LedgerInput in, LedgerEntry current) {
@@ -178,12 +193,11 @@ public class LedgerService {
         }
         List<String> tags = normalizeTags(in.tags(), errors);
 
-        if (current != null && current.invoiceId() != null && errors.isEmpty()) {
+        if (current != null && current.isLockedByInvoice() && errors.isEmpty()) {
             boolean locked = !Objects.equals(date, current.entryDate()) || !direction.equals(current.direction())
                     || amount.compareTo(current.amount()) != 0;
             if (locked) {
-                errors.add("Dátum, typ a sumu tejto položky určuje úhrada faktúry " + current.invoiceNumber()
-                        + " - zmeňte ju na faktúre.");
+                errors.add("Dátum, typ a sumu tejto položky určuje " + current.lockReason() + " - zmeňte ju na faktúre.");
             }
         }
         if (!errors.isEmpty()) {
@@ -192,7 +206,7 @@ public class LedgerService {
         return new LedgerRepository.Row(date, description, direction, amount, in.projectId(),
                 tags.toArray(String[]::new), limit(trim(in.category()), 80), limit(trim(in.counterparty()), 200),
                 limit(trim(in.documentRef()), 100), method, limit(trim(in.note()), 2000),
-                current == null ? null : current.invoiceId());
+                current == null ? null : current.invoiceId(), current == null ? null : current.receivedInvoiceId());
     }
 
     private static boolean sameAs(LedgerRepository.Row r, LedgerEntry e) {

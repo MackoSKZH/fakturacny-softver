@@ -41,7 +41,7 @@ class ExportController {
         return "exports";
     }
 
-    @GetMapping("/exporty/{key:[a-z]+}.{format:csv|xlsx|pdf}")
+    @GetMapping("/exporty/{key:[a-z][a-z-]*}.{format:csv|xlsx|pdf}")
     ResponseEntity<byte[]> one(@PathVariable String key, @PathVariable String format, Authentication auth) {
         ExportCatalog.Export e = this.catalog.find(key).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         this.audit.record(CurrentUser.name(auth), "EXPORT", "export", key, format);

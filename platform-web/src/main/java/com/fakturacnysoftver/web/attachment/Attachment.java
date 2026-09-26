@@ -7,6 +7,7 @@ public record Attachment(
         Long projectId,
         Long partnerId,
         Long dealId,
+        Long receivedInvoiceId,
         String category,
         String fileName,
         String contentType,
@@ -30,6 +31,9 @@ public record Attachment(
         if (this.projectId != null) {
             return "/aktivity/" + this.projectId;
         }
+        if (this.receivedInvoiceId != null) {
+            return "/prijate-faktury/" + this.receivedInvoiceId;
+        }
         return this.partnerId != null ? "/partneri/" + this.partnerId : "/financovanie/" + this.dealId;
     }
 
@@ -42,6 +46,9 @@ public record Attachment(
             return this.editorsOnly ? a.canEditActivity(this.projectId) || a.isFinanceRead()
                     : a.isActivitiesRead() || a.owns(this.projectId);
         }
+        if (this.receivedInvoiceId != null) {
+            return a.isFinanceRead();
+        }
         return this.dealId != null ? a.isFinanceRead() && (!this.editorsOnly || a.isFinanceWrite()) : a.isPartners();
     }
 
@@ -50,6 +57,6 @@ public record Attachment(
         if (this.projectId != null) {
             return a.canEditActivity(this.projectId);
         }
-        return this.dealId != null ? a.isFinanceWrite() : a.isPartners();
+        return this.dealId != null || this.receivedInvoiceId != null ? a.isFinanceWrite() : a.isPartners();
     }
 }

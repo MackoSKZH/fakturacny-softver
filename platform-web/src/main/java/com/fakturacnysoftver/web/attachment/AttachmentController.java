@@ -36,10 +36,13 @@ class AttachmentController {
     private final AttachmentRepository repo;
     private final ActivityRepository activities;
     private final PartnerRepository partners;
+    private final com.fakturacnysoftver.web.received.ReceivedInvoiceRepository received;
     private final Clock clock;
 
     AttachmentController(AttachmentService service, AttachmentRepository repo, ActivityRepository activities,
-                         PartnerRepository partners, Clock clock) {
+                         PartnerRepository partners, com.fakturacnysoftver.web.received.ReceivedInvoiceRepository received,
+                         Clock clock) {
+        this.received = received;
         this.service = service;
         this.repo = repo;
         this.activities = activities;
@@ -72,6 +75,15 @@ class AttachmentController {
         this.partners.deal(id, LocalDate.now(this.clock)).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         return this.upload(AttachmentRepository.Owner.DEAL, id, "/financovanie/" + id, file, category, editorsOnly, note,
                 auth, redirect);
+    }
+
+    @PostMapping("/prijate-faktury/{id}/prilohy")
+    String toReceived(@PathVariable long id, @RequestParam(required = false) MultipartFile file,
+                      @RequestParam(required = false) String category, @RequestParam(required = false) String note,
+                      Authentication auth, RedirectAttributes redirect) {
+        this.received.find(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return this.upload(AttachmentRepository.Owner.RECEIVED, id, "/prijate-faktury/" + id, file,
+                category == null ? "DOKLAD" : category, false, note, auth, redirect);
     }
 
     private String upload(AttachmentRepository.Owner owner, long id, String back, MultipartFile file, String category,

@@ -23,18 +23,19 @@
                     <td th:if="${x.action().name() == 'DUPLIKAT'}">preskočí sa<input type="hidden" th:name="'action_' + ${x.index()}" value="DUPLIKAT"></td>
                     <td th:unless="${x.action().name() == 'DUPLIKAT'}">
                         <select th:name="'action_' + ${x.index()}" aria-label="Akcia">
-                            <option th:if="${x.invoiceId() != null}" value="FAKTURA" th:selected="${x.action().name() == 'FAKTURA'}" th:text="'Úhrada ' + ${x.invoiceNumber()}"></option>
+                            <option th:if="${x.action().name() == 'FAKTURA'}" value="FAKTURA" selected th:text="'Úhrada ' + ${x.invoiceNumber()}"></option>
+                            <option th:if="${x.action().name() == 'DOSLA'}" value="DOSLA" selected th:text="'Úhrada došlej ' + ${x.invoiceNumber()}"></option>
                             <option th:if="${l.credit()}" value="DAR" th:selected="${x.action().name() == 'DAR'}">Dar</option>
                             <option value="POLOZKA" th:selected="${x.action().name() == 'POLOZKA'}" th:text="${l.credit()} ? 'Príjem' : 'Výdavok'"></option>
                             <option value="PRESKOCIT">Preskočiť</option>
                         </select>
                     </td>
                     <td>
-                        <select th:unless="${x.action().name() == 'DUPLIKAT' or x.action().name() == 'FAKTURA'}" th:name="'project_' + ${x.index()}" aria-label="Aktivita">
+                        <select th:unless="${x.action().name() == 'DUPLIKAT' or x.action().name() == 'FAKTURA' or x.action().name() == 'DOSLA'}" th:name="'project_' + ${x.index()}" aria-label="Aktivita">
                             <option value="">-</option>
                             <option th:each="a : ${activities}" th:value="${a.id()}" th:text="${a.code()}" th:selected="${a.id() == x.projectId()}"></option>
                         </select>
-                        <small class="muted" th:if="${x.action().name() == 'FAKTURA'}">podľa faktúry</small>
+                        <small class="muted" th:if="${x.action().name() == 'FAKTURA' or x.action().name() == 'DOSLA'}">podľa faktúry</small>
                     </td>
                 </tr>
                 </tbody>

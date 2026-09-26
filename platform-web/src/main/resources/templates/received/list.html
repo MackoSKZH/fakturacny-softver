@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Prijaté faktúry')}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='faktury')}"></header>
+<main class="wide">
+    <div class="page-head">
+        <div>
+            <h1>Prijaté faktúry <small class="inline">kniha došlých faktúr</small></h1>
+            <p class="muted">Od 1. 1. 2027 musíte e-faktúry od dodávateľov prijímať aj ako OZ. E-faktúru (XML) nahráte tu, papierovú
+                alebo PDF zapíšete ručne. Pôvodné XML sa archivuje 10 rokov.</p>
+        </div>
+        <div class="row">
+            <a class="button" th:href="@{/faktury}">Vydané faktúry</a>
+            <th:block th:if="${acc.exports}"><span th:replace="~{fragments :: exports('/exporty/dosle-faktury', '')}"></span></th:block>
+        </div>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+
+    <section class="kpis">
+        <div><small>Na úhradu</small><strong th:text="${#numbers.formatDecimal(unpaidTotal, 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></strong><small>nezaplatené</small></div>
+        <div><small>Po splatnosti</small><strong th:text="${overdueCount}" th:classappend="${overdueCount > 0} ? 'over'"></strong><small>faktúr</small></div>
+    </section>
+
+    <form class="toolbar" method="get" th:action="@{/prijate-faktury}">
+        <select name="stav" aria-label="Stav">
+            <option value="nezaplatene" th:selected="${stav == 'nezaplatene'}">Nezaplatené</option>
+            <option value="po-splatnosti" th:selected="${stav == 'po-splatnosti'}">Po splatnosti</option>
+            <option value="vsetky" th:selected="${stav == 'vsetky'}">Všetky</option>
+        </select>
+        <button type="submit">Filtrovať</button>
+    </form>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Dodávateľ</th><th>Číslo</th><th>Vystavená</th><th>Splatná</th><th class="num">Suma</th><th>VS</th><th>Aktivita</th><th>Stav</th></tr></thead>
+            <tbody>
+            <tr th:each="r : ${invoices}" th:classappend="${r.isOverdue(today)} ? 'overdue'">
+                <td><a th:href="@{/prijate-faktury/{id}(id=${r.id()})}" th:text="${r.supplierName()}"></a>
+                    <span class="badge" th:if="${r.isEInvoice()}">e-faktúra</span>
+                    <span class="badge" th:if="${r.isCreditNote()}">dobropis</span></td>
+                <td class="mono" th:text="${r.number()}"></td>
+                <td th:text="${#temporals.format(r.issueDate(), 'd. M. yyyy')}"></td>
+                <td th:text="${r.dueDate() == null} ? '' : ${#temporals.format(r.dueDate(), 'd. M. yyyy')}"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(r.totalPayable(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                <td class="mono" th:text="${r.paymentRef()}"></td>
+                <td th:text="${r.projectCode()}"></td>
+                <td><span class="badge" th:classappend="${r.paidOn() != null} ? 'ok' : (${r.isOverdue(today)} ? 'bad' : '')"
+                          th:text="${r.paidOn() != null} ? 'uhradená' : (${r.isOverdue(today)} ? 'po splatnosti' : 'na úhradu')"></span></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="empty" th:if="${invoices.isEmpty()}">Nič nezodpovedá filtru.</p>
+
+    <th:block th:if="${acc.financeWrite}">
+    <section class="card">
+        <h2>Nahrať e-faktúru (XML)</h2>
+        <p class="muted">E-faktúry prídu cez vášho poskytovateľa Peppol (prístupový bod) alebo e-mailom ako XML. Kontrolujeme, že je adresovaná vám (IČO).</p>
+        <form th:action="@{/prijate-faktury/xml}" method="post" enctype="multipart/form-data" class="toolbar">
+            <input type="file" name="file" accept=".xml,application/xml,text/xml" required aria-label="E-faktúra XML">
+            <select name="projectId" aria-label="Aktivita">
+                <option value="">aktivita (nepovinné)</option>
+                <option th:each="x : ${projects}" th:value="${x.id()}" th:text="${x.code()}"></option>
+            </select>
+            <button type="submit" class="primary">Nahrať</button>
+        </form>
+    </section>
+    <section class="card">
+        <h2>Zapísať papierovú alebo PDF faktúru</h2>
+        <form th:action="@{/prijate-faktury}" method="post" class="grid">
+            <label>Dodávateľ <input name="supplierName" required></label>
+            <label>IČO dodávateľa <input name="supplierIco" inputmode="numeric"></label>
+            <label>Číslo faktúry <input name="number" required></label>
+            <label>Doklad <select name="docType"><option value="FAKTURA">Faktúra</option><option value="DOBROPIS">Dobropis</option></select></label>
+            <label>Vystavená <input type="date" name="issueDate" required th:value="${today}"></label>
+            <label>Splatná <input type="date" name="dueDate"></label>
+            <label>Suma na úhradu (€) <input name="totalPayable" inputmode="decimal" required></label>
+            <label>Variabilný symbol <input name="paymentRef" inputmode="numeric"></label>
+            <label>IBAN dodávateľa <input name="supplierIban"></label>
+            <label>Aktivita <select name="projectId"><option value="">-</option>
+                <option th:each="x : ${projects}" th:value="${x.id()}" th:text="${x.code()}"></option></select></label>
+            <label>Kategória <input name="category" placeholder="Materiál, Cestovné, Služby"></label>
+            <label>Poznámka <input name="note"></label>
+            <div class="span2"><button type="submit" class="primary">Zapísať</button></div>
+        </form>
+    </section>
+    </th:block>
+</main>
+</body>
+</html>

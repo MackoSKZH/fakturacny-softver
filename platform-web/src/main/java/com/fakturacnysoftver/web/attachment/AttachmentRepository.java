@@ -9,7 +9,7 @@ import java.util.Optional;
 @Repository
 public class AttachmentRepository {
     private static final String SELECT = """
-            SELECT id, project_id, partner_id, deal_id, category, file_name, content_type, size_bytes, editors_only, note,
+            SELECT id, project_id, partner_id, deal_id, received_invoice_id, category, file_name, content_type, size_bytes, editors_only, note,
                    uploaded_by, uploaded_at
             FROM attachment
             """;
@@ -21,7 +21,7 @@ public class AttachmentRepository {
     }
 
     public enum Owner {
-        PROJECT("project_id"), PARTNER("partner_id"), DEAL("deal_id");
+        PROJECT("project_id"), PARTNER("partner_id"), DEAL("deal_id"), RECEIVED("received_invoice_id");
 
         final String column;
 

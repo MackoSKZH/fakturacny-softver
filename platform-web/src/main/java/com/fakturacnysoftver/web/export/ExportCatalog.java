@@ -117,6 +117,15 @@ public class ExportCatalog {
                     FROM work_log w JOIN work_contract c ON c.id = w.contract_id JOIN person p ON p.id = c.person_id
                          LEFT JOIN project pr ON pr.id = w.project_id
                     ORDER BY w.work_date, p.full_name"""),
+            new Export("dosle-faktury", "Kniha došlých faktúr", "Prijaté faktúry a e-faktúry: dodávateľ, sumy, splatnosť, úhrada.", """
+                    SELECT r.issue_date AS "Vystavená", r.supplier_name AS "Dodávateľ", r.supplier_ico AS "IČO",
+                           r.number AS "Číslo", CASE r.doc_type WHEN 'DOBROPIS' THEN 'Dobropis' ELSE 'Faktúra' END AS "Doklad",
+                           CASE r.source WHEN 'UBL' THEN 'e-faktúra' ELSE 'papier/PDF' END AS "Forma",
+                           r.total_net AS "Základ (€)", r.total_vat AS "DPH (€)", r.total_payable AS "Na úhradu (€)",
+                           r.due_date AS "Splatná", r.paid_on AS "Uhradená", r.payment_ref AS "VS", pr.code AS "Aktivita",
+                           r.category AS "Kategória"
+                    FROM received_invoice r LEFT JOIN project pr ON pr.id = r.project_id
+                    ORDER BY r.issue_date, r.id"""),
             new Export("partneri", "Partneri", "Kontakty, kto vzťah vedie, dohodnuté a prijaté sumy, posledný kontakt.", """
                     SELECT p.name AS "Partner", CASE p.kind WHEN 'FIRMA' THEN 'Firma' WHEN 'NADACIA' THEN 'Nadácia / fond'
                                WHEN 'VEREJNY' THEN 'Verejný sektor' WHEN 'SKOLA' THEN 'Škola' WHEN 'JEDNOTLIVEC' THEN 'Jednotlivec'
