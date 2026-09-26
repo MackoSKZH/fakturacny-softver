@@ -1,5 +1,6 @@
 package com.fakturacnysoftver.web.people;
 
+import com.fakturacnysoftver.web.asset.AssetRepository;
 import com.fakturacnysoftver.web.audit.AuditLog;
 import com.fakturacnysoftver.web.schedule.ScheduleService;
 import com.fakturacnysoftver.web.security.CurrentUser;
@@ -28,12 +29,15 @@ import java.util.Locale;
 class PeopleController {
     private final PersonRepository people;
     private final ScheduleService schedule;
+    private final AssetRepository assets;
     private final AuditLog audit;
     private final Clock clock;
 
-    PeopleController(PersonRepository people, ScheduleService schedule, AuditLog audit, Clock clock) {
+    PeopleController(PersonRepository people, ScheduleService schedule, AssetRepository assets, AuditLog audit,
+                     Clock clock) {
         this.people = people;
         this.schedule = schedule;
+        this.assets = assets;
         this.audit = audit;
         this.clock = clock;
     }
@@ -88,6 +92,8 @@ class PeopleController {
         model.addAttribute("participation", this.people.participation(id));
         model.addAttribute("hours", this.people.volunteerHours(id));
         this.schedule.calendarToken(id).ifPresent(t -> model.addAllAttributes(ScheduleService.feedUrls(t)));
+        model.addAttribute("lent", this.assets.lentTo(id));
+        model.addAttribute("today", LocalDate.now(this.clock));
         return "people/detail";
     }
 

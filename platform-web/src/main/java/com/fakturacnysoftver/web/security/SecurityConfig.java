@@ -47,6 +47,8 @@ public class SecurityConfig {
                 .requestMatchers("/faktury/nova", "/faktury/*/dobropis").hasRole(EDITOR)
                 // Adresar ludi obsahuje kontakty na maloletych a ich zastupcov - len editori (minimalizacia GDPR).
                 .requestMatchers("/ludia", "/ludia/**").hasRole(EDITOR)
+                // Kontakty na partnerov a darcov (aj fyzicke osoby) - len editori. Financovanie citaju vsetci.
+                .requestMatchers("/partneri", "/partneri/**").hasRole(EDITOR)
                 .anyRequest().authenticated());
 
         if (props.mode() == AppSecurityProperties.Mode.GOOGLE) {

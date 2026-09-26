@@ -34,6 +34,16 @@
         </table>
     </section>
 
+    <section class="card" th:unless="${lent.isEmpty()}">
+        <h2>Má požičané</h2>
+        <ul class="tasks">
+            <li th:each="x : ${lent}" th:classappend="${x.isLoanOverdue(today)} ? 'overdue'">
+                <a class="title" th:href="@{/majetok/{id}(id=${x.id()})}" th:text="${x.inventoryNo()} + ' ' + ${x.name()}"></a>
+                <span class="due" th:text="${x.loanDueOn() == null} ? 'od ' + ${#temporals.format(x.lentOn(), 'd. M. yyyy')} : 'vrátiť do ' + ${#temporals.format(x.loanDueOn(), 'd. M. yyyy')}"></span>
+            </li>
+        </ul>
+    </section>
+
     <section class="card" id="kalendar">
         <div class="page-head">
             <h2>Program a kalendár</h2>

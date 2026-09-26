@@ -2,6 +2,7 @@ package com.fakturacnysoftver.web.schedule;
 
 import com.fakturacnysoftver.web.activity.Activity;
 import com.fakturacnysoftver.web.activity.ActivityRepository;
+import com.fakturacnysoftver.web.asset.AssetRepository;
 import com.fakturacnysoftver.web.audit.AuditLog;
 import com.fakturacnysoftver.web.people.Person;
 import com.fakturacnysoftver.web.people.PersonRepository;
@@ -44,10 +45,12 @@ class ScheduleController {
     private final ActivityRepository activities;
     private final PersonRepository people;
     private final AuditLog audit;
+    private final AssetRepository assets;
     private final Clock clock;
 
     ScheduleController(ScheduleService service, ScheduleRepository repo, ActivityRepository activities,
-                       PersonRepository people, AuditLog audit, Clock clock) {
+                       PersonRepository people, AuditLog audit, AssetRepository assets, Clock clock) {
+        this.assets = assets;
         this.service = service;
         this.repo = repo;
         this.activities = activities;
@@ -202,6 +205,8 @@ class ScheduleController {
             model.addAttribute("days", byDay);
             model.addAttribute("pastCount", entries.stream().filter(e -> e.day().isBefore(today)).count());
             this.service.calendarToken(me.id()).ifPresent(t -> model.addAllAttributes(ScheduleService.feedUrls(t)));
+            model.addAttribute("lent", this.assets.lentTo(me.id()));
+            model.addAttribute("today", today);
         }
         return "schedule/mine";
     }

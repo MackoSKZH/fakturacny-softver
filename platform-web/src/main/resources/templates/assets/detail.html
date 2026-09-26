@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title=${a.inventoryNo()} + ' ' + ${a.name()})}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='majetok')}"></header>
+<main class="wide">
+    <p><a th:href="@{/majetok}">&larr; Majetok</a></p>
+    <div class="page-head">
+        <div>
+            <span class="kind" th:text="${a.categoryLabel()}"></span>
+            <h1 th:text="${a.name()}"></h1>
+            <p class="muted"><span class="mono" th:text="${a.inventoryNo()}"></span>
+                <span th:if="${a.serialNo() != null}" th:text="' · SN ' + ${a.serialNo()}"></span>
+                <span th:if="${a.location() != null}" th:text="' · ' + ${a.location()}"></span></p>
+        </div>
+        <span class="badge" th:classappend="${a.isLoanOverdue(today)} ? 'bad' : ''" th:text="${a.statusLabel()}"></span>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+    <ul class="warning" th:unless="${warnings.isEmpty()}"><li th:each="w : ${warnings}" th:text="${w}"></li></ul>
+
+    <section class="kpis">
+        <div><small>Cena</small><strong th:text="${a.price() == null} ? '-' : ${#numbers.formatDecimal(a.price(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></strong>
+            <small th:text="${a.purchasedOn() == null} ? '' : 'kúpené ' + ${#temporals.format(a.purchasedOn(), 'd. M. yyyy')}"></small></div>
+        <div><small>Doklad</small><strong class="small" th:text="${a.ledgerLabel() ?: '-'}"></strong></div>
+        <div><small>Financované</small><strong class="small">
+            <a th:if="${a.dealId() != null}" th:href="@{/financovanie/{id}(id=${a.dealId()})}" th:text="${a.dealTitle()}"></a>
+            <span th:if="${a.dealId() == null}">vlastné zdroje</span></strong>
+            <small th:if="${a.keepUntil() != null}" th:text="'udržať do ' + ${#temporals.format(a.keepUntil(), 'd. M. yyyy')}"></small></div>
+    </section>
+
+    <section class="card" th:unless="${a.isRetired()}">
+        <h2>Výpožička</h2>
+        <th:block th:if="${a.isLent()}">
+            <p>Má to <strong th:text="${a.borrowerName()}"></strong><span th:text="' od ' + ${#temporals.format(a.lentOn(), 'd. M. yyyy')} + (${a.loanDueOn() != null} ? ', vrátiť do ' + ${#temporals.format(a.loanDueOn(), 'd. M. yyyy')} : '') + '.'"></span></p>
+            <form th:if="${canEdit}" th:action="@{/majetok/{id}/vratit(id=${a.id()})}" method="post" class="toolbar">
+                <label>Vrátené <input type="date" name="returnedOn" th:value="${today}"></label>
+                <button type="submit" class="primary">Zapísať vrátenie</button>
+            </form>
+        </th:block>
+        <form th:if="${canEdit and !a.isLent()}" th:action="@{/majetok/{id}/pozicat(id=${a.id()})}" method="post" class="grid">
+            <label>Komu <select name="personId" required>
+                <option value="">-</option>
+                <option th:each="p : ${people}" th:value="${p.id()}" th:text="${p.fullName()}"></option>
+            </select></label>
+            <label>Na aktivitu <select name="projectId">
+                <option value="">-</option>
+                <option th:each="x : ${projects}" th:value="${x.id()}" th:text="${x.code()}"></option>
+            </select></label>
+            <label>Vrátiť do <input type="date" name="dueOn"></label>
+            <label>Poznámka <input name="note" placeholder="s nabíjačkou, 2 batérie"></label>
+            <div><button type="submit" class="primary">Požičať</button></div>
+        </form>
+        <p class="muted" th:unless="${canEdit or a.isLent()}">K dispozícii.</p>
+    </section>
+
+    <section class="card">
+        <h2>História výpožičiek</h2>
+        <p class="empty" th:if="${loans.isEmpty()}">Zatiaľ nikto.</p>
+        <table th:unless="${loans.isEmpty()}">
+            <thead><tr><th>Kto</th><th>Aktivita</th><th>Od</th><th>Do</th><th>Vrátené</th><th>Poznámka</th><th>Požičal</th></tr></thead>
+            <tbody>
+            <tr th:each="l : ${loans}">
+                <td th:text="${l.personName()}"></td>
+                <td th:text="${l.projectCode()}"></td>
+                <td th:text="${#temporals.format(l.lentOn(), 'd. M. yyyy')}"></td>
+                <td th:text="${l.dueOn() == null} ? '' : ${#temporals.format(l.dueOn(), 'd. M. yyyy')}"></td>
+                <td th:text="${l.returnedOn() == null} ? 'nevrátené' : ${#temporals.format(l.returnedOn(), 'd. M. yyyy')}"></td>
+                <td th:text="${l.note()}"></td>
+                <td class="muted" th:text="${l.lentBy()}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <p class="warning" th:if="${a.isRetired()}" th:text="'Vyradené ' + ${#temporals.format(a.retiredOn(), 'd. M. yyyy')} + ': ' + ${a.retiredReason()}"></p>
+
+    <details class="card" th:if="${canEdit and !a.isRetired()}">
+        <summary><h2 class="inline">Upraviť, oprava, vyradenie</h2></summary>
+        <form th:action="@{/majetok/{id}(id=${a.id()})}" method="post" class="grid">
+            <th:block th:replace="~{assets/form-fields :: fields(${a})}"></th:block>
+            <div class="span2"><button type="submit" class="primary">Uložiť</button></div>
+        </form>
+        <form th:action="@{/majetok/{id}/oprava(id=${a.id()})}" method="post" class="row">
+            <input type="hidden" name="inRepair" th:value="${a.status() != 'OPRAVA'}">
+            <button type="submit" th:text="${a.status() == 'OPRAVA'} ? 'Opravené - späť k dispozícii' : 'Dať do opravy'"></button>
+        </form>
+        <form th:action="@{/majetok/{id}/vyradit(id=${a.id()})}" method="post" class="grid">
+            <label>Vyradiť dňa <input type="date" name="retiredOn" th:value="${today}"></label>
+            <label>Dôvod <input name="reason" required placeholder="pokazené, stratené, predané, darované škole"></label>
+            <div><button type="submit" class="danger">Vyradiť</button></div>
+        </form>
+    </details>
+</main>
+</body>
+</html>

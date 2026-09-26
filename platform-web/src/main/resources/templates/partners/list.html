@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Partneri')}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='partneri')}"></header>
+<main class="wide">
+    <div class="page-head">
+        <div>
+            <h1>Partneri</h1>
+            <p class="muted">Sponzori, nadácie, granty, školy, investori a darcovia. Ku každému: kontakty, dohody, protiplnenia, faktúry a história komunikácie.</p>
+        </div>
+        <a class="button" th:href="@{/financovanie}">Financovanie a pipeline</a>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+    <form class="toolbar" method="get" th:action="@{/partneri}">
+        <input type="search" name="q" th:value="${q}" placeholder="Hľadať názov, kontakt, tag" aria-label="Hľadať">
+        <select name="typ" aria-label="Typ">
+            <option value="">Všetky typy</option>
+            <option th:each="k : ${kinds}" th:value="${k.name()}" th:text="${k.label()}" th:selected="${k.name() == typ}"></option>
+        </select>
+        <button type="submit">Filtrovať</button>
+    </form>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Partner</th><th>Typ</th><th>Vzťah vedie</th><th class="num">Dohodnuté</th><th class="num">V jednaní</th>
+                <th class="num">Prijaté</th><th>Posledný kontakt</th><th>Ďalší krok</th></tr></thead>
+            <tbody>
+            <tr th:each="x : ${partners}">
+                <td><a th:href="@{/partneri/{id}(id=${x.id()})}" th:text="${x.name()}"></a>
+                    <span class="chips"><span class="chip" th:each="t : ${x.tags()}" th:text="${t}"></span></span></td>
+                <td th:text="${x.kindLabel()}"></td>
+                <td th:text="${x.ownerName()}"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(x.secured(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(x.negotiating(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(x.received(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                <td th:classappend="${x.isNeglected(today)} ? 'over'">
+                    <span th:if="${x.lastContact() != null}" th:text="${#temporals.format(x.lastContact(), 'd. M. yyyy')}"></span>
+                    <span th:if="${x.lastContact() == null}">nikdy</span></td>
+                <td th:classappend="${x.nextStepOn() != null and x.nextStepOn().isBefore(today)} ? 'over'"
+                    th:text="${x.nextStepOn() == null} ? '' : ${#temporals.format(x.nextStepOn(), 'd. M. yyyy')}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="empty" th:if="${partners.isEmpty()}">Zatiaľ žiadni partneri.</p>
+    <p class="muted">Červený posledný kontakt = viac než 4 mesiace ticho. Partnera, ktorému sa ozveme len keď pýtame peniaze, stratíme.</p>
+
+    <section class="card">
+        <h2>Nový partner</h2>
+        <form th:action="@{/partneri}" method="post" class="grid">
+            <th:block th:replace="~{partners/form-fields :: fields(null)}"></th:block>
+            <div class="span2"><button type="submit" class="primary">Pridať partnera</button></div>
+        </form>
+    </section>
+</main>
+</body>
+</html>

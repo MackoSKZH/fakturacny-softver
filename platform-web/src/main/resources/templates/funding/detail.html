@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title=${d.title()})}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='financovanie')}"></header>
+<main class="wide">
+    <p><a th:href="@{/financovanie}">&larr; Financovanie</a>
+        <span th:if="${canEdit}"> · <a th:href="@{/partneri/{id}(id=${d.partnerId()})}" th:text="${d.partnerName()}"></a></span></p>
+    <div class="page-head">
+        <div>
+            <span class="kind" th:text="${d.kindLabel()}"></span>
+            <h1 th:text="${d.title()}"></h1>
+            <p class="muted"><span th:text="${d.partnerName()}"></span> · <span th:text="${d.stageLabel()}"></span>
+                <span th:if="${d.projectCode() != null}" th:text="' · ' + ${d.projectCode()}"></span>
+                <span th:if="${d.program() != null}" th:text="' · ' + ${d.program()}"></span></p>
+        </div>
+        <div class="row">
+            <span class="muted" th:text="${d.isGrant()} ? 'Vyúčtovanie:' : 'Platby:'"></span>
+            <span th:replace="~{fragments :: exports('/financovanie/' + ${d.id()} + '/vyuctovanie', '')}"></span>
+        </div>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+    <ul class="warning" th:unless="${warnings.isEmpty()}"><li th:each="w : ${warnings}" th:text="${w}"></li></ul>
+
+    <section class="kpis">
+        <div><small th:text="${d.isGrant()} ? 'Schválené' : 'Dohodnutá suma'"></small><strong th:text="${#numbers.formatDecimal(d.amount(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></strong></div>
+        <div><small>Prijaté</small><strong th:text="${#numbers.formatDecimal(d.received(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></strong></div>
+        <div th:if="${d.isGrant()}"><small>Čerpané</small><strong th:text="${#numbers.formatDecimal(d.spent(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></strong>
+            <small th:text="'zostáva ' + ${#numbers.formatDecimal(d.remainingToSpend(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></small></div>
+        <div th:if="${d.isGrant() and d.periodFrom() != null}"><small>Oprávnené obdobie</small>
+            <strong class="small" th:text="${#temporals.format(d.periodFrom(), 'd. M. yyyy')} + ' - ' + ${#temporals.format(d.periodTo(), 'd. M. yyyy')}"></strong>
+            <small th:if="${d.reportDueOn() != null}" th:text="'vyúčtovanie do ' + ${#temporals.format(d.reportDueOn(), 'd. M. yyyy')}"></small></div>
+    </section>
+
+    <section class="card" id="protiplnenia">
+        <h2>Protiplnenia</h2>
+        <p class="muted" th:if="${d.kind() == 'DAR'}">Pri dare len poďakovanie. Ak sľúbite logo či reklamu, ide o reklamu - zmeňte typ a vystavte faktúru.</p>
+        <ul class="tasks">
+            <li th:each="x : ${deliverables}" th:classappend="${x.isOverdue(today)} ? 'overdue'">
+                <form th:if="${canEdit}" class="inline" th:action="@{/financovanie/{id}/protiplnenia/{xid}/hotovo(id=${d.id()},xid=${x.id()})}" method="post">
+                    <button type="submit" class="check-btn" th:text="${x.done()} ? '☑' : '☐'" th:aria-label="${x.done()} ? 'Vrátiť' : 'Splnené'"></button>
+                </form>
+                <span class="title" th:classappend="${x.done()} ? 'muted'" th:text="${x.title()}"></span>
+                <span class="due" th:if="${x.dueOn() != null}" th:text="${#temporals.format(x.dueOn(), 'd. M. yyyy')}"></span>
+                <small th:if="${x.doneBy() != null}" th:text="${x.doneBy()}"></small>
+                <form th:if="${canEdit}" class="inline" th:action="@{/financovanie/{id}/protiplnenia/{xid}/zmazat(id=${d.id()},xid=${x.id()})}" method="post">
+                    <button type="submit" class="link danger" aria-label="Zmazať">×</button>
+                </form>
+            </li>
+        </ul>
+        <p class="empty" th:if="${deliverables.isEmpty()}">Žiadne protiplnenia.</p>
+        <form th:if="${canEdit}" th:action="@{/financovanie/{id}/protiplnenia(id=${d.id()})}" method="post" class="grid add-task">
+            <label class="span2">Protiplnenie <input name="title" required placeholder="Logo na robote a dresoch, poďakovanie na sieťach, správa po akcii"></label>
+            <label>Termín <input type="date" name="dueOn"></label>
+            <div><button type="submit" class="primary">Pridať</button></div>
+        </form>
+    </section>
+
+    <section class="card" id="polozky">
+        <h2 th:text="${d.isGrant()} ? 'Príjmy a čerpanie grantu' : 'Prijaté platby'"></h2>
+        <table th:unless="${entries.isEmpty()}">
+            <thead><tr><th>Dátum</th><th>Popis</th><th>Doklad</th><th>Aktivita</th><th class="num">Suma</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="e : ${entries}" th:classappend="${d.isGrant() and !e.isIncome() and d.periodFrom() != null and (e.entryDate().isBefore(d.periodFrom()) or e.entryDate().isAfter(d.periodTo()))} ? 'overdue'">
+                <td th:text="${#temporals.format(e.entryDate(), 'd. M. yyyy')}"></td>
+                <td th:text="${e.description()}"></td>
+                <td th:text="${e.documentRef()}"></td>
+                <td th:text="${e.projectCode()}"></td>
+                <td class="num" th:text="(${e.isIncome()} ? '+' : '-') + ${#numbers.formatDecimal(e.amount(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                <td><form th:if="${canEdit}" class="inline" th:action="@{/financovanie/{id}/polozky/{eid}/odpojit(id=${d.id()},eid=${e.id()})}" method="post">
+                    <button type="submit" class="link danger">odpojiť</button></form></td>
+            </tr>
+            </tbody>
+        </table>
+        <p class="empty" th:if="${entries.isEmpty()}" th:text="${d.isGrant()} ? 'Priraďte príjem grantu a výdavky, ktoré z neho hradíte.' : 'Priraďte príjem z bankového výpisu.'"></p>
+        <details th:if="${canEdit and !candidates.isEmpty()}">
+            <summary>+ Priradiť položky</summary>
+            <form th:action="@{/financovanie/{id}/polozky(id=${d.id()})}" method="post">
+                <div class="table-wrap pick">
+                    <table>
+                        <tbody>
+                        <tr th:each="c : ${candidates}">
+                            <td><input type="checkbox" name="entryIds" th:value="${c.id()}" th:id="'e' + ${c.id()}"></td>
+                            <td><label th:for="'e' + ${c.id()}" th:text="${#temporals.format(c.entryDate(), 'd. M. yyyy')}"></label></td>
+                            <td th:text="${c.description()}"></td>
+                            <td th:text="${c.projectCode()}"></td>
+                            <td class="num" th:text="(${c.isIncome()} ? '+' : '-') + ${#numbers.formatDecimal(c.amount(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button type="submit" class="primary">Priradiť vybrané</button>
+            </form>
+        </details>
+    </section>
+
+    <details class="card" th:if="${canEdit}">
+        <summary><h2 class="inline">Upraviť dohodu</h2></summary>
+        <form th:action="@{/financovanie/{id}(id=${d.id()})}" method="post" class="grid">
+            <th:block th:replace="~{funding/deal-fields :: fields(${d})}"></th:block>
+            <div class="span2"><button type="submit" class="primary">Uložiť</button></div>
+        </form>
+        <form th:action="@{/financovanie/{id}/zmazat(id=${d.id()})}" method="post">
+            <button type="submit" class="link danger">Zmazať dohodu</button>
+        </form>
+    </details>
+</main>
+</body>
+</html>

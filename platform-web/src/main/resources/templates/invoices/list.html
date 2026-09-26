@@ -6,7 +6,10 @@
 <main>
     <div class="page-head">
         <h1>Faktúry a dobropisy</h1>
-        <a class="button primary" th:if="${canEdit}" th:href="@{/faktury/nova}">+ Nová faktúra</a>
+        <div class="row">
+            <a class="button" th:href="@{/odberatelia}">Odberatelia</a>
+            <a class="button primary" th:if="${canEdit}" th:href="@{/faktury/nova}">+ Nová faktúra</a>
+        </div>
     </div>
     <div th:replace="~{fragments :: messages}"></div>
 

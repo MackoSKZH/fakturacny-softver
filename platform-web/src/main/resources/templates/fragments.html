@@ -15,11 +15,13 @@
         <a th:href="@{/aktivity}" th:classappend="${active == 'aktivity' or active == 'projekty'} ? 'active'">Aktivity</a>
         <a th:href="@{/moj-program}" th:classappend="${active == 'program'} ? 'active'">Môj program</a>
         <a th:if="${canEdit}" th:href="@{/ludia}" th:classappend="${active == 'ludia'} ? 'active'">Ľudia</a>
+        <a th:if="${canEdit}" th:href="@{/partneri}" th:classappend="${active == 'partneri'} ? 'active'">Partneri</a>
+        <a th:href="@{/financovanie}" th:classappend="${active == 'financovanie'} ? 'active'">Financovanie</a>
         <a th:if="${canEdit}" th:href="@{/dochadzka}" th:classappend="${active == 'dochadzka'} ? 'active'">Dochádzka</a>
         <a th:unless="${canEdit}" th:href="@{/moja-dochadzka}" th:classappend="${active == 'dochadzka'} ? 'active'">Moja dochádzka</a>
         <a th:href="@{/polozky}" th:classappend="${active == 'polozky'} ? 'active'">Položky</a>
         <a th:href="@{/faktury}" th:classappend="${active == 'faktury'} ? 'active'">Faktúry</a>
-        <a th:href="@{/odberatelia}" th:classappend="${active == 'odberatelia'} ? 'active'">Odberatelia</a>
+        <a th:href="@{/majetok}" th:classappend="${active == 'majetok'} ? 'active'">Majetok</a>
         <a th:if="${canEdit}" th:href="@{/exporty}" th:classappend="${active == 'exporty'} ? 'active'">Exporty</a>
         <a th:href="@{/nastavenia}" th:classappend="${active == 'nastavenia'} ? 'active'">Nastavenia</a>
     </nav>

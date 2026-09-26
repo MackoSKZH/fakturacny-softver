@@ -37,6 +37,16 @@
         </section>
         <p class="muted" th:if="${pastCount > 0}" th:text="'Minulé položky (' + ${pastCount} + ') sú v exporte.'"></p>
 
+    <section class="card" th:unless="${lent.isEmpty()}">
+        <h2>Mám požičané</h2>
+        <ul class="tasks">
+            <li th:each="x : ${lent}" th:classappend="${x.isLoanOverdue(today)} ? 'overdue'">
+                <a class="title" th:href="@{/majetok/{id}(id=${x.id()})}" th:text="${x.inventoryNo()} + ' ' + ${x.name()}"></a>
+                <span class="due" th:text="${x.loanDueOn() == null} ? 'od ' + ${#temporals.format(x.lentOn(), 'd. M. yyyy')} : 'vrátiť do ' + ${#temporals.format(x.loanDueOn(), 'd. M. yyyy')}"></span>
+            </li>
+        </ul>
+    </section>
+
         <section class="card" id="kalendar">
             <h2>Program v mojom kalendári</h2>
             <th:block th:if="${feedUrl == null}">

@@ -116,7 +116,55 @@ public class ExportCatalog {
                                 AND t.month = date_trunc('month', w.work_date)::date) THEN 'áno' ELSE 'nie' END AS "Uzavreté"
                     FROM work_log w JOIN work_contract c ON c.id = w.contract_id JOIN person p ON p.id = c.person_id
                          LEFT JOIN project pr ON pr.id = w.project_id
-                    ORDER BY w.work_date, p.full_name"""));
+                    ORDER BY w.work_date, p.full_name"""),
+            new Export("partneri", "Partneri", "Kontakty, kto vzťah vedie, dohodnuté a prijaté sumy, posledný kontakt.", """
+                    SELECT p.name AS "Partner", CASE p.kind WHEN 'FIRMA' THEN 'Firma' WHEN 'NADACIA' THEN 'Nadácia / fond'
+                               WHEN 'VEREJNY' THEN 'Verejný sektor' WHEN 'SKOLA' THEN 'Škola' WHEN 'JEDNOTLIVEC' THEN 'Jednotlivec'
+                               ELSE 'Iné' END AS "Typ", p.ico AS "IČO", p.contact_name AS "Kontakt", p.contact_email AS "E-mail",
+                           p.contact_phone AS "Telefón", o.full_name AS "Vzťah vedie", p.tags AS "Tagy",
+                           COALESCE((SELECT sum(amount) FROM deal d WHERE d.partner_id = p.id
+                                     AND d.stage IN ('DOHODNUTE', 'ZAPLATENE')), 0) AS "Dohodnuté (€)",
+                           COALESCE((SELECT sum(l.amount) FROM ledger_entry l JOIN deal d ON d.id = l.deal_id
+                                     WHERE d.partner_id = p.id AND l.direction = 'PRIJEM'), 0) AS "Prijaté (€)",
+                           (SELECT max(happened_on) FROM partner_note n WHERE n.partner_id = p.id) AS "Posledný kontakt"
+                    FROM partner p LEFT JOIN person o ON o.id = p.owner_person_id ORDER BY lower(p.name)"""),
+            new Export("financovanie", "Financovanie a granty", "Všetky dohody: typ, stav, suma, prijaté, čerpanie grantov a termíny.", """
+                    SELECT pa.name AS "Partner", d.title AS "Dohoda",
+                           CASE d.kind WHEN 'DAR' THEN 'Dar' WHEN 'REKLAMA' THEN 'Reklama / sponzoring' WHEN 'GRANT' THEN 'Grant'
+                               WHEN 'VECNE' THEN 'Vecné plnenie' WHEN 'INVESTICIA' THEN 'Investícia' ELSE 'Iné' END AS "Typ",
+                           CASE d.stage WHEN 'OSLOVENY' THEN 'Oslovený' WHEN 'ROKUJEME' THEN 'Rokujeme' WHEN 'DOHODNUTE' THEN 'Dohodnuté'
+                               WHEN 'ZAPLATENE' THEN 'Zaplatené' ELSE 'Odmietnuté' END AS "Stav",
+                           pr.code AS "Aktivita", d.amount AS "Suma (€)",
+                           COALESCE((SELECT sum(amount) FROM ledger_entry l WHERE l.deal_id = d.id AND l.direction = 'PRIJEM'), 0)
+                           AS "Prijaté (€)",
+                           COALESCE((SELECT sum(amount) FROM ledger_entry l WHERE l.deal_id = d.id AND l.direction = 'VYDAVOK'), 0)
+                           AS "Čerpané (€)",
+                           d.expected_on AS "Platba do", d.next_step AS "Ďalší krok", d.next_step_on AS "Termín kroku",
+                           d.program AS "Program", d.period_from AS "Obdobie od", d.period_to AS "Obdobie do",
+                           d.report_due_on AS "Vyúčtovanie do", d.reported_on AS "Vyúčtovanie odovzdané"
+                    FROM deal d JOIN partner pa ON pa.id = d.partner_id LEFT JOIN project pr ON pr.id = d.project_id
+                    ORDER BY pa.name, d.created_at"""),
+            new Export("protiplnenia", "Protiplnenia partnerom", "Čo sme partnerom sľúbili, do kedy a či je to splnené.", """
+                    SELECT pa.name AS "Partner", d.title AS "Dohoda", pr.code AS "Aktivita", x.title AS "Protiplnenie",
+                           x.due_on AS "Termín", CASE WHEN x.done THEN 'splnené'
+                               WHEN x.due_on < :today THEN 'PO TERMÍNE' ELSE 'otvorené' END AS "Stav", x.done_by AS "Splnil"
+                    FROM deal_deliverable x JOIN deal d ON d.id = x.deal_id JOIN partner pa ON pa.id = d.partner_id
+                         LEFT JOIN project pr ON pr.id = d.project_id
+                    ORDER BY x.done, x.due_on NULLS LAST, pa.name"""),
+            new Export("majetok", "Majetok a hardvér", "Inventár s cenou, dokladom, grantom, stavom a kto čo má požičané.", """
+                    SELECT a.inventory_no AS "Inventárne číslo", a.name AS "Názov",
+                           CASE a.category WHEN 'ROBOTIKA' THEN 'Robotika' WHEN 'POCITAC' THEN 'Počítače a tablety'
+                               WHEN 'NARADIE' THEN 'Náradie' WHEN 'DIELY' THEN 'Diely' WHEN 'PREZENTACIA' THEN 'Prezentácia'
+                               ELSE 'Iné' END AS "Kategória", a.serial_no AS "Sériové číslo", a.purchased_on AS "Kúpené",
+                           a.price AS "Cena (€)", l.document_ref AS "Doklad", d.title AS "Grant", a.keep_until AS "Udržať do",
+                           CASE WHEN a.status = 'VYRADENY' THEN 'vyradené' WHEN lo.id IS NOT NULL THEN 'požičané'
+                               WHEN a.status = 'OPRAVA' THEN 'v oprave' ELSE 'k dispozícii' END AS "Stav",
+                           a.location AS "Kde", p.full_name AS "Požičané komu", lo.due_on AS "Vrátiť do",
+                           a.retired_on AS "Vyradené", a.retired_reason AS "Dôvod vyradenia"
+                    FROM asset a LEFT JOIN ledger_entry l ON l.id = a.ledger_entry_id LEFT JOIN deal d ON d.id = a.deal_id
+                         LEFT JOIN asset_loan lo ON lo.asset_id = a.id AND lo.returned_on IS NULL
+                         LEFT JOIN person p ON p.id = lo.person_id
+                    ORDER BY a.status = 'VYRADENY', a.category, a.inventory_no"""));
 
     private final JdbcClient jdbc;
     private final Clock clock;

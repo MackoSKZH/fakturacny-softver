@@ -69,7 +69,8 @@ final class PdfTableWriter {
             for (int c = 0; c < n; c++) {
                 final int col = c;
                 this.numeric[c] = !t.rows().isEmpty() && t.rows().stream()
-                        .allMatch(r -> r.get(col) == null || r.get(col) instanceof BigDecimal || r.get(col) instanceof Number);
+                        .allMatch(r -> r.get(col) == null || r.get(col) instanceof BigDecimal || r.get(col) instanceof Number)
+                        && t.rows().stream().anyMatch(r -> r.get(col) != null);
             }
             this.widths = this.columnWidths(PAGE.getWidth() - 2 * MARGIN);
         }

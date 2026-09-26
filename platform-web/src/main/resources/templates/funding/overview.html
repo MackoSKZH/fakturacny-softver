@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Financovanie')}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='financovanie')}"></header>
+<main class="wide">
+    <div class="page-head">
+        <div>
+            <h1>Financovanie</h1>
+            <p class="muted">Pipeline dohôd s partnermi, granty a krytie rozpočtu jednotlivých aktivít. Investície do NTE startupov sa do krytia nepočítajú - nie sú príjmom združenia.</p>
+        </div>
+        <a class="button" th:if="${canEdit}" th:href="@{/partneri}">Partneri</a>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+
+    <section class="kpis">
+        <div><small>V jednaní</small><strong th:text="${#numbers.formatDecimal(negotiating, 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></strong><small>oslovení a rokujeme</small></div>
+        <div><small>Dohodnuté</small><strong th:text="${#numbers.formatDecimal(secured, 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></strong><small>dohodnuté a zaplatené</small></div>
+        <div><small>Prijaté</small><strong th:text="${#numbers.formatDecimal(received, 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></strong><small>priradené príjmy</small></div>
+        <div><small>Upozornenia</small><strong th:text="${warningCount}" th:classappend="${warningCount > 0} ? 'over'"></strong><small>termíny, granty, protiplnenia</small></div>
+    </section>
+
+    <section class="card">
+        <h2>Krytie rozpočtu aktivít</h2>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Aktivita</th><th class="num">Rozpočet</th><th class="num">Dohodnuté</th><th class="num">V jednaní</th>
+                    <th class="num">Chýba</th><th class="num">Prijaté (všetky príjmy)</th><th>Krytie</th></tr></thead>
+                <tbody>
+                <tr th:each="f : ${funding}">
+                    <td><a th:href="@{/financovanie(aktivita=${f.id()})}" th:text="${f.code()}"></a> <span class="muted" th:text="${f.name()}"></span></td>
+                    <td class="num" th:text="${#numbers.formatDecimal(f.budget(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                    <td class="num" th:text="${#numbers.formatDecimal(f.secured(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                    <td class="num" th:text="${#numbers.formatDecimal(f.negotiating(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                    <td class="num" th:classappend="${f.missing().signum() > 0} ? 'over'" th:text="${#numbers.formatDecimal(f.missing(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                    <td class="num" th:text="${#numbers.formatDecimal(f.received(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                    <td><progress max="100" th:value="${f.securedPercent()}" th:title="${f.securedPercent()} + ' %'"></progress>
+                        <small th:text="${f.securedPercent()} + ' %'"></small></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="page-head">
+            <h2>Dohody</h2>
+            <form class="toolbar" method="get" th:action="@{/financovanie}">
+                <select name="aktivita" aria-label="Aktivita">
+                    <option value="">Všetky aktivity</option>
+                    <option th:each="x : ${projects}" th:value="${x.id()}" th:text="${x.code()}" th:selected="${x.id() == aktivita}"></option>
+                </select>
+                <select name="typ" aria-label="Typ">
+                    <option value="">Všetky typy</option>
+                    <option th:each="k : ${dealKinds}" th:value="${k.name()}" th:text="${k.label()}" th:selected="${k.name() == typ}"></option>
+                </select>
+                <button type="submit">Filtrovať</button>
+            </form>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Stav</th><th>Partner</th><th>Dohoda</th><th>Typ</th><th>Aktivita</th><th class="num">Suma</th>
+                    <th class="num">Prijaté</th><th>Ďalší krok</th><th>Upozornenia</th></tr></thead>
+                <tbody>
+                <tr th:each="d : ${deals}">
+                    <td><span class="badge" th:classappend="${d.stage() == 'ZAPLATENE'} ? 'ok' : (${d.stage() == 'ODMIETNUTE'} ? 'bad' : '')" th:text="${d.stageLabel()}"></span></td>
+                    <td><a th:if="${canEdit}" th:href="@{/partneri/{id}(id=${d.partnerId()})}" th:text="${d.partnerName()}"></a>
+                        <span th:unless="${canEdit}" th:text="${d.partnerName()}"></span></td>
+                    <td><a th:href="@{/financovanie/{id}(id=${d.id()})}" th:text="${d.title()}"></a></td>
+                    <td th:text="${d.kindLabel()}"></td>
+                    <td th:text="${d.projectCode()}"></td>
+                    <td class="num" th:text="${#numbers.formatDecimal(d.amount(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                    <td class="num" th:text="${#numbers.formatDecimal(d.received(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                    <td th:classappend="${d.nextStepOn() != null and d.nextStepOn().isBefore(today)} ? 'over'">
+                        <span th:text="${d.nextStep()}"></span>
+                        <small th:if="${d.nextStepOn() != null}" th:text="${#temporals.format(d.nextStepOn(), 'd. M.')}"></small></td>
+                    <td><ul class="warnings"><li th:each="w : ${d.warnings(today)}" th:text="${w}"></li></ul></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="empty" th:if="${deals.isEmpty()}">Žiadne dohody.</p>
+        <details th:if="${canEdit and !partners.isEmpty()}">
+            <summary>+ Nová dohoda</summary>
+            <form th:action="@{/financovanie}" method="post" class="grid">
+                <label class="span2">Partner <select name="partnerId" required>
+                    <option value="">-</option>
+                    <option th:each="x : ${partners}" th:value="${x.id()}" th:text="${x.name()}"></option>
+                </select></label>
+                <th:block th:replace="~{funding/deal-fields :: fields(null)}"></th:block>
+                <div class="span2"><button type="submit" class="primary">Zapísať dohodu</button></div>
+            </form>
+        </details>
+    </section>
+</main>
+</body>
+</html>

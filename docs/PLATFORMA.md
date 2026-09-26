@@ -36,10 +36,12 @@ Stav k 26. 9. 2026. Pivot z "fakturačného softvéru" na operačný systém zdr
 | **Harmonogram** | body programu s vlastníkom a tagmi „pre koho“ (roly, „všetci“), smeny z rolí, filter podľa roly / osoby / zodpovedného, osobný program každého člena, odber kalendára cez tajný odkaz (Google, Outlook, iPhone), rozpis pre každého s e-mailom | hotové |
 | **Exporty** | všetko v Exceli (.xlsx so skutočnými číslami a dátumami), PDF (na tlač, strany, podpisy) a CSV; centrálna stránka a ZIP so všetkým; hromadné exporty len pre editorov a s auditom | hotové |
 | **Podklady** | hárky k výzvam, pravidlá, hodnotiace hárky, zmluvy - prílohy k aktivite | ďalšia iterácia |
-| **Financovanie** | cieľ financovania aktivity, podporovatelia (každý môže prispieť - QR platba s VS aktivity), partneri a investori ako pipeline (oslovený -> rokujeme -> zmluva -> zaplatené), plnenie protiplnení (logo na robote = charitatívna reklama) | ďalšia iterácia |
+| **Partneri** | karta partnera: kontakty, kto vzťah vedie, tagy, prepojenie na odberateľa pre faktúry, história komunikácie, upozornenie na partnera bez kontaktu 4 mesiace (len editori) | hotové |
+| **Financovanie a granty** | dohody (dar, reklama, grant, vecné plnenie, investícia do NTE startupu) po aktivitách, pipeline oslovený -> rokujeme -> dohodnuté -> zaplatené, protiplnenia s termínmi, prepojenie na položky (príjmy aj čerpanie grantu cez históriu položiek), kontrola oprávneného obdobia a termínu vyúčtovania, vyúčtovanie grantu v Exceli/PDF s podpismi, krytie rozpočtu aktivít | hotové |
+| **Majetok** | inventárne čísla FGS-RRRR-NNN, doklad o kúpe, grant a „udržať do“, výpožičky ľuďom (jedna naraz, termín vrátenia), oprava, vyradenie s dôvodom (nie pred koncom udržateľnosti grantu), upozornenie na majetok nad 1 700 € | hotové |
+| **Príspevky od verejnosti** | QR platba (PAY by square) s VS aktivity, aby mohol prispieť ktokoľvek | ďalšia iterácia |
 | **Potvrdenia** | potvrdenie o dobrovoľníckej činnosti (zákon 406/2011) a certifikáty z odpracovaných hodín | ďalšia iterácia |
 | **Verejné prihlášky** | formulár pre dobrovoľníkov a tímy so súhlasmi (alebo Tally, ktoré už máte pripojené) | ďalšia iterácia |
-| **Inventár** | robotické sady, náhradné diely, notebooky, kto čo má požičané | neskôr |
 | Mzdy | **nestavať** - účtovník / certifikovaný softvér | - |
 
 ## Ďalšie veci, ktoré treba doplniť (a ľahko sa zabúdajú)
