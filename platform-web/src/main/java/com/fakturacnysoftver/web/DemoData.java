@@ -1,5 +1,7 @@
 package com.fakturacnysoftver.web;
 
+import com.fakturacnysoftver.web.access.AccessRepository;
+import com.fakturacnysoftver.web.access.AccessService;
 import com.fakturacnysoftver.web.activity.ActivityRepository;
 import com.fakturacnysoftver.web.activity.StaffingRepository;
 import com.fakturacnysoftver.web.activity.TaskRepository;
@@ -52,12 +54,16 @@ public class DemoData {
     private final AssetService assets;
     private final TimesheetService timesheets;
     private final DonationRepository donations;
+    private final AccessService access;
+    private final AccessRepository accessRepo;
     private final Clock clock;
 
     public DemoData(OrganizationRepository organizations, PersonRepository people, ActivityRepository activities,
                     StaffingRepository staffing, TaskRepository tasks, ScheduleService schedule, LedgerService ledger,
                     PartnerService partners, AssetService assets, TimesheetService timesheets,
-                    DonationRepository donations, Clock clock) {
+                    DonationRepository donations, AccessService access, AccessRepository accessRepo, Clock clock) {
+        this.access = access;
+        this.accessRepo = accessRepo;
         this.organizations = organizations;
         this.people = people;
         this.activities = activities;
@@ -170,8 +176,22 @@ public class DemoData {
         if (first.isBefore(today)) {
             this.timesheets.logHours(contract, first.plusDays(1), "2,5", round, "Harmonogram a pokyny pre rozhodcov", ACTOR);
         }
-        LOG.info("Demo dáta sú pripravené.");
+        // Pouzivatelia v roznych rolach (v deme sa vsetci prihlasuju spolocnym heslom)
+        long pmUser = this.access.createUser("peter@demo.example", "Peter Horváth", roles("PROJEKTOVY_MANAZER"), ACTOR);
+        this.access.addOwner(pmUser, round, ACTOR);
+        this.access.createUser("jana@demo.example", "Jana Koordinátorka", roles("KOORDINATOR"), ACTOR);
+        this.access.createUser("eva@demo.example", "Eva Nováková", roles("DOBROVOLNIK"), ACTOR);
+        this.access.createUser("marek@demo.example", "Marek Technik", roles("MENTOR"), ACTOR);
+        this.access.createUser("financie@demo.example", "Pokladníčka", roles("FINANCIE"), ACTOR);
+        this.access.createUser("rada@demo.example", "Predseda rady", roles("VEDENIE"), ACTOR);
+        AccessService.CreatedInvite invite = this.access.createInvite(null, roles("DOBROVOLNIK"), null,
+                "Demo - otvorená pozvánka pre dobrovoľníkov", 30, 50, ACTOR);
+        LOG.info("Demo dáta sú pripravené. Pozvánka pre dobrovoľníkov: /pozvanka/{}", invite.token());
         return true;
+    }
+
+    private List<Long> roles(String... codes) {
+        return java.util.Arrays.stream(codes).map(c -> this.accessRepo.roleByCode(c).orElseThrow().id()).toList();
     }
 
     private long person(String name, String email, List<String> roles, boolean minor, String guardian) {

@@ -112,7 +112,8 @@ class AdminWebTest extends IntegrationTest {
         var pm = user("pm@fgs.example").roles("USER");
         this.mvc.perform(get("/").session(session).with(pm)).andExpect(redirectedUrl("/pozvanka/" + token));
         this.mvc.perform(post("/pozvanka/" + token + "/prijat").session(session).with(pm).with(csrf()))
-                .andExpect(redirectedUrl("/"));
+                .andExpect(redirectedUrl("/aktivity"))
+                .andExpect(flash().attribute("message", "Vitajte! Pozvánka je prijatá a prístup je nastavený."));
         assertTrue(session.getAttribute(SecurityConfig.PENDING_INVITE) == null);
         this.mvc.perform(get("/aktivity/" + this.project).with(pm)).andExpect(status().isOk())
                 .andExpect(content().string(containsString("Upraviť aktivitu")));

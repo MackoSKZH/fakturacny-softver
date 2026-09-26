@@ -12,11 +12,20 @@ docker compose -f docker-compose.demo.yml up --build
 
 Po hláške „Demo dáta sú pripravené“ otvorte <http://localhost:8080>:
 
-| Účet | Heslo | Čo vidí |
+Všetky účty majú heslo `demo-heslo-2027`:
+
+| Účet | Rola | Čo uvidíte |
 |---|---|---|
-| `pokladnik` | `demo-heslo-2027` | editor - všetko, môže meniť |
-| `eva@demo.example` | `demo-heslo-2027` | členka a dobrovoľníčka - len čítanie, Môj program, požičaný hub |
-| `jana@demo.example` | `demo-heslo-2027` | platená koordinátorka - Moja dochádzka |
+| `pokladnik` | Admin | všetko vrátane Správy (používatelia, roly, pozvánky) |
+| `peter@demo.example` | Projektový manažér, vlastník národného kola | upravuje len národné kolo a vidí len jeho rozpočet |
+| `jana@demo.example` | Koordinátorka | všetky aktivity a ľudia, financie nie |
+| `eva@demo.example` | Dobrovoľníčka | len Môj program, Moja dochádzka, potvrdenia |
+| `marek@demo.example` | Mentor | číta aktivity |
+| `financie@demo.example` | Financie | položky, faktúry, financovanie, dochádzka, exporty |
+| `rada@demo.example` | Vedenie | číta aktivity a financie |
+
+Pozvánku vyskúšate odkazom z logu (`docker compose -f docker-compose.demo.yml logs app | grep Pozvánka`):
+otvorte ho v anonymnom okne, prihláste sa ľubovoľným e-mailom a demo heslom a pozvánku prijmite.
 
 Ukážkové dáta: národné kolo o 45 dní (tím, harmonogram, checklist, verejná stránka `/podpora/NK-DEMO`), minulé sústredenie
 s potvrdeniami o dobrovoľníctve, grant s výdavkom mimo obdobia, sponzor, majetok, dochádzka. Dátumy sú vždy relatívne k dnešku.
@@ -47,15 +56,16 @@ Aplikácia **odmietne štart**, ak:
 - je Google prihlásenie bez `APP_EDITOR_EMAILS` (aspoň jeden účet, ktorý smie vystavovať doklady),
 - je lokálne prihlásenie bez hesla s aspoň 12 znakmi.
 
-Roly (stav dnes):
+Používatelia a roly sa spravujú v aplikácii (**Správa**), nie v `.env`:
 
-- **editor** (e-maily v `APP_EDITOR_EMAILS`) mení všetko: financie, ľudí, partnerov, dochádzku, exporty,
-- **člen** (`APP_ALLOWED_EMAILS` alebo celá doména v `APP_ALLOWED_DOMAINS`, napr. Google Workspace OZ) číta aktivity, harmonogram,
-  financovanie, položky, faktúry a majetok; nevidí ľudí, partnerov ani hromadné exporty,
-- každý prihlásený vidí **Môj program**, **Moju dochádzku** a svoje potvrdenia - prepojenie je cez e-mail v karte osoby.
-
-Zmena rolí dnes znamená upraviť `.env` a reštartovať aplikáciu (`docker compose up -d`). Správa používateľov a jemnejšie roly
-priamo v aplikácii sú ďalší krok - bez nich neodporúčame pustiť dnu dobrovoľníkov (videli by financie).
+- `APP_EDITOR_EMAILS` sú **admini z konfigurácie** - núdzový prístup, ktorý sa z aplikácie nedá zamknúť. Stačí jeden alebo dvaja.
+- Ďalších ľudí pridáte v Správe e-mailom, alebo im pošlete **pozvánku**. Pozvánka na konkrétny e-mail môže dať
+  akúkoľvek rolu a vlastníctvo aktivity; otvorený odkaz (napr. pre dobrovoľníkov) len čítanie aktivít.
+- `APP_ALLOWED_EMAILS` / `APP_ALLOWED_DOMAINS` sú voliteľné: kto z nich sa prihlási prvý raz, dostane rolu
+  `APP_DEFAULT_ROLE` (predvolene Dobrovoľník - najmenej práv) a admin mu ju zvýši.
+- Roly: Admin, Financie, Koordinátor, Projektový manažér, Vedenie, Mentor, Dobrovoľník - plus vlastné, poskladané
+  z oprávnení. **Vlastník aktivity** (projektový manažér) upravuje len svoju aktivitu a vidí len jej rozpočet.
+- Zmena rolí a deaktivácia platia hneď, nie až po odhlásení. Sebe admina zobrať ani seba deaktivovať nejde.
 
 Po prvom prihlásení: **Nastavenia** (údaje OZ, IBAN, DIČ) -> **Aktivity** -> **Ľudia** -> **Partneri**.
 

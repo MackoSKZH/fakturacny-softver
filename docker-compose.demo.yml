@@ -1,7 +1,9 @@
 # Vyskusanie na vlastnom pocitaci (Docker Desktop) - ukazkove data, bez Google a bez domeny.
 #   docker compose -f docker-compose.demo.yml up --build
-#   http://localhost:8080  ->  pokladnik / demo-heslo-2027   (editor, vidi a meni vsetko)
-#                              eva@demo.example / demo-heslo-2027   (clenka, len cita + Moj program)
+#   http://localhost:8080  ->  pokladnik / demo-heslo-2027   (admin, vidi a meni vsetko)
+#   dalsie ucty s tym istym heslom: peter@ (projektovy manazer, vlastni narodne kolo), jana@ (koordinatorka),
+#   eva@ (dobrovolnicka), marek@ (mentor), financie@, rada@  - vsetky @demo.example
+#   Odkaz na demo pozvanku je v logu: docker compose -f docker-compose.demo.yml logs app | grep Pozvanka
 # Zmazanie vsetkych demo dat:  docker compose -f docker-compose.demo.yml down -v
 # Nie je to produkcia: jedno spolocne heslo, bez HTTPS, pristup len z tohto pocitaca (127.0.0.1).
 services:
@@ -33,7 +35,6 @@ services:
       APP_SECURITY_MODE: local
       APP_LOCAL_USERNAME: pokladnik
       APP_LOCAL_PASSWORD: demo-heslo-2027
-      APP_LOCAL_READERS: eva@demo.example,jana@demo.example
       COOKIE_SECURE: "false"
 
 volumes:

@@ -74,7 +74,9 @@ class InviteController {
             this.service.accept(token, CurrentUser.name(auth), name);
             session.removeAttribute(SecurityConfig.PENDING_INVITE);
             redirect.addFlashAttribute("message", "Vitajte! Pozvánka je prijatá a prístup je nastavený.");
-            return "redirect:/";
+            // rovno na cielovu stranku - pri dvoch presmerovaniach by sa privitanie stratilo
+            return this.service.resolve(CurrentUser.name(auth), name).access().isActivitiesRead() ? "redirect:/aktivity"
+                    : "redirect:/moj-program";
         } catch (AccessException e) {
             redirect.addFlashAttribute("errors", e.errors());
             return "redirect:/pozvanka/" + token;
