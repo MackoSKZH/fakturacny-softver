@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Audit')}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='sprava')}"></header>
+<main class="wide">
+    <div class="page-head">
+        <h1>Správa</h1>
+        <span th:replace="~{fragments :: exports('/sprava/audit', ${query.isEmpty()} ? '' : '?' + ${query})}"></span>
+    </div>
+    <nav th:replace="~{admin/tabs :: tabs(${tab})}"></nav>
+    <div th:replace="~{fragments :: messages}"></div>
+    <p class="muted">Kto, kedy a čo zmenil. Záznamy sa nedajú upraviť ani zmazať - ani adminom, chráni ich databáza.
+        Zmeny jednotlivých položiek (suma, dátum...) sú navyše v histórii položky.</p>
+
+    <form th:action="@{/sprava/audit}" method="get" class="toolbar filters">
+        <input name="actor" th:value="${f.actor()}" placeholder="kto (e-mail)" aria-label="Kto">
+        <select name="entity" aria-label="Záznam">
+            <option value="">všetky záznamy</option>
+            <option th:each="e : ${entities}" th:value="${e}" th:text="${e}" th:selected="${e == f.entity()}"></option>
+        </select>
+        <select name="action" aria-label="Akcia">
+            <option value="">všetky akcie</option>
+            <option th:each="a : ${actions}" th:value="${a}" th:text="${a}" th:selected="${a == f.action()}"></option>
+        </select>
+        <label>od <input type="date" name="from" th:value="${f.from()}"></label>
+        <label>do <input type="date" name="to" th:value="${f.to()}"></label>
+        <input name="q" th:value="${f.q()}" placeholder="hľadať v podrobnostiach alebo id" aria-label="Hľadať">
+        <button type="submit">Filtrovať</button>
+        <a class="button link" th:if="${!f.isEmpty()}" th:href="@{/sprava/audit}">Zrušiť filter</a>
+    </form>
+
+    <p class="empty" th:if="${rows.isEmpty()}">Nič nenájdené.</p>
+    <div class="table-wrap" th:unless="${rows.isEmpty()}">
+        <table class="audit">
+            <thead><tr><th>Čas</th><th>Kto</th><th>Akcia</th><th>Záznam</th><th>Podrobnosti</th></tr></thead>
+            <tbody>
+            <tr th:each="r : ${rows}">
+                <td class="nowrap" th:text="${#temporals.format(r.at(), 'd. M. yyyy HH:mm:ss')}"></td>
+                <td th:text="${r.actor()}"></td>
+                <td><span class="chip" th:text="${r.action()}"></span></td>
+                <td class="nowrap"><a th:if="${r.link() != null}" th:href="@{${r.link()}}" th:text="${r.entity()} + ' ' + ${r.entityId()}"></a>
+                    <span th:if="${r.link() == null}" th:text="${r.entity()} + (${r.entityId() != null} ? ' ' + ${r.entityId()} : '')"></span></td>
+                <td th:text="${r.detail()}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="row">
+        <a class="button" th:if="${paged}" th:href="@{${'/sprava/audit' + (query.isEmpty() ? '' : '?' + query)}}">&larr; Najnovšie</a>
+        <a class="button" th:if="${nextBefore != null}"
+           th:href="@{${'/sprava/audit?' + (query.isEmpty() ? '' : query + '&') + 'before=' + nextBefore}}">Staršie &rarr;</a>
+    </p>
+</main>
+</body>
+</html>

@@ -1,11 +1,15 @@
 package sk.firstglobal.hq.web.access;
 
 import sk.firstglobal.hq.web.activity.ActivityRepository;
+import sk.firstglobal.hq.web.audit.AuditLog;
+import sk.firstglobal.hq.web.export.Table;
 import sk.firstglobal.hq.web.people.PersonRole;
 import sk.firstglobal.hq.web.security.CurrentUser;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,9 +32,12 @@ class AdminController {
     private final AccessService service;
     private final AccessRepository repo;
     private final ActivityRepository activities;
+    private final AuditLog audit;
     private final Clock clock;
 
-    AdminController(AccessService service, AccessRepository repo, ActivityRepository activities, Clock clock) {
+    AdminController(AccessService service, AccessRepository repo, ActivityRepository activities, AuditLog audit,
+                    Clock clock) {
+        this.audit = audit;
         this.service = service;
         this.repo = repo;
         this.activities = activities;
@@ -128,6 +135,53 @@ class AdminController {
         this.service.deleteRole(id, CurrentUser.name(auth));
         redirect.addFlashAttribute("message", "Rola je zmazaná.");
         return "redirect:/sprava/role";
+    }
+
+    // ---------- audit ----------
+
+    private static final int AUDIT_PAGE = 100;
+    private static final int AUDIT_EXPORT_MAX = 20000;
+
+    /** Kto, kedy a co zmenil. Zaznamy sa nedaju upravit ani zmazat (chrani to databaza). */
+    @GetMapping("/sprava/audit")
+    String audit(@RequestParam(required = false) String actor, @RequestParam(required = false) String entity,
+                 @RequestParam(required = false) String action,
+                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+                 @RequestParam(required = false) String q, @RequestParam(required = false) Long before, Model model) {
+        AuditLog.Filter f = new AuditLog.Filter(actor, entity, action, from, to, q);
+        List<AuditLog.Row> rows = this.audit.search(f, before, AUDIT_PAGE + 1);
+        model.addAttribute("rows", rows.size() > AUDIT_PAGE ? rows.subList(0, AUDIT_PAGE) : rows);
+        model.addAttribute("nextBefore", rows.size() > AUDIT_PAGE ? rows.get(AUDIT_PAGE - 1).id() : null);
+        model.addAttribute("f", f);
+        model.addAttribute("query", f.query());
+        model.addAttribute("paged", before != null);
+        model.addAttribute("entities", this.audit.entities());
+        model.addAttribute("actions", this.audit.actions());
+        model.addAttribute("tab", "audit");
+        return "admin/audit";
+    }
+
+    @GetMapping("/sprava/audit.{format:csv|xlsx|pdf}")
+    ResponseEntity<byte[]> auditExport(@PathVariable String format, @RequestParam(required = false) String actor,
+                                       @RequestParam(required = false) String entity,
+                                       @RequestParam(required = false) String action,
+                                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+                                       @RequestParam(required = false) String q, Authentication auth) {
+        AuditLog.Filter f = new AuditLog.Filter(actor, entity, action, from, to, q);
+        List<AuditLog.Row> rows = this.audit.search(f, null, AUDIT_EXPORT_MAX + 1);
+        Table t = new Table("Audit log", "Čas", "Kto", "Akcia", "Záznam", "Id", "Podrobnosti");
+        t.subtitle(f.isEmpty() ? "všetky záznamy" : "filter: " + java.net.URLDecoder.decode(f.query(),
+                java.nio.charset.StandardCharsets.UTF_8).replace("&", ", "));
+        rows.stream().limit(AUDIT_EXPORT_MAX).forEach(r -> t.row(r.at(), r.actor(), r.action(), r.entity(), r.entityId(),
+                r.detail()));
+        if (rows.size() > AUDIT_EXPORT_MAX) {
+            t.note("Zobrazených je len " + AUDIT_EXPORT_MAX + " najnovších záznamov - zúžte filter (napr. obdobie).");
+        }
+        // aj export auditu je udalost - kto si stiahol prehlad cinnosti ostatnych
+        this.audit.record(CurrentUser.name(auth), "EXPORT", "audit", null, format + " " + f.query());
+        return t.response(format, "audit-" + LocalDate.now(this.clock));
     }
 
     // ---------- pozvanky ----------

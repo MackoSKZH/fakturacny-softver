@@ -37,6 +37,8 @@ class AdminWebTest extends IntegrationTest {
     AccessRepository repo;
     @Autowired
     ActivityRepository activities;
+    @Autowired
+    sk.firstglobal.hq.web.audit.AuditLog audit;
 
     final RequestPostProcessor admin = user("pokladnik").roles("USER");
     long project;
@@ -128,5 +130,36 @@ class AdminWebTest extends IntegrationTest {
                 .andExpect(flash().attributeExists("errors"));
         assertEquals(0, this.jdbc.sql("SELECT count(*) FROM invite").query(Long.class).single());
         this.mvc.perform(get("/pozvanka/" + "x".repeat(43)).with(anonymous())).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void auditLogIsSearchablePagedAndExportedOnlyByAdmin() throws Exception {
+        for (int i = 1; i <= 105; i++) {
+            this.audit.record("jana@fgs.example", "ZMENA", "aktivita", this.project, "krok " + i);
+        }
+        this.audit.record("peter@fgs.example", "ZMAZANIE", "dohoda", 7, "Grant 100%_hotovo");
+
+        this.mvc.perform(get("/sprava/audit").with(this.admin)).andExpect(status().isOk())
+                .andExpect(content().string(containsString("Grant 100%_hotovo")))
+                .andExpect(content().string(containsString("href=\"/financovanie/7\"")))
+                .andExpect(content().string(containsString("Staršie")));
+        MvcResult page = this.mvc.perform(get("/sprava/audit").with(this.admin).param("actor", "JANA")
+                .param("entity", "aktivita")).andExpect(status().isOk()).andReturn();
+        String html = page.getResponse().getContentAsString();
+        assertFalse(html.contains("Grant 100%"), "filter podľa človeka");
+        assertTrue(html.contains("krok 105") && !html.contains("krok 5<"), "prvá strana = najnovších 100");
+        assertTrue(html.contains("actor=JANA&amp;entity=aktivita&amp;before="), "ďalšia strana drží filter");
+
+        this.mvc.perform(get("/sprava/audit").with(this.admin).param("q", "100%_")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("Grant 100%_hotovo")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("krok 100<"))));
+
+        this.mvc.perform(get("/sprava/audit.xlsx").with(this.admin).param("action", "ZMAZANIE")).andExpect(status().isOk());
+        assertEquals(1, this.audit.search(new sk.firstglobal.hq.web.audit.AuditLog.Filter(null, "audit", "EXPORT",
+                null, null, null), null, 10).size(), "stiahnutie auditu je v audite");
+
+        grant("vedenie@fgs.example", "VEDENIE");
+        this.mvc.perform(get("/sprava/audit").with(user("vedenie@fgs.example").roles("USER"))).andExpect(status().isForbidden());
+        this.mvc.perform(get("/sprava/audit.csv").with(user("vedenie@fgs.example").roles("USER"))).andExpect(status().isForbidden());
     }
 }

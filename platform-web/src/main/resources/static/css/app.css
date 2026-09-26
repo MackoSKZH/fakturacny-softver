@@ -271,3 +271,4 @@ td.expense { font-weight: 600; }
 #platba .row { align-items: flex-start; gap: 1.5rem; flex-wrap: wrap; }
 #platba .qr { width: 180px; max-width: 100%; }
 #platba .qr svg { width: 100%; height: auto; display: block; }
+.nowrap { white-space: nowrap; }
