@@ -67,7 +67,7 @@ public class SecurityConfig {
                 .requestMatchers("/partneri", "/partneri/**").hasAuthority(perm(Permission.PARTNERS))
                 .requestMatchers("/dochadzka", "/dochadzka/**").hasAuthority(perm(Permission.TIMESHEETS))
                 // Financie: citanie a zapis zvlast.
-                .requestMatchers("/faktury/nova", "/faktury/*/dobropis").hasAuthority(perm(Permission.FINANCE_WRITE))
+                .requestMatchers("/faktury/nova", "/faktury/*/dobropis", "/polozky/banka", "/polozky/banka/**").hasAuthority(perm(Permission.FINANCE_WRITE))
                 .requestMatchers(HttpMethod.GET, "/polozky", "/polozky/**", "/api/polozky", "/api/polozky/**",
                         "/faktury", "/faktury/**", "/odberatelia", "/odberatelia/**", "/projekty", "/projekty/**",
                         "/financovanie", "/financovanie/**").hasAuthority(perm(Permission.FINANCE_READ))

@@ -8,7 +8,8 @@
         <h1>Položky <small class="inline">príjmy a výdavky</small></h1>
         <div class="row">
             <button type="button" class="primary" id="new-entry" th:if="${acc.financeWrite}">+ Nová položka</button>
-            <button type="button" id="open-import" th:if="${acc.financeWrite}">Import z Excelu / banky</button>
+            <a class="button" th:if="${acc.financeWrite}" th:href="@{/polozky/banka}">Výpis z banky (XML)</a>
+            <button type="button" id="open-import" th:if="${acc.financeWrite}">Import z Excelu</button>
             <span th:replace="~{fragments :: exports('/api/polozky/export', '')}"></span>
         </div>
     </div>

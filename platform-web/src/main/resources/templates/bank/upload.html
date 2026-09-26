@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Import výpisu z banky')}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='polozky')}"></header>
+<main>
+    <p><a th:href="@{/polozky}">&larr; Položky</a></p>
+    <h1>Import výpisu z banky</h1>
+    <div th:replace="~{fragments :: messages}"></div>
+    <section class="card">
+        <p>Nahrajte výpis vo formáte <strong>XML (ISO 20022 camt.053)</strong>. V internet bankingu ho nájdete pri výpisoch ako
+            „XML“, „ISO 20022“ alebo „camt.053“ (Slovenská sporiteľňa, Tatra banka, VÚB, ČSOB, Fio aj ďalšie).</p>
+        <ul class="muted">
+            <li>Platba s VS a sumou nezaplatenej faktúry sa navrhne ako jej <strong>úhrada</strong>.</li>
+            <li>Platba s VS zbierky aktivity (800000 + číslo aktivity) sa navrhne ako <strong>dar</strong> na tú aktivitu.</li>
+            <li>Ostatné pohyby sa navrhnú ako nové položky - aktivitu im vyberiete v náhľade.</li>
+            <li>Pohyby, ktoré už v položkách sú, sa preskočia - ten istý výpis môžete nahrať aj dvakrát.</li>
+        </ul>
+        <p class="muted">Nič sa nezapíše, kým náhľad nepotvrdíte.</p>
+        <form th:action="@{/polozky/banka}" method="post" enctype="multipart/form-data" class="toolbar">
+            <input type="file" name="file" accept=".xml,application/xml,text/xml" required aria-label="Výpis XML">
+            <button type="submit" class="primary">Nahrať a zobraziť náhľad</button>
+        </form>
+    </section>
+</main>
+</body>
+</html>

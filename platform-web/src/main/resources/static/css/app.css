@@ -265,3 +265,6 @@ table.matrix td.center { text-align: center; color: var(--accent); }
 tr.inactive td { opacity: 0.55; }
 .card.highlight { border-color: var(--accent); }
 details.edit fieldset { margin: 6px 0; }
+table.bank td { vertical-align: top; }
+td.income { color: var(--ok); font-weight: 600; }
+td.expense { font-weight: 600; }

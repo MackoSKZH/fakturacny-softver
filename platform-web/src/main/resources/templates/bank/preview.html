@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Náhľad importu')}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='polozky')}"></header>
+<main class="wide">
+    <p><a th:href="@{/polozky/banka}">&larr; Iný výpis</a></p>
+    <h1>Náhľad importu <small class="inline" th:text="${p.statement().iban()}"></small></h1>
+    <div th:replace="~{fragments :: messages}"></div>
+    <ul class="warning" th:unless="${p.warnings().isEmpty()}"><li th:each="w : ${p.warnings()}" th:text="${w}"></li></ul>
+    <form th:action="@{/polozky/banka/potvrdit}" method="post">
+        <div class="table-wrap">
+            <table class="bank">
+                <thead><tr><th>Dátum</th><th class="num">Suma</th><th>Protistrana</th><th>VS / správa</th><th>Návrh</th><th>Akcia</th><th>Aktivita</th></tr></thead>
+                <tbody>
+                <tr th:each="x : ${p.proposals()}" th:with="l=${x.line()}" th:classappend="${x.action().name() == 'DUPLIKAT'} ? 'inactive'">
+                    <td th:text="${l.date() == null} ? '-' : ${#temporals.format(l.date(), 'd. M. yyyy')}"></td>
+                    <td class="num" th:classappend="${l.credit()} ? 'income' : 'expense'"
+                        th:text="(${l.credit()} ? '+' : '-') + ${#numbers.formatDecimal(l.amount(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                    <td><span th:text="${l.counterparty()}"></span><br><small class="muted mono" th:text="${l.counterpartyIban()}"></small></td>
+                    <td><span class="mono" th:if="${l.vs() != null}" th:text="'VS ' + ${l.vs()}"></span><br><small th:text="${l.message()}"></small></td>
+                    <td><small th:text="${x.reason()}"></small></td>
+                    <td th:if="${x.action().name() == 'DUPLIKAT'}">preskočí sa<input type="hidden" th:name="'action_' + ${x.index()}" value="DUPLIKAT"></td>
+                    <td th:unless="${x.action().name() == 'DUPLIKAT'}">
+                        <select th:name="'action_' + ${x.index()}" aria-label="Akcia">
+                            <option th:if="${x.invoiceId() != null}" value="FAKTURA" th:selected="${x.action().name() == 'FAKTURA'}" th:text="'Úhrada ' + ${x.invoiceNumber()}"></option>
+                            <option th:if="${l.credit()}" value="DAR" th:selected="${x.action().name() == 'DAR'}">Dar</option>
+                            <option value="POLOZKA" th:selected="${x.action().name() == 'POLOZKA'}" th:text="${l.credit()} ? 'Príjem' : 'Výdavok'"></option>
+                            <option value="PRESKOCIT">Preskočiť</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select th:unless="${x.action().name() == 'DUPLIKAT' or x.action().name() == 'FAKTURA'}" th:name="'project_' + ${x.index()}" aria-label="Aktivita">
+                            <option value="">-</option>
+                            <option th:each="a : ${activities}" th:value="${a.id()}" th:text="${a.code()}" th:selected="${a.id() == x.projectId()}"></option>
+                        </select>
+                        <small class="muted" th:if="${x.action().name() == 'FAKTURA'}">podľa faktúry</small>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="muted">Po potvrdení sa všetko zapíše naraz. Úhrady faktúr sa označia na faktúrach, dary sa započítajú do zbierky aktivity.</p>
+        <button type="submit" class="primary" th:disabled="${p.proposals().isEmpty()}">Potvrdiť a zapísať</button>
+    </form>
+</main>
+</body>
+</html>
