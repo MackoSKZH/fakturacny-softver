@@ -47,7 +47,8 @@ Stav k 26. 9. 2026. Pivot z "fakturačného softvéru" na operačný systém zdr
 ## Ďalšie veci, ktoré treba doplniť (a ľahko sa zabúdajú)
 
 - **2 % / 3 % z dane** - registrácia v Notárskom centrálnom registri do 31. 1., kampaň pre rodičov a partnerov vo februári až apríli. Je to najlacnejší zdroj peňazí pre OZ.
-- **Párovanie platieb podľa VS z bankového výpisu** - dnes sa VS daru zapisuje ručne do poľa „Doklad“. Import výpisu (CSV/XML banky) s automatickým priradením k aktivite a faktúre ušetrí najviac ručnej práce.
+- **Import výpisu z banky** (hotové pre XML camt.053): úhrady faktúr podľa VS a sumy, dary podľa VS aktivity, ostatné ako položky; opakovaný import nič nezdvojí. Pred ostrým použitím nahrajte skutočný výpis z vašej banky a skontrolujte náhľad. CSV exporty bánk zatiaľ nie.
+- **Pozývanie dobrovoľníkov projektovým manažérom** na vlastnú akciu (dnes pozýva len admin).
 - **Zmluva o dobrovoľníckej činnosti** - generovanie zo šablóny (pri maloletom podpisuje zákonný zástupca) a evidencia, kto ju má podpísanú.
 
 - **Súhlasy rodičov** pred každou akciou s maloletými (spracovanie údajov, fotografie, cesta do zahraničia, zdravotné informácie).
