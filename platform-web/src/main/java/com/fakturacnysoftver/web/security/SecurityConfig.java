@@ -8,6 +8,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -71,10 +72,14 @@ public class SecurityConfig {
         if (props.mode() != AppSecurityProperties.Mode.LOCAL) {
             return new InMemoryUserDetailsManager();
         }
-        return new InMemoryUserDetailsManager(User.withUsername(props.localUsername())
-                .password(encoder.encode(props.localPassword()))
-                .roles("USER", EDITOR)
-                .build());
+        // Lokalny rezim je na skusanie: jeden editor + volitelne citatelia s rovnakym heslom (napr. e-mail osoby,
+        // aby sa dal vyskusat "Moj program" a "Moja dochadzka"). Produkcia pouziva Google prihlasenie.
+        String password = encoder.encode(props.localPassword());
+        List<UserDetails> users = new ArrayList<>();
+        users.add(User.withUsername(props.localUsername()).password(password).roles("USER", EDITOR).build());
+        props.localReaders().stream().filter(r -> !r.equals(props.localUsername()))
+                .forEach(r -> users.add(User.withUsername(r).password(password).roles("USER").build()));
+        return new InMemoryUserDetailsManager(users);
     }
 
     @Bean

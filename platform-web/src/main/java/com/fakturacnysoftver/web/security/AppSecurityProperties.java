@@ -16,7 +16,8 @@ public record AppSecurityProperties(
         List<String> allowedDomains,
         String localUsername,
         String localPassword,
-        List<String> editorEmails) {
+        List<String> editorEmails,
+        List<String> localReaders) {
 
     public static final int MIN_PASSWORD_LENGTH = 12;
 
@@ -28,6 +29,7 @@ public record AppSecurityProperties(
         allowedDomains = normalize(allowedDomains);
         localUsername = localUsername == null || localUsername.isBlank() ? "admin" : localUsername.trim();
         editorEmails = normalize(editorEmails);
+        localReaders = normalize(localReaders);
 
         if (mode == Mode.GOOGLE && allowedEmails.isEmpty() && allowedDomains.isEmpty() && editorEmails.isEmpty()) {
             throw new IllegalStateException("Režim GOOGLE bez APP_ALLOWED_EMAILS / APP_ALLOWED_DOMAINS "

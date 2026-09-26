@@ -45,5 +45,7 @@ app:
     allowed-domains: ${APP_ALLOWED_DOMAINS:}
     local-username: ${APP_LOCAL_USERNAME:admin}
     local-password: ${APP_LOCAL_PASSWORD:}
+    # len lokalny rezim: ciarkou oddeleni pouzivatelia na citanie (rovnake heslo), napr. eva@demo.example
+    local-readers: ${APP_LOCAL_READERS:}
     # ucty, ktore smu vystavovat doklady a menit udaje; ostatni povoleni len citaju
     editor-emails: ${APP_EDITOR_EMAILS:}

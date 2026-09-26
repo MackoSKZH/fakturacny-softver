@@ -1,0 +1,40 @@
+# Vyskusanie na vlastnom pocitaci (Docker Desktop) - ukazkove data, bez Google a bez domeny.
+#   docker compose -f docker-compose.demo.yml up --build
+#   http://localhost:8080  ->  pokladnik / demo-heslo-2027   (editor, vidi a meni vsetko)
+#                              eva@demo.example / demo-heslo-2027   (clenka, len cita + Moj program)
+# Zmazanie vsetkych demo dat:  docker compose -f docker-compose.demo.yml down -v
+# Nie je to produkcia: jedno spolocne heslo, bez HTTPS, pristup len z tohto pocitaca (127.0.0.1).
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ucto
+      POSTGRES_USER: ucto
+      POSTGRES_PASSWORD: demo-db-heslo
+    volumes:
+      - demo-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ucto -d ucto"]
+      interval: 5s
+      retries: 20
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/ucto
+      DATABASE_USER: ucto
+      DATABASE_PASSWORD: demo-db-heslo
+      SPRING_PROFILES_ACTIVE: demo
+      APP_SECURITY_MODE: local
+      APP_LOCAL_USERNAME: pokladnik
+      APP_LOCAL_PASSWORD: demo-heslo-2027
+      APP_LOCAL_READERS: eva@demo.example,jana@demo.example
+      COOKIE_SECURE: "false"
+
+volumes:
+  demo-db:

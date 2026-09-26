@@ -13,6 +13,15 @@ Interná platforma občianskeho združenia FIRST Global Slovakia: aktivity (nár
 - Financie a e-fakturácia: [docs/PLAN.md](docs/PLAN.md)
 - Nasadenie a zálohy: [docs/NASADENIE.md](docs/NASADENIE.md)
 
+Vyskúšať na vlastnom počítači s ukážkovými dátami (Docker Desktop):
+
+```sh
+docker compose -f docker-compose.demo.yml up --build
+# http://localhost:8080  pokladnik / demo-heslo-2027  (alebo eva@demo.example - členka)
+```
+
+Testy:
+
 ```sh
 sh ./gradlew :platform-core:test :platform-web:test
 ```
