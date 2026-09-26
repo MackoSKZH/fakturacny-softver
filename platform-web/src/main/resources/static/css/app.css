@@ -172,3 +172,52 @@ button.link.danger { color: var(--bad); }
 .import textarea { font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: 0.85rem; }
 .history ol { padding-left: 18px; display: flex; flex-direction: column; gap: 8px; }
 .over { color: var(--bad); font-weight: 600; }
+
+/* ---------- FGS HQ: aktivity a ludia ---------- */
+.topbar .brand span { color: var(--accent); }
+.row.between { justify-content: space-between; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; margin: 14px 0; }
+a.activity { display: flex; flex-direction: column; gap: 6px; padding: 16px; border: 1px solid var(--line);
+    border-radius: var(--radius); background: var(--card); color: var(--text); text-decoration: none; }
+a.activity:hover { border-color: var(--accent); }
+a.activity h2 { margin: 0; font-size: 1.1rem; }
+a.activity p { margin: 0; }
+.kind { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); font-weight: 600; }
+.mono { font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; }
+dl.meters { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 6px 0 0; align-items: center; }
+dl.meters dt { color: var(--muted); font-size: 0.85rem; }
+dl.meters dd { margin: 0; display: flex; gap: 8px; align-items: center; font-size: 0.85rem; flex-wrap: wrap; }
+dl.meters progress { width: 110px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin: 14px 0; }
+.kpis > div { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 2px; }
+.kpis strong { font-size: 1.4rem; font-variant-numeric: tabular-nums; }
+.kpis.compact { margin: 0; }
+.roles { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; }
+.role { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.role h3 { margin: 0; font-size: 1rem; }
+.role small { display: block; }
+ul.seats { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+ul.seats li { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+form.inline { display: inline-flex; gap: 4px; align-items: center; }
+form.inline select, form.inline input { width: auto; padding: 4px 6px; }
+input.hours { width: 64px !important; }
+.add-role, .add-task { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line); }
+.task-group h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 14px 0 6px; }
+ul.tasks { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
+ul.tasks li { display: flex; gap: 8px; align-items: center; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+ul.tasks li .title { flex: 1; }
+ul.tasks li .due { font-size: 0.85rem; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+ul.tasks li .who { font-size: 0.8rem; border: 1px solid var(--line); border-radius: 99px; padding: 1px 8px; }
+ul.tasks li.overdue .due { color: var(--bad); font-weight: 600; }
+ul.tasks.done .title { text-decoration: line-through; color: var(--muted); }
+.check-btn { border: 0; background: none; font-size: 1.15rem; cursor: pointer; color: var(--accent); padding: 0 2px; }
+details > summary { cursor: pointer; }
+h2.inline { display: inline; font-size: 1.1rem; }
+label.check { flex-direction: row; align-items: center; gap: 8px; font-weight: 400; }
+label.check input { width: auto; }
+fieldset { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px 14px; }
+fieldset legend { font-size: 0.85rem; font-weight: 600; padding: 0 4px; }
+.role form.inline { flex-wrap: wrap; max-width: 100%; }
+.role form.inline select[name=personId] { flex: 1 1 160px; min-width: 0; max-width: 100%; }

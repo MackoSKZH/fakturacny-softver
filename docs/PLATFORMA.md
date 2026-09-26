@@ -1,0 +1,52 @@
+# Platforma FIRST Global Slovakia - nový rozsah
+
+Stav k 26. 9. 2026. Pivot z "fakturačného softvéru" na operačný systém združenia: aktivity, ľudia, úlohy, financovanie. Faktúry, položky a rozpočty ostávajú ako finančný modul.
+
+## Čo združenie reálne robí (overené)
+
+| Aktivita | Kto ju riadi | Čo z toho vyplýva pre platformu |
+|---|---|---|
+| **FIRST Global Slovensko** - národné kolo pre stredoškolákov (registrácia do 31. 1., kolo koncom apríla), výber reprezentácie | FGS úplne | Plná podpora: tímy, dobrovoľníci, rozhodcovia, harmonogram, výsledky |
+| **FIRST Global Challenge** - svetové finále (2025 Panama, 2026 Incheon) | FIRST Global + FGS za slovenský tím | Cesta: pasy, víza, poistenie, súhlasy rodičov, letenky, preprava robota, rozpočet cesty |
+| **NTE** - New Technology Experience (fáza 1 video + reklama do 3. 8., fáza 2 do 7. 9., prezentácie 7. 10.) | FIRST Global portál | Termíny, úlohy, podklady; odovzdanie ostáva na portáli FG |
+| **FIRST LEGO League Poprad** - regionálne kolo | FLL Slovensko, o. z.; dobrovoľníci; HANDS on TECHNOLOGY má platformu HERO | Miestna logistika a úlohy; oficiálnu registráciu porotcov/rozhodcov **neduplikovať**, overiť s FLL SK, čo je povinné |
+| **Sústredenia** tímu | FGS | Ubytovanie, strava, alergie, dozor, program, rozpočet |
+
+## Stress test nového rozsahu
+
+1. **"Softvér na všetko" je najčastejšia cesta k nedokončenému projektu.** Riešenie: jeden spoločný základ (aktivita, osoba, úloha, peniaze) a moduly nad ním, každý dotiahnutý do konca skôr, než začne ďalší.
+2. **Čo robí Notion lepšie, nestaviame.** Voľné texty a wiki nechajte v Notion alebo Google Docs, platforma na ne odkazuje. Staviame to, čo Notion nevie spoľahlivo: jedna osoba naprieč všetkými akciami, obsadenosť rolí, súhlasy GDPR, prepojenie s peniazmi, potvrdenia pre dobrovoľníkov.
+3. **Maloletí.** Študenti sú prevažne pod 18 rokov:
+   - súhlas so spracovaním údajov do 16 rokov dáva zákonný zástupca (GDPR čl. 8, zákon 18/2018),
+   - fotografie detí = súhlas rodiča,
+   - zmluvu o dobrovoľníckej činnosti s maloletým uzatvára zákonný zástupca a organizátor musí poučiť o rizikách (zákon 406/2011),
+   - alergie a zdravotný stav = osobitná kategória údajov: výslovný súhlas, prístup len organizátorom akcie, zmazať po akcii.
+4. **Doklady na cesty** (čísla pasov) sú citlivé - v platforme len "má platný pas do dátumu X", nie kópie pasov.
+5. **Oficiálne systémy FIRST** (portál FIRST Global, HERO pri FLL, oficiálne hodnotiace nástroje) nenahrádzame, len na ne nadväzujeme.
+
+## Moduly
+
+| Modul | Obsah | Stav |
+|---|---|---|
+| **Aktivity** | typ (národné kolo, sústredenie, FLL turnaj, NTE, cesta na FGC, workshop), dátumy, miesto, stav, rozpočet | v tejto iterácii |
+| **Ľudia** | jedna karta osoby naprieč akciami; roly (dobrovoľník, hodnotiteľ, rozhodca, mentor, študent, rodič, partner, investor, sponzor); súhlasy GDPR a fotografie, zákonný zástupca pri maloletých | v tejto iterácii |
+| **Tím a roly na akcii** | pozície so zmenami (napr. 3 rozhodcovia 9:00-13:00), obsadenosť, pozvaný / potvrdený / odmietol / zúčastnil sa, odpracované hodiny | v tejto iterácii |
+| **Úlohy a checklisty** | úlohy s termínom a zodpovednou osobou, sekcie, šablóny pre každý typ akcie s termínmi relatívnymi k začiatku | v tejto iterácii |
+| **Podklady** | hárky k výzvam, pravidlá, hodnotiace hárky, zmluvy - prílohy k aktivite | ďalšia iterácia |
+| **Financovanie** | cieľ financovania aktivity, podporovatelia (každý môže prispieť - QR platba s VS aktivity), partneri a investori ako pipeline (oslovený -> rokujeme -> zmluva -> zaplatené), plnenie protiplnení (logo na robote = charitatívna reklama) | ďalšia iterácia |
+| **Potvrdenia** | potvrdenie o dobrovoľníckej činnosti (zákon 406/2011) a certifikáty z odpracovaných hodín | ďalšia iterácia |
+| **Verejné prihlášky** | formulár pre dobrovoľníkov a tímy so súhlasmi (alebo Tally, ktoré už máte pripojené) | ďalšia iterácia |
+| **Inventár** | robotické sady, náhradné diely, notebooky, kto čo má požičané | neskôr |
+| Mzdy | **nestavať** - účtovník / certifikovaný softvér | - |
+
+## Ďalšie veci, ktoré treba doplniť (a ľahko sa zabúdajú)
+
+- **Súhlasy rodičov** pred každou akciou s maloletými (spracovanie údajov, fotografie, cesta do zahraničia, zdravotné informácie).
+- **Dozor a pomer dospelí/deti** na sústredeniach a cestách, kontakt na zákonného zástupcu počas akcie.
+- **Cestovné poistenie** a európsky preukaz poistenca, víza a platnosť pasov (6 mesiacov po návrate).
+- **Preprava robota a batérií** (pravidlá leteckých spoločností pre Li-ion, colné doklady mimo EÚ).
+- **Poistenie zodpovednosti** organizátora na národnom kole.
+- **Protiplnenia sponzorom** (logo, zmienky) a ich dokladovanie - podklad pre charitatívnu reklamu.
+- **Hlásenie donorom a grantom** (čo sa z peňazí urobilo) - generované z položiek a aktivít.
+- **Hodnotenie po akcii** (spätná väzba dobrovoľníkov a tímov) a poučenia pre ďalší ročník.
+- **Odovzdávka roka** - nový ročník začína šablónami z minulého, aby sa know-how nestrácalo s odchádzajúcimi členmi.

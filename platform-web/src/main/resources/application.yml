@@ -1,6 +1,6 @@
 spring:
   application:
-    name: ucto-platforma
+    name: fgs-hq
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/ucto}
     username: ${DATABASE_USER:ucto}

@@ -1,4 +1,4 @@
-rootProject.name = 'fakturacny-softver'
+rootProject.name = 'fgs-platform'
 
 include 'platform-core'
 include 'platform-web'

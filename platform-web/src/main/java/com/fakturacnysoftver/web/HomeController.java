@@ -16,7 +16,7 @@ class HomeController {
 
     @GetMapping("/")
     String home() {
-        return "redirect:/faktury";
+        return "redirect:/aktivity";
     }
 
     @GetMapping("/login")

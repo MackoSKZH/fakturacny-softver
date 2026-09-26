@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title=${p.fullName()})}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='ludia')}"></header>
+<main class="wide">
+    <p><a th:href="@{/ludia}">&larr; Ľudia</a></p>
+    <div class="page-head">
+        <div>
+            <h1 th:text="${p.fullName()}"></h1>
+            <span class="chips"><span class="chip" th:each="l : ${p.roleLabels()}" th:text="${l}"></span></span>
+        </div>
+        <div class="kpis compact">
+            <div><small>Odpracované hodiny</small><strong th:text="${hours}"></strong><small>na akciách, kde sa zúčastnil(a)</small></div>
+        </div>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+    <p class="warning" th:unless="${p.consentIssue() == null}" th:text="${p.consentIssue()}"></p>
+
+    <section class="card">
+        <h2>Účasť na akciách</h2>
+        <p class="empty" th:if="${participation.isEmpty()}">Zatiaľ na žiadnej akcii.</p>
+        <table th:unless="${participation.isEmpty()}">
+            <thead><tr><th>Aktivita</th><th>Rola</th><th>Kedy</th><th>Stav</th><th class="num">Hodiny</th></tr></thead>
+            <tbody>
+            <tr th:each="x : ${participation}">
+                <td><a th:href="@{/aktivity/{id}(id=${x.projectId()})}" th:text="${x.activityName()}"></a></td>
+                <td th:text="${x.roleName()}"></td>
+                <td th:text="${x.startsAt() == null} ? '-' : ${#temporals.format(x.startsAt(), 'd. M. yyyy HH:mm')}"></td>
+                <td th:text="${x.status()}"></td>
+                <td class="num" th:text="${x.hours()}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card">
+        <h2>Údaje a súhlasy</h2>
+        <form th:action="@{/ludia/{id}(id=${p.id()})}" method="post" class="grid">
+            <th:block th:replace="~{people/form-fields :: fields(${p}, ${roles})}"></th:block>
+            <div class="span2"><button type="submit" class="primary">Uložiť</button></div>
+        </form>
+    </section>
+</main>
+</body>
+</html>

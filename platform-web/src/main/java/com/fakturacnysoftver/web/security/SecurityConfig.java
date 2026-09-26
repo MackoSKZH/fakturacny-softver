@@ -37,6 +37,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/**").hasRole(EDITOR)
                 .requestMatchers(HttpMethod.DELETE, "/**").hasRole(EDITOR)
                 .requestMatchers("/faktury/nova", "/faktury/*/dobropis").hasRole(EDITOR)
+                // Adresar ludi obsahuje kontakty na maloletych a ich zastupcov - len editori (minimalizacia GDPR).
+                .requestMatchers("/ludia", "/ludia/**").hasRole(EDITOR)
                 .anyRequest().authenticated());
 
         if (props.mode() == AppSecurityProperties.Mode.GOOGLE) {

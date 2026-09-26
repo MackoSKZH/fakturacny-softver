@@ -653,5 +653,9 @@
         $('bulk-clear').addEventListener('click', function () { state.selected.clear(); render(); });
     }
 
+    // odkaz z aktivity: /polozky?projekt=ID predvyplni filter
+    var preset = new URLSearchParams(window.location.search).get('projekt');
+    if (preset) { $('f-project').value = preset; }
+
     load().catch(function (err) { toast(err.errors || ['Položky sa nepodarilo načítať.'], true); });
 })();
