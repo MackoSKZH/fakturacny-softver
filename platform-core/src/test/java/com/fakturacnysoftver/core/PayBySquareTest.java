@@ -52,6 +52,17 @@ class PayBySquareTest {
         assertEquals("10.00", payload.split("\t", -1)[3]);
     }
 
+    @Test
+    void donationWithoutAmountLeavesAmountForPayer() throws Exception {
+        PayBySquare.Payment payment = new PayBySquare.Payment(null, "EUR", null, "800001", null, null,
+                "Dar FGS-2027", TestInvoices.VALID_SK_IBAN, null, "FIRST Global Slovakia", null, null);
+
+        String[] fields = decode(PayBySquare.encode(payment)).split("\t", -1);
+
+        assertEquals("", fields[3], "sumu zadá darca v banke");
+        assertEquals("800001", fields[6]);
+    }
+
     /** Dekoder podla specifikacie - rovnaky postup ako bankova aplikacia. */
     static String decode(String code) throws Exception {
         String alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUV";

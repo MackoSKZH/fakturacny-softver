@@ -6,6 +6,7 @@ import com.fakturacnysoftver.web.asset.AssetRepository;
 import com.fakturacnysoftver.web.audit.AuditLog;
 import com.fakturacnysoftver.web.people.Person;
 import com.fakturacnysoftver.web.people.PersonRepository;
+import com.fakturacnysoftver.web.people.VolunteerConfirmation;
 import com.fakturacnysoftver.web.security.CurrentUser;
 
 import org.springframework.http.CacheControl;
@@ -46,11 +47,14 @@ class ScheduleController {
     private final PersonRepository people;
     private final AuditLog audit;
     private final AssetRepository assets;
+    private final VolunteerConfirmation confirmations;
     private final Clock clock;
 
     ScheduleController(ScheduleService service, ScheduleRepository repo, ActivityRepository activities,
-                       PersonRepository people, AuditLog audit, AssetRepository assets, Clock clock) {
+                       PersonRepository people, AuditLog audit, AssetRepository assets,
+                       VolunteerConfirmation confirmations, Clock clock) {
         this.assets = assets;
+        this.confirmations = confirmations;
         this.service = service;
         this.repo = repo;
         this.activities = activities;
@@ -206,6 +210,7 @@ class ScheduleController {
             model.addAttribute("pastCount", entries.stream().filter(e -> e.day().isBefore(today)).count());
             this.service.calendarToken(me.id()).ifPresent(t -> model.addAllAttributes(ScheduleService.feedUrls(t)));
             model.addAttribute("lent", this.assets.lentTo(me.id()));
+            model.addAttribute("confirmationYears", this.confirmations.years(me.id()));
             model.addAttribute("today", today);
         }
         return "schedule/mine";
@@ -222,6 +227,18 @@ class ScheduleController {
     ResponseEntity<byte[]> mineIcs(Authentication auth) {
         Person me = this.me(auth);
         return ics("FGS - " + me.fullName(), this.repo.ofPerson(me.id(), null), "moj-program.ics", true);
+    }
+
+    /** Dobrovolnik si potvrdenie stiahne sam - podpis a peciatku doplni statutar. */
+    @GetMapping("/moj-program/potvrdenie.pdf")
+    ResponseEntity<byte[]> myConfirmation(@RequestParam(required = false) Integer rok, Authentication auth) {
+        Person me = this.me(auth);
+        try {
+            return VolunteerConfirmation.response(this.confirmations.pdf(me.id(), rok, null),
+                    "potvrdenie-dobrovolnictvo" + (rok == null ? "" : "-" + rok));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
     }
 
     @PostMapping("/moj-program/kalendar")

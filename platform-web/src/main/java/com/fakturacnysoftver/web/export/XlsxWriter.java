@@ -127,7 +127,7 @@ final class XlsxWriter {
         }
         int lastData = r;
         r++;
-        for (String note : t.notes()) {
+        for (String note : java.util.stream.Stream.concat(t.preamble().stream(), t.notes().stream()).toList()) {
             r++;
             sb.append("<row r=\"").append(r).append("\">");
             cell(sb, "A" + r, note, 0);

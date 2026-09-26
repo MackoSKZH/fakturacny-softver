@@ -37,7 +37,9 @@
 
     <!-- TIM -->
     <section class="card" id="tim">
-        <div class="page-head"><h2>Tím a roly</h2></div>
+        <div class="page-head"><h2>Tím a roly</h2>
+            <a class="button" th:if="${canEdit and attendees > 0}" th:href="@{/aktivity/{id}/potvrdenia.zip(id=${a.id()})}"
+               th:text="'Potvrdenia dobrovoľníkom (' + ${attendees} + ', ZIP)'"></a></div>
         <p class="empty" th:if="${roles.isEmpty()}">Zatiaľ žiadne roly. Pridajte napríklad rozhodcov, hodnotiteľov NTE alebo registráciu.</p>
         <div class="roles">
             <article class="role" th:each="r : ${roles}">
@@ -145,6 +147,28 @@
             <datalist id="sections"><option th:each="entry : ${openTasks}" th:value="${entry.key}"></option></datalist>
         </form>
     </section>
+
+    <section class="card" id="podpora" th:if="${canEdit}">
+        <div class="page-head">
+            <h2>Podpora od verejnosti</h2>
+            <span class="badge" th:classappend="${donation.enabled()} ? 'ok'" th:text="${donation.enabled()} ? 'verejná stránka zapnutá' : 'vypnutá'"></span>
+        </div>
+        <p class="muted">Ktokoľvek môže prispieť QR platbou z banky na účet združenia s variabilným symbolom
+            <strong class="mono" th:text="${donation.variableSymbol()}"></strong>. Pri zápise príjmu z výpisu vložte tento VS do poľa
+            „Doklad“ - suma sa započíta do zbierky.</p>
+        <p th:if="${donation.enabled()}">Odkaz na zdieľanie: <a th:href="${donationUrl}" th:text="${donationUrl}"></a></p>
+        <p th:if="${donation.collected().signum() > 0}" th:text="'Vyzbierané: ' + ${#numbers.formatDecimal(donation.collected(), 1, 'WHITESPACE', 2, 'COMMA')} + ' € (' + ${donation.donors()} + ' platieb)'"></p>
+        <form th:action="@{/aktivity/{id}/podpora(id=${a.id()})}" method="post" class="grid">
+            <label class="check span2"><input type="checkbox" name="enabled" value="true" th:checked="${donation.enabled()}"> zverejniť stránku /podpora/<span th:text="${a.code()}"></span></label>
+            <label class="span2">Text pre verejnosť <textarea name="text" rows="3" maxlength="1500" th:text="${donation.text()}"
+                placeholder="Na čo peniaze pôjdu - napr. letenky pre 5 študentov na svetové finále v Singapure."></textarea></label>
+            <label>Cieľ zbierky (€, nepovinné) <input name="goal" inputmode="decimal" th:value="${donation.goal()}"></label>
+            <p class="muted span2">Na verejnej stránke je len názov aktivity, tento text, cieľ s vyzbieranou sumou a údaje na platbu. Nič z interných dát.</p>
+            <div class="span2"><button type="submit" class="primary">Uložiť</button></div>
+        </form>
+    </section>
+
+    <section th:replace="~{fragments :: attachments(${attachments}, ${uploadUrl}, false)}"></section>
 
     <!-- UPRAVA -->
     <details class="card" th:if="${canEdit}">

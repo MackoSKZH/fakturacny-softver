@@ -18,7 +18,14 @@
     <p class="warning" th:unless="${p.consentIssue() == null}" th:text="${p.consentIssue()}"></p>
 
     <section class="card">
-        <h2>Účasť na akciách</h2>
+        <div class="page-head">
+            <h2>Účasť na akciách</h2>
+            <div class="row" th:unless="${confirmationYears.isEmpty()}">
+                <span class="muted">Potvrdenie o dobrovoľníctve:</span>
+                <a class="button" th:each="y : ${confirmationYears}" th:href="@{/ludia/{id}/potvrdenie.pdf(id=${p.id()},rok=${y})}" th:text="${y}"></a>
+            </div>
+        </div>
+        <p class="muted" th:if="${confirmationYears.isEmpty() and !participation.isEmpty()}">Potvrdenie o dobrovoľníckej činnosti sa dá vydať, keď má účasť stav „zúčastnil sa“ a zapísané hodiny.</p>
         <p class="empty" th:if="${participation.isEmpty()}">Zatiaľ na žiadnej akcii.</p>
         <table th:unless="${participation.isEmpty()}">
             <thead><tr><th>Aktivita</th><th>Rola</th><th>Kedy</th><th>Stav</th><th class="num">Hodiny</th></tr></thead>

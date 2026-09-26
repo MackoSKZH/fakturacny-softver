@@ -1,10 +1,16 @@
 package com.fakturacnysoftver.web.activity;
 
+import com.fakturacnysoftver.web.attachment.AttachmentRepository;
 import com.fakturacnysoftver.web.audit.AuditLog;
+import com.fakturacnysoftver.web.donation.DonationRepository;
 import com.fakturacnysoftver.web.people.PersonRepository;
+import com.fakturacnysoftver.web.people.VolunteerConfirmation;
 import com.fakturacnysoftver.web.security.CurrentUser;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -37,10 +44,17 @@ class ActivityController {
     private final TaskRepository tasks;
     private final PersonRepository people;
     private final AuditLog audit;
+    private final AttachmentRepository attachments;
+    private final DonationRepository donations;
+    private final VolunteerConfirmation confirmations;
     private final Clock clock;
 
     ActivityController(ActivityRepository activities, StaffingRepository staffing, TaskRepository tasks,
-                       PersonRepository people, AuditLog audit, Clock clock) {
+                       PersonRepository people, AuditLog audit, AttachmentRepository attachments,
+                       DonationRepository donations, VolunteerConfirmation confirmations, Clock clock) {
+        this.confirmations = confirmations;
+        this.attachments = attachments;
+        this.donations = donations;
         this.activities = activities;
         this.staffing = staffing;
         this.tasks = tasks;
@@ -92,7 +106,7 @@ class ActivityController {
     }
 
     @GetMapping("/{id}")
-    String detail(@PathVariable long id, Model model) {
+    String detail(@PathVariable long id, Model model, Authentication auth) {
         Activity a = this.activities.findById(id, this.today()).orElseThrow(NotFound::new);
         List<TaskRepository.Task> all = this.tasks.tasksOf(id);
         Map<String, List<TaskRepository.Task>> bySection = new LinkedHashMap<>();
@@ -106,6 +120,14 @@ class ActivityController {
         model.addAttribute("statuses", STATUSES);
         model.addAttribute("today", this.today());
         model.addAttribute("templateSize", this.tasks.templateSize(a.kind()));
+        model.addAttribute("attendees", this.staffing.rolesOf(id).stream().flatMap(r -> r.seats().stream())
+                .filter(x -> x.status().equals("ZUCASTNIL_SA")).map(StaffingRepository.Seat::personId).distinct().count());
+        model.addAttribute("attachments", this.attachments.visible(AttachmentRepository.Owner.PROJECT, id,
+                CurrentUser.isEditor(auth)));
+        model.addAttribute("uploadUrl", "/aktivity/" + id + "/prilohy");
+        model.addAttribute("donation", this.donations.of(id).orElseThrow());
+        model.addAttribute("donationUrl", ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/podpora/" + a.code()).toUriString());
         return "activities/detail";
     }
 
@@ -135,6 +157,20 @@ class ActivityController {
         redirect.addFlashAttribute("message", created == 0 ? "Všetky úlohy zo šablóny už existujú."
                 : "Pridaných " + created + " úloh zo šablóny" + (a.startsOn() == null ? " (bez termínov - doplňte dátum začiatku)." : "."));
         return "redirect:/aktivity/" + id + "#ulohy";
+    }
+
+    /** Potvrdenia o dobrovolnickej cinnosti pre vsetkych, co sa zucastnili (stav "zucastnil sa"). */
+    @GetMapping("/{id}/potvrdenia.zip")
+    ResponseEntity<byte[]> confirmations(@PathVariable long id, Authentication auth) {
+        Activity a = this.activities.findById(id, this.today()).orElseThrow(NotFound::new);
+        byte[] zip = this.confirmations.zipForActivity(id);
+        if (zip == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nikto nemá stav „zúčastnil sa“.");
+        }
+        this.audit.record(CurrentUser.name(auth), "POTVRDENIE", "aktivita", id, "všetci zúčastnení");
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"potvrdenia-" + a.code() + ".zip\"")
+                .contentType(MediaType.parseMediaType("application/zip")).body(zip);
     }
 
     // ---------- roly a obsadenie ----------
@@ -193,8 +229,12 @@ class ActivityController {
         } catch (NumberFormatException e) {
             h = BigDecimal.valueOf(-1);
         }
+        LocalDate day = this.staffing.assignmentDay(id, assignmentId).orElse(null);
         if (!allowed.contains(status) || (h != null && (h.signum() < 0 || h.compareTo(BigDecimal.valueOf(200)) > 0))) {
             redirect.addFlashAttribute("errors", List.of("Neplatný stav alebo počet hodín (0 až 200)."));
+        } else if ("ZUCASTNIL_SA".equals(status) && day != null && day.isAfter(this.today())) {
+            redirect.addFlashAttribute("errors", List.of("Účasť sa dá potvrdiť až v deň akcie alebo po nej ("
+                    + day.getDayOfMonth() + ". " + day.getMonthValue() + ". " + day.getYear() + ")."));
         } else {
             this.staffing.update(id, assignmentId, status, h);
         }

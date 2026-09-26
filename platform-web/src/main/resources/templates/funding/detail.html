@@ -94,6 +94,8 @@
         </details>
     </section>
 
+    <section th:replace="~{fragments :: attachments(${attachments}, ${uploadUrl}, false)}"></section>
+
     <details class="card" th:if="${canEdit}">
         <summary><h2 class="inline">Upraviť dohodu</h2></summary>
         <form th:action="@{/financovanie/{id}(id=${d.id()})}" method="post" class="grid">

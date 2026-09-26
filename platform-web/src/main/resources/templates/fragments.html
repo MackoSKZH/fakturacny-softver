@@ -35,6 +35,32 @@
     <a class="button" th:href="@{${base + '.pdf' + query}}" title="Na tlač a pre partnerov">PDF</a>
     <a class="button link" th:href="@{${base + '.csv' + query}}" title="Na import do iných nástrojov">CSV</a>
 </span>
+<section th:fragment="attachments(list, uploadUrl, restricted)" class="card" id="podklady">
+    <h2>Podklady</h2>
+    <p class="empty" th:if="${list.isEmpty()}">Zatiaľ žiadne súbory.</p>
+    <ul class="files" th:unless="${list.isEmpty()}">
+        <li th:each="f : ${list}">
+            <a th:href="@{/prilohy/{id}(id=${f.id()})}" th:text="${f.fileName()}"></a>
+            <span class="chip" th:text="${f.categoryLabel()}"></span>
+            <span class="badge" th:if="${f.editorsOnly()}">len editori</span>
+            <small class="muted" th:text="${f.sizeLabel()} + ' · ' + ${f.uploadedBy()} + ' · ' + ${#temporals.format(f.uploadedAt(), 'd. M. yyyy')}"></small>
+            <form th:if="${canEdit}" class="inline" th:action="@{/prilohy/{id}/zmazat(id=${f.id()})}" method="post">
+                <button type="submit" class="link danger" aria-label="Zmazať súbor">×</button>
+            </form>
+            <div class="note muted" th:if="${f.note() != null}" th:text="${f.note()}"></div>
+        </li>
+    </ul>
+    <form th:if="${canEdit}" th:action="@{${uploadUrl}}" method="post" enctype="multipart/form-data" class="grid add-task">
+        <label class="span2">Súbor (najviac 10 MB) <input type="file" name="file" required
+               accept=".pdf,.docx,.xlsx,.pptx,.doc,.xls,.odt,.ods,.png,.jpg,.jpeg,.zip,.txt,.csv"></label>
+        <label>Druh <select name="category">
+            <option th:each="c : ${attachmentCategories}" th:value="${c.name()}" th:text="${c.label()}"></option>
+        </select></label>
+        <label class="check" th:unless="${restricted}"><input type="checkbox" name="editorsOnly" value="true"> len pre editorov</label>
+        <label class="span2">Poznámka <input name="note" placeholder="verzia, odkaz na Drive s videom..."></label>
+        <div><button type="submit" class="primary">Nahrať</button></div>
+    </form>
+</section>
 <div th:fragment="messages">
     <p class="flash" th:if="${message}" th:text="${message}">Uložené.</p>
     <ul class="errors" th:if="${errors != null and !errors.isEmpty()}">

@@ -1,5 +1,6 @@
 package com.fakturacnysoftver.web.partner;
 
+import com.fakturacnysoftver.web.attachment.AttachmentRepository;
 import com.fakturacnysoftver.web.customer.CustomerRepository;
 import com.fakturacnysoftver.web.people.PersonRepository;
 import com.fakturacnysoftver.web.project.ProjectRepository;
@@ -27,9 +28,11 @@ class PartnerController {
     private final PersonRepository people;
     private final CustomerRepository customers;
     private final ProjectRepository projects;
+    private final AttachmentRepository attachments;
 
     PartnerController(PartnerService service, PartnerRepository repo, PersonRepository people,
-                      CustomerRepository customers, ProjectRepository projects) {
+                      CustomerRepository customers, ProjectRepository projects, AttachmentRepository attachments) {
+        this.attachments = attachments;
         this.service = service;
         this.repo = repo;
         this.people = people;
@@ -78,6 +81,8 @@ class PartnerController {
         model.addAttribute("stages", DealStage.values());
         model.addAttribute("projects", this.projects.findAll());
         model.addAttribute("kinds", PartnerKind.values());
+        model.addAttribute("attachments", this.attachments.of(AttachmentRepository.Owner.PARTNER, id));
+        model.addAttribute("uploadUrl", "/partneri/" + id + "/prilohy");
         this.formOptions(model);
         return "partners/detail";
     }

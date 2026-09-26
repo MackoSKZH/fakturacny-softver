@@ -53,6 +53,8 @@ public final class Table {
     private final List<String> header;
     private final List<List<Object>> rows = new ArrayList<>();
     private final List<String> notes = new ArrayList<>();
+    private final List<String> preamble = new ArrayList<>();
+    private boolean portrait;
 
     public Table(String title, String... header) {
         this.title = title;
@@ -78,6 +80,26 @@ public final class Table {
     public Table note(String note) {
         this.notes.add(note);
         return this;
+    }
+
+    /** Text nad tabulkou (napr. identifikacia stran pri potvrdeni). V Exceli ide medzi poznamky. */
+    public Table preamble(String paragraph) {
+        this.preamble.add(paragraph);
+        return this;
+    }
+
+    public List<String> preamble() {
+        return this.preamble;
+    }
+
+    /** PDF na vysku - pre listiny (potvrdenia), nie siroke prehlady. */
+    public Table portrait() {
+        this.portrait = true;
+        return this;
+    }
+
+    public boolean isPortrait() {
+        return this.portrait;
     }
 
     public List<String> notes() {

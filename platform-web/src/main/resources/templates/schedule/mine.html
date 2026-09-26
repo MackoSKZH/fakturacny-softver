@@ -47,6 +47,12 @@
         </ul>
     </section>
 
+        <section class="card" th:unless="${confirmationYears.isEmpty()}">
+            <h2>Potvrdenie o dobrovoľníckej činnosti</h2>
+            <p class="muted">Na školu, do životopisu alebo na prijímačky. Podpis a pečiatku doplní štatutár združenia.</p>
+            <p class="row"><a class="button" th:each="y : ${confirmationYears}" th:href="@{/moj-program/potvrdenie.pdf(rok=${y})}" th:text="'Rok ' + ${y} + ' (PDF)'"></a></p>
+        </section>
+
         <section class="card" id="kalendar">
             <h2>Program v mojom kalendári</h2>
             <th:block th:if="${feedUrl == null}">

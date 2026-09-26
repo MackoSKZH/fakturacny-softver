@@ -92,6 +92,15 @@ public class StaffingRepository {
                 .query(Long.class).optional();
     }
 
+    /** Kedy sa smena/akcia zacina - "zucastnil sa" sa neda zapisat vopred. */
+    public Optional<java.time.LocalDate> assignmentDay(long projectId, long assignmentId) {
+        return this.jdbc.sql("""
+                        SELECT COALESCE(r.starts_at::date, p.starts_on) FROM assignment a
+                        JOIN activity_role r ON r.id = a.role_id JOIN project p ON p.id = r.project_id
+                        WHERE a.id = :a AND r.project_id = :p""")
+                .param("a", assignmentId).param("p", projectId).query(java.time.LocalDate.class).optional();
+    }
+
     public boolean assign(long roleId, long personId) {
         return this.jdbc.sql("""
                         INSERT INTO assignment (role_id, person_id) VALUES (:r, :person)

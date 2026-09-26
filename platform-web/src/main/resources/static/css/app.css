@@ -245,3 +245,15 @@ ul.timeline .note { white-space: pre-line; margin-top: 2px; }
 strong.small { font-size: 1rem; }
 td.num, th.num { white-space: nowrap; }
 tr.overdue td { color: var(--bad); }
+ul.files { list-style: none; padding: 0; margin: 0 0 8px; display: flex; flex-direction: column; gap: 8px; }
+ul.files li { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+ul.files .note { flex-basis: 100%; }
+main.narrow { max-width: 760px; margin: 0 auto; padding: 24px 16px; }
+p.lead { font-size: 1.1rem; white-space: pre-line; }
+.donate { display: grid; grid-template-columns: minmax(180px, 260px) 1fr; gap: 20px; align-items: start; }
+.donate .qr svg { width: 100%; height: auto; display: block; }
+dl.pay { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 12px 0 0; }
+dl.pay dt { color: var(--muted); }
+dl.pay dd { margin: 0; }
+.muted.small, p.small { font-size: 0.85rem; }
+@media (max-width: 560px) { .donate { grid-template-columns: 1fr; } .donate .qr { max-width: 260px; } }

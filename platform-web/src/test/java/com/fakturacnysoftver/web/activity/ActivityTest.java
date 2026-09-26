@@ -19,6 +19,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class ActivityTest extends IntegrationTest {
@@ -85,7 +86,10 @@ class ActivityTest extends IntegrationTest {
         this.mvc.perform(post("/aktivity/" + id + "/roly/" + roleId + "/priradit").with(csrf()).param("personId", String.valueOf(minor)));
         StaffingRepository.Role role = this.staffing.rolesOf(id).get(0);
         this.mvc.perform(post("/aktivity/" + id + "/obsadenie/" + role.seats().get(0).assignmentId()).with(csrf())
-                .param("status", "ZUCASTNIL_SA").param("hours", "4,5"));
+                        .param("status", "ZUCASTNIL_SA").param("hours", "4,5"))
+                .andExpect(flash().attribute("errors", List.of("Účasť sa dá potvrdiť až v deň akcie alebo po nej (24. 4. 2027).")));
+        this.mvc.perform(post("/aktivity/" + id + "/obsadenie/" + role.seats().get(0).assignmentId()).with(csrf())
+                .param("status", "POTVRDENY").param("hours", "4,5"));
 
         Activity a = this.activities.findById(id, LocalDate.of(2027, 1, 15)).orElseThrow();
         assertEquals(2, a.seatsNeeded());

@@ -6,6 +6,7 @@ import com.fakturacnysoftver.web.schedule.ScheduleService;
 import com.fakturacnysoftver.web.security.CurrentUser;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -30,11 +31,13 @@ class PeopleController {
     private final PersonRepository people;
     private final ScheduleService schedule;
     private final AssetRepository assets;
+    private final VolunteerConfirmation confirmations;
     private final AuditLog audit;
     private final Clock clock;
 
-    PeopleController(PersonRepository people, ScheduleService schedule, AssetRepository assets, AuditLog audit,
-                     Clock clock) {
+    PeopleController(PersonRepository people, ScheduleService schedule, AssetRepository assets,
+                     VolunteerConfirmation confirmations, AuditLog audit, Clock clock) {
+        this.confirmations = confirmations;
         this.people = people;
         this.schedule = schedule;
         this.assets = assets;
@@ -93,6 +96,7 @@ class PeopleController {
         model.addAttribute("hours", this.people.volunteerHours(id));
         this.schedule.calendarToken(id).ifPresent(t -> model.addAllAttributes(ScheduleService.feedUrls(t)));
         model.addAttribute("lent", this.assets.lentTo(id));
+        model.addAttribute("confirmationYears", this.confirmations.years(id));
         model.addAttribute("today", LocalDate.now(this.clock));
         return "people/detail";
     }
@@ -155,6 +159,21 @@ class PeopleController {
 
     private static String t(String s) {
         return s == null || s.isBlank() ? null : s.trim();
+    }
+
+    /** Potvrdenie o dobrovolnickej cinnosti za rok (alebo za vsetky roky). */
+    @GetMapping("/{id}/potvrdenie.pdf")
+    ResponseEntity<byte[]> confirmation(@PathVariable long id, @RequestParam(required = false) Integer rok,
+                                        Authentication auth) {
+        Person p = this.people.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        byte[] pdf;
+        try {
+            pdf = this.confirmations.pdf(id, rok, null);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
+        this.audit.record(CurrentUser.name(auth), "POTVRDENIE", "osoba", id, rok == null ? "všetky roky" : "rok " + rok);
+        return VolunteerConfirmation.response(pdf, "potvrdenie-" + VolunteerConfirmation.fileSafe(p.fullName()) + (rok == null ? "" : "-" + rok));
     }
 
     private static String nz(String s) {

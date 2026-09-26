@@ -95,6 +95,8 @@
         </table>
     </section>
 
+    <section th:replace="~{fragments :: attachments(${attachments}, ${uploadUrl}, true)}"></section>
+
     <details class="card">
         <summary><h2 class="inline">Upraviť údaje partnera</h2></summary>
         <form th:action="@{/partneri/{id}(id=${p.id()})}" method="post" class="grid">

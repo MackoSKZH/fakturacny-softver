@@ -83,7 +83,7 @@ public final class PayBySquare {
                 "",                                   // ID dokladu
                 "1",                                  // pocet platieb
                 "1",                                  // typ: platobny prikaz
-                p.amount().setScale(2, RoundingMode.HALF_UP).toPlainString(),
+                p.amount() == null ? "" : p.amount().setScale(2, RoundingMode.HALF_UP).toPlainString(),
                 clean(p.currency()),
                 p.dueDate() == null ? "" : p.dueDate().format(DUE_DATE),
                 clean(p.variableSymbol()),

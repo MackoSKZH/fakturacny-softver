@@ -1,6 +1,6 @@
 # FIRST Global Slovakia HQ
 
-Interná platforma občianskeho združenia FIRST Global Slovakia: aktivity (národné kolo, cesta na FGC, NTE, sústredenia, FLL turnaje), ľudia a ich roly, harmonogramy a osobné kalendáre, dochádzka platených ľudí, partneri, financovanie a granty, majetok a výpožičky, úlohy a checklisty, exporty do Excelu a PDF, rozpočty, položky, faktúry a e-faktúry (Peppol, povinné od 1. 1. 2027).
+Interná platforma občianskeho združenia FIRST Global Slovakia: aktivity (národné kolo, cesta na FGC, NTE, sústredenia, FLL turnaje), ľudia a ich roly, harmonogramy a osobné kalendáre, dochádzka platených ľudí, partneri, financovanie a granty, majetok a výpožičky, podklady, verejné príspevky cez QR, potvrdenia dobrovoľníkom, úlohy a checklisty, exporty do Excelu a PDF, rozpočty, položky, faktúry a e-faktúry (Peppol, povinné od 1. 1. 2027).
 
 | Modul | Čo robí |
 |---|---|

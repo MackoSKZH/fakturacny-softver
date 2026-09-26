@@ -12,9 +12,18 @@ spring:
   mvc:
     format:
       date: iso
+  servlet:
+    multipart:
+      # Prilohy maju limit 10 MB v AttachmentService (s peknou hlaskou). Tu je rezerva, aby sa subor 10-50 MB
+      # vobec nacital a pouzivatel dostal vysvetlenie; nad 50 MB ukaze Spring stranku error/413.
+      max-file-size: 50MB
+      max-request-size: 51MB
 
 server:
   forward-headers-strategy: framework
+  tomcat:
+    # pri prilis velkom subore dorucit peknu chybu namiesto zhodeneho spojenia
+    max-swallow-size: 60MB
   servlet:
     session:
       timeout: 8h

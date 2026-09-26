@@ -35,16 +35,20 @@ Stav k 26. 9. 2026. Pivot z "fakturačného softvéru" na operačný systém zdr
 | **Dochádzka** | zmluvy platených ľudí (DoVP, DoPČ, DoBPŠ, pracovný pomer, živnosť), náplň práce, hodinovka, register hodín so zákonnými limitmi, mesačné uzavretie, výkaz s podpismi, „Moja dochádzka“ | hotové |
 | **Harmonogram** | body programu s vlastníkom a tagmi „pre koho“ (roly, „všetci“), smeny z rolí, filter podľa roly / osoby / zodpovedného, osobný program každého člena, odber kalendára cez tajný odkaz (Google, Outlook, iPhone), rozpis pre každého s e-mailom | hotové |
 | **Exporty** | všetko v Exceli (.xlsx so skutočnými číslami a dátumami), PDF (na tlač, strany, podpisy) a CSV; centrálna stránka a ZIP so všetkým; hromadné exporty len pre editorov a s auditom | hotové |
-| **Podklady** | hárky k výzvam, pravidlá, hodnotiace hárky, zmluvy - prílohy k aktivite | ďalšia iterácia |
+| **Podklady** | súbory k aktivite, partnerovi a dohode (hárky k výzvam, pravidlá, hodnotiace hárky, zmluvy, doklady, fotky), do 10 MB, typ overený podľa obsahu, zmluvy a súbory partnerov len pre editorov, sťahovanie vždy ako príloha | hotové |
 | **Partneri** | karta partnera: kontakty, kto vzťah vedie, tagy, prepojenie na odberateľa pre faktúry, história komunikácie, upozornenie na partnera bez kontaktu 4 mesiace (len editori) | hotové |
 | **Financovanie a granty** | dohody (dar, reklama, grant, vecné plnenie, investícia do NTE startupu) po aktivitách, pipeline oslovený -> rokujeme -> dohodnuté -> zaplatené, protiplnenia s termínmi, prepojenie na položky (príjmy aj čerpanie grantu cez históriu položiek), kontrola oprávneného obdobia a termínu vyúčtovania, vyúčtovanie grantu v Exceli/PDF s podpismi, krytie rozpočtu aktivít | hotové |
 | **Majetok** | inventárne čísla FGS-RRRR-NNN, doklad o kúpe, grant a „udržať do“, výpožičky ľuďom (jedna naraz, termín vrátenia), oprava, vyradenie s dôvodom (nie pred koncom udržateľnosti grantu), upozornenie na majetok nad 1 700 € | hotové |
-| **Príspevky od verejnosti** | QR platba (PAY by square) s VS aktivity, aby mohol prispieť ktokoľvek | ďalšia iterácia |
-| **Potvrdenia** | potvrdenie o dobrovoľníckej činnosti (zákon 406/2011) a certifikáty z odpracovaných hodín | ďalšia iterácia |
+| **Príspevky od verejnosti** | verejná stránka /podpora/KÓD (zapína editor pri každej aktivite), QR platba PAY by square s VS aktivity (800000 + id), voliteľná suma, cieľ zbierky a vyzbierané z príjmov s týmto VS v poli „Doklad“; žiadne interné dáta | hotové |
+| **Potvrdenia** | potvrdenie o výkone dobrovoľníckej činnosti (zákon 406/2011) za rok pre osobu, sám si ho stiahne aj dobrovoľník, ZIP pre všetkých zúčastnených po akcii; len akcie, ktoré už prebehli | hotové |
 | **Verejné prihlášky** | formulár pre dobrovoľníkov a tímy so súhlasmi (alebo Tally, ktoré už máte pripojené) | ďalšia iterácia |
 | Mzdy | **nestavať** - účtovník / certifikovaný softvér | - |
 
 ## Ďalšie veci, ktoré treba doplniť (a ľahko sa zabúdajú)
+
+- **2 % / 3 % z dane** - registrácia v Notárskom centrálnom registri do 31. 1., kampaň pre rodičov a partnerov vo februári až apríli. Je to najlacnejší zdroj peňazí pre OZ.
+- **Párovanie platieb podľa VS z bankového výpisu** - dnes sa VS daru zapisuje ručne do poľa „Doklad“. Import výpisu (CSV/XML banky) s automatickým priradením k aktivite a faktúre ušetrí najviac ručnej práce.
+- **Zmluva o dobrovoľníckej činnosti** - generovanie zo šablóny (pri maloletom podpisuje zákonný zástupca) a evidencia, kto ju má podpísanú.
 
 - **Súhlasy rodičov** pred každou akciou s maloletými (spracovanie údajov, fotografie, cesta do zahraničia, zdravotné informácie).
 - **Dozor a pomer dospelí/deti** na sústredeniach a cestách, kontakt na zákonného zástupcu počas akcie.

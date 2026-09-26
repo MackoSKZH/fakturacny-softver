@@ -16,7 +16,7 @@ import java.util.List;
 
 /** Tabulka do PDF: A4 na sirku, zalamovanie textu v bunkach, hlavicka na kazdej strane, "strana X / Y". */
 final class PdfTableWriter {
-    private static final PDRectangle PAGE = new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth());
+    private static final PDRectangle LANDSCAPE = new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth());
     private static final float MARGIN = 28;
     private static final float SIZE = 8;
     private static final float LEADING = 10;
@@ -58,10 +58,12 @@ final class PdfTableWriter {
         private final boolean[] numeric;
         private PDPageContentStream cs;
         private float y;
+        private final PDRectangle page;
 
         Layout(PDDocument doc, Table t, PDType0Font regular, PDType0Font bold) throws IOException {
             this.doc = doc;
             this.t = t;
+            this.page = t.isPortrait() ? PDRectangle.A4 : LANDSCAPE;
             this.regular = regular;
             this.bold = bold;
             int n = t.header().size();
@@ -72,7 +74,7 @@ final class PdfTableWriter {
                         .allMatch(r -> r.get(col) == null || r.get(col) instanceof BigDecimal || r.get(col) instanceof Number)
                         && t.rows().stream().anyMatch(r -> r.get(col) != null);
             }
-            this.widths = this.columnWidths(PAGE.getWidth() - 2 * MARGIN);
+            this.widths = this.columnWidths(this.page.getWidth() - 2 * MARGIN);
         }
 
         /**
@@ -154,7 +156,7 @@ final class PdfTableWriter {
                 }
                 if (shade) {
                     this.cs.setNonStrokingColor(0.965f);
-                    this.cs.addRect(MARGIN, this.y - h, PAGE.getWidth() - 2 * MARGIN, h);
+                    this.cs.addRect(MARGIN, this.y - h, this.page.getWidth() - 2 * MARGIN, h);
                     this.cs.fill();
                     this.cs.setNonStrokingColor(0f);
                 }
@@ -162,10 +164,10 @@ final class PdfTableWriter {
                 this.drawRow(cells, this.regular);
                 this.y -= h;
             }
-            float full = PAGE.getWidth() - 2 * MARGIN;
+            float full = this.page.getWidth() - 2 * MARGIN;
             this.y -= 8;
             for (String note : this.t.notes()) {
-                for (String line : this.wrap(note, this.regular, full)) {
+                for (String line : this.wrap(note, this.regular, full * SIZE / 9)) {
                     if (this.y - LEADING - 2 < MARGIN + 14) {
                         this.cs.close();
                         this.newPage(false);
@@ -180,10 +182,10 @@ final class PdfTableWriter {
         }
 
         private void newPage(boolean first) throws IOException {
-            PDPage page = new PDPage(PAGE);
+            PDPage page = new PDPage(this.page);
             this.doc.addPage(page);
             this.cs = new PDPageContentStream(this.doc, page);
-            this.y = PAGE.getHeight() - MARGIN;
+            this.y = this.page.getHeight() - MARGIN;
             if (first) {
                 this.text(MARGIN, this.y - 14, this.bold, 14, this.t.title());
                 this.y -= 20;
@@ -194,6 +196,14 @@ final class PdfTableWriter {
                     this.y -= 14;
                 }
                 this.y -= 4;
+                float full = this.page.getWidth() - 2 * MARGIN;
+                for (String paragraph : this.t.preamble()) {
+                    for (String line : this.wrap(paragraph, this.regular, full * SIZE / 10)) {
+                        this.text(MARGIN, this.y - 10, this.regular, 10, line);
+                        this.y -= 14;
+                    }
+                    this.y -= 4;
+                }
             }
             List<List<String>> head = new ArrayList<>();
             int lines = 1;
@@ -204,7 +214,7 @@ final class PdfTableWriter {
             }
             float h = lines * LEADING + 2 * PAD;
             this.cs.setNonStrokingColor(0.91f, 0.93f, 0.97f);
-            this.cs.addRect(MARGIN, this.y - h, PAGE.getWidth() - 2 * MARGIN, h);
+            this.cs.addRect(MARGIN, this.y - h, this.page.getWidth() - 2 * MARGIN, h);
             this.cs.fill();
             this.cs.setNonStrokingColor(0f);
             this.drawRow(head, this.bold);
@@ -242,7 +252,7 @@ final class PdfTableWriter {
                     f.showText(this.safe(this.regular, left));
                     f.endText();
                     f.beginText();
-                    f.newLineAtOffset(PAGE.getWidth() - MARGIN - this.regular.getStringWidth(right) / 1000 * 7,
+                    f.newLineAtOffset(this.page.getWidth() - MARGIN - this.regular.getStringWidth(right) / 1000 * 7,
                             MARGIN - 12);
                     f.showText(right);
                     f.endText();

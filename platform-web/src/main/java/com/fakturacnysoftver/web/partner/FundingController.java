@@ -1,5 +1,6 @@
 package com.fakturacnysoftver.web.partner;
 
+import com.fakturacnysoftver.web.attachment.AttachmentRepository;
 import com.fakturacnysoftver.web.project.ProjectRepository;
 import com.fakturacnysoftver.web.security.CurrentUser;
 
@@ -29,8 +30,11 @@ class FundingController {
     private final PartnerService service;
     private final PartnerRepository repo;
     private final ProjectRepository projects;
+    private final AttachmentRepository attachments;
 
-    FundingController(PartnerService service, PartnerRepository repo, ProjectRepository projects) {
+    FundingController(PartnerService service, PartnerRepository repo, ProjectRepository projects,
+                      AttachmentRepository attachments) {
+        this.attachments = attachments;
         this.service = service;
         this.repo = repo;
         this.projects = projects;
@@ -79,9 +83,12 @@ class FundingController {
     }
 
     @GetMapping("/financovanie/{id}")
-    String detail(@PathVariable long id, Model model) {
+    String detail(@PathVariable long id, Model model, Authentication auth) {
         this.repo.deal(id, this.service.today()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         model.addAllAttributes(this.service.dealModel(id));
+        model.addAttribute("attachments", this.attachments.visible(AttachmentRepository.Owner.DEAL, id,
+                CurrentUser.isEditor(auth)));
+        model.addAttribute("uploadUrl", "/financovanie/" + id + "/prilohy");
         model.addAttribute("today", this.service.today());
         model.addAttribute("dealKinds", DealKind.values());
         model.addAttribute("stages", DealStage.values());

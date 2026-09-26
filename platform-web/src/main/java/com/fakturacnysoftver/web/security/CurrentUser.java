@@ -17,4 +17,9 @@ public final class CurrentUser {
         }
         return auth.getName();
     }
+
+    public static boolean isEditor(Authentication auth) {
+        return auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> ("ROLE_" + SecurityConfig.EDITOR).equals(a.getAuthority()));
+    }
 }
