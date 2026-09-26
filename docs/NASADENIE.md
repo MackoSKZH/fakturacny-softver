@@ -22,7 +22,10 @@ docker compose logs -f app   # "Started UctoApplication" = bezi
 
 Aplikácia **odmietne štart**, ak:
 - je zapnuté Google prihlásenie bez `APP_ALLOWED_EMAILS` / `APP_ALLOWED_DOMAINS` (inak by sa prihlásil ktokoľvek s Google účtom),
+- je Google prihlásenie bez `APP_EDITOR_EMAILS` (aspoň jeden účet, ktorý smie vystavovať doklady),
 - je lokálne prihlásenie bez hesla s aspoň 12 znakmi.
+
+Roly: **editor** (e-maily v `APP_EDITOR_EMAILS`) vystavuje faktúry a dobropisy a mení údaje. Ostatní povolení členovia (`APP_ALLOWED_EMAILS` / `APP_ALLOWED_DOMAINS`) všetko vidia, ale nič nezmenia.
 
 Po prvom prihlásení: **Nastavenia** (údaje OZ, IBAN, DIČ) -> **Odberatelia** -> **Projekty** -> **Nová faktúra**.
 

@@ -15,7 +15,8 @@ public record AppSecurityProperties(
         List<String> allowedEmails,
         List<String> allowedDomains,
         String localUsername,
-        String localPassword) {
+        String localPassword,
+        List<String> editorEmails) {
 
     public static final int MIN_PASSWORD_LENGTH = 12;
 
@@ -26,10 +27,15 @@ public record AppSecurityProperties(
         allowedEmails = normalize(allowedEmails);
         allowedDomains = normalize(allowedDomains);
         localUsername = localUsername == null || localUsername.isBlank() ? "admin" : localUsername.trim();
+        editorEmails = normalize(editorEmails);
 
-        if (mode == Mode.GOOGLE && allowedEmails.isEmpty() && allowedDomains.isEmpty()) {
+        if (mode == Mode.GOOGLE && allowedEmails.isEmpty() && allowedDomains.isEmpty() && editorEmails.isEmpty()) {
             throw new IllegalStateException("Režim GOOGLE bez APP_ALLOWED_EMAILS / APP_ALLOWED_DOMAINS "
                     + "by pustil dnu ktorýkoľvek Google účet. Nastavte zoznam povolených účtov.");
+        }
+        if (mode == Mode.GOOGLE && editorEmails.isEmpty()) {
+            throw new IllegalStateException("Nastavte APP_EDITOR_EMAILS - aspoň jeden účet, ktorý smie "
+                    + "vystavovať faktúry. Ostatní povolení členovia majú prístup len na čítanie.");
         }
         if (mode == Mode.LOCAL && (localPassword == null || localPassword.length() < MIN_PASSWORD_LENGTH)) {
             throw new IllegalStateException("Režim LOCAL vyžaduje APP_LOCAL_PASSWORD s aspoň "
@@ -43,7 +49,13 @@ public record AppSecurityProperties(
         }
         String e = email.trim().toLowerCase(Locale.ROOT);
         int at = e.lastIndexOf('@');
-        return this.allowedEmails.contains(e) || (at > 0 && this.allowedDomains.contains(e.substring(at + 1)));
+        return this.allowedEmails.contains(e) || this.editorEmails.contains(e)
+                || (at > 0 && this.allowedDomains.contains(e.substring(at + 1)));
+    }
+
+    /** Editor smie vystavovat doklady a menit udaje; ostatni povoleni len citaju. */
+    public boolean isEditor(String email) {
+        return email != null && this.editorEmails.contains(email.trim().toLowerCase(Locale.ROOT));
     }
 
     private static List<String> normalize(List<String> values) {

@@ -2,6 +2,10 @@ package com.fakturacnysoftver.web.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -16,13 +20,21 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Configuration
 public class SecurityConfig {
+
+    public static final String EDITOR = "EDITOR";
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, AppSecurityProperties props) throws Exception {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/login", "/css/**", "/js/**", "/actuator/health", "/error").permitAll()
+                // Zapis (a formulare, ktore k nemu vedu) len pre editorov; clenovia citaju.
+                .requestMatchers(HttpMethod.POST, "/**").hasRole(EDITOR)
+                .requestMatchers("/faktury/nova", "/faktury/*/dobropis").hasRole(EDITOR)
                 .anyRequest().authenticated());
 
         if (props.mode() == AppSecurityProperties.Mode.GOOGLE) {
@@ -45,7 +57,7 @@ public class SecurityConfig {
         }
         return new InMemoryUserDetailsManager(User.withUsername(props.localUsername())
                 .password(encoder.encode(props.localPassword()))
-                .roles("USER")
+                .roles("USER", EDITOR)
                 .build());
     }
 
@@ -63,7 +75,12 @@ public class SecurityConfig {
                 throw new OAuth2AuthenticationException(new OAuth2Error("access_denied"),
                         "Účet " + user.getEmail() + " nemá prístup.");
             }
-            return user;
+            List<GrantedAuthority> authorities = new ArrayList<>(user.getAuthorities());
+            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+            if (props.isEditor(user.getEmail())) {
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + EDITOR));
+            }
+            return new DefaultOidcUser(authorities, user.getIdToken(), user.getUserInfo(), "email");
         };
     }
 }

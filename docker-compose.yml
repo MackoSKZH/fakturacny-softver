@@ -29,6 +29,7 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       APP_ALLOWED_EMAILS: ${APP_ALLOWED_EMAILS:-}
       APP_ALLOWED_DOMAINS: ${APP_ALLOWED_DOMAINS:-}
+      APP_EDITOR_EMAILS: ${APP_EDITOR_EMAILS:-}
       APP_LOCAL_PASSWORD: ${APP_LOCAL_PASSWORD:-}
 
   # HTTPS certifikat od Let's Encrypt automaticky; aplikacia nie je priamo vystavena na internet.

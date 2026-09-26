@@ -40,14 +40,30 @@ class WebFlowTest extends IntegrationTest {
     }
 
     @Test
-    @WithMockUser("pokladnik")
+    @WithMockUser(value = "clen", roles = "USER")
+    void readOnlyMemberCanBrowseButNotChangeAnything() throws Exception {
+        this.mvc.perform(get("/faktury")).andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("Nová faktúra"))));
+        this.mvc.perform(get("/projekty")).andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("Vytvoriť projekt"))));
+        this.mvc.perform(get("/faktury/nova")).andExpect(status().isForbidden());
+        this.mvc.perform(post("/projekty").with(csrf()).param("code", "X1").param("name", "X"))
+                .andExpect(status().isForbidden());
+        this.mvc.perform(post("/nastavenia").with(csrf()).param("name", "Hack")).andExpect(status().isForbidden());
+        this.mvc.perform(post("/faktury/1/uhrada").with(csrf()).param("paidOn", "2027-01-01"))
+                .andExpect(status().isForbidden());
+        assertTrue(this.jdbc.sql("SELECT count(*) FROM project").query(Long.class).single() == 0);
+    }
+
+    @Test
+    @WithMockUser(value = "pokladnik", roles = {"USER", "EDITOR"})
     void postWithoutCsrfTokenIsRejected() throws Exception {
         this.mvc.perform(post("/projekty").param("code", "X1").param("name", "X"))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    @WithMockUser("pokladnik")
+    @WithMockUser(value = "pokladnik", roles = {"USER", "EDITOR"})
     void fullInvoicingFlow() throws Exception {
         this.mvc.perform(get("/faktury/nova")).andExpect(status().isOk())
                 .andExpect(content().string(containsString("údaje organizácie")));
@@ -129,7 +145,7 @@ class WebFlowTest extends IntegrationTest {
     }
 
     @Test
-    @WithMockUser("pokladnik")
+    @WithMockUser(value = "pokladnik", roles = {"USER", "EDITOR"})
     void invalidInvoiceShowsErrorsAndKeepsInput() throws Exception {
         this.mvc.perform(post("/faktury").with(csrf())
                         .param("lines[0].description", "Reklama")
@@ -142,7 +158,7 @@ class WebFlowTest extends IntegrationTest {
     }
 
     @Test
-    @WithMockUser("pokladnik")
+    @WithMockUser(value = "pokladnik", roles = {"USER", "EDITOR"})
     void settingsRejectInvalidIbanAndPattern() throws Exception {
         this.mvc.perform(post("/nastavenia").with(csrf())
                         .param("name", "OZ").param("city", "Bratislava").param("iban", "SK0000000000000000000000")
@@ -153,7 +169,7 @@ class WebFlowTest extends IntegrationTest {
     }
 
     @Test
-    @WithMockUser("pokladnik")
+    @WithMockUser(value = "pokladnik", roles = {"USER", "EDITOR"})
     void unknownInvoiceIs404AndPagesSendSecurityHeaders() throws Exception {
         this.mvc.perform(get("/faktury/999")).andExpect(status().isNotFound());
         this.mvc.perform(get("/faktury"))

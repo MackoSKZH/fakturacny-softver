@@ -7,7 +7,7 @@
     <div class="page-head">
         <h1><span th:text="${s.isCreditNote()} ? 'Dobropis' : 'Faktúra'"></span> <span th:text="${s.number()}"></span></h1>
         <div class="row">
-            <a class="button" th:if="${!s.isCreditNote()}" th:href="@{/faktury/{id}/dobropis(id=${s.id()})}">Vystaviť dobropis</a>
+            <a class="button" th:if="${canEdit and !s.isCreditNote()}" th:href="@{/faktury/{id}/dobropis(id=${s.id()})}">Vystaviť dobropis</a>
             <a class="button primary" th:href="@{/faktury/{id}/pdf(id=${s.id()})}" target="_blank">PDF</a>
             <a class="button" th:if="${s.hasUbl()}" th:href="@{/faktury/{id}/xml(id=${s.id()})}">E-faktúra (XML)</a>
         </div>
@@ -70,11 +70,11 @@
     <section class="card">
         <h2 th:text="${s.isCreditNote()} ? 'Vrátenie peňazí' : 'Úhrada'">Úhrada</h2>
         <p th:if="${s.paidOn() != null}"><span th:text="${s.isCreditNote()} ? 'Vrátené' : 'Uhradená'"></span> <strong th:text="${#temporals.format(s.paidOn(), 'd. M. yyyy')}"></strong></p>
-        <form th:if="${s.paidOn() == null}" th:action="@{/faktury/{id}/uhrada(id=${s.id()})}" method="post" class="row">
+        <form th:if="${canEdit and s.paidOn() == null}" th:action="@{/faktury/{id}/uhrada(id=${s.id()})}" method="post" class="row">
             <label>Dátum <input type="date" name="paidOn" required></label>
             <button type="submit" class="primary" th:text="${s.isCreditNote()} ? 'Označiť ako vrátené' : 'Označiť ako uhradenú'">Označiť ako uhradenú</button>
         </form>
-        <form th:if="${s.paidOn() != null}" th:action="@{/faktury/{id}/uhrada(id=${s.id()})}" method="post">
+        <form th:if="${canEdit and s.paidOn() != null}" th:action="@{/faktury/{id}/uhrada(id=${s.id()})}" method="post">
             <button type="submit" class="link">Zrušiť úhradu</button>
         </form>
     </section>

@@ -149,10 +149,14 @@ Ak ani jedno neplatí, zastavte sa tu a kúpte si nástroj.
 - Nasadenie: `Dockerfile`, `docker-compose.yml` (PostgreSQL, HTTPS cez Caddy, denné zálohy), CI pre GitHub Actions. Návod: [NASADENIE.md](NASADENIE.md).
 - **Neoverené:** samotný `docker compose up` (v tomto prostredí nebeží Docker daemon; overená je len konfigurácia a build cez gradle wrapper).
 
-**Čo ešte chýba z fázy 2 a je dôležité:**
-- Dobropis (opravný doklad) - kým nie je, chybnú faktúru nejde legálne opraviť.
-- Roly (pokladník vs. člen len na čítanie) - teraz má každý prihlásený plný prístup.
+**Doplnené po fáze 2:**
+- **Dobropis** (opravná faktúra): vlastný rad `D` + vzor faktúr, odkaz na pôvodnú faktúru a dôvod opravy v PDF aj v UBL `CreditNote` (prechádza oficiálnymi Peppol pravidlami pre dobropis). Súčet dobropisov nesmie prekročiť sumu faktúry, kontrola beží pod zámkom pôvodnej faktúry (otestované súbežnými dobropismi). Rozpočet projektu dobropisy odpočíta.
+- **Roly:** editori (`APP_EDITOR_EMAILS`) vystavujú a menia, ostatní povolení členovia len čítajú. Bez aspoň jedného editora sa aplikácia v Google režime nespustí.
+- **Artifact** na claude.ai (`artifact/`): prehliadačová verzia na vyskúšanie, rovnaká logika v JS, XML overené tými istými Peppol pravidlami.
+
+**Čo ešte chýba:**
 - Úprava a deaktivácia odberateľov a projektov.
+- Fázy 3 až 6 nižšie. Na fázu 3 (SAPI-SK) treba oficiálnu OpenAPI špecifikáciu zo sapi-sk.sk.
 
 ### Fáza 3 - prijaté e-faktúry
 - SAPI-SK klient: stiahnuť prijaté dokumenty, uložiť originál XML (archív), rozparsovať, priradiť k projektu, potvrdiť prijatie.

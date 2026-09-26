@@ -3,8 +3,8 @@
 <head th:replace="~{fragments :: head(title='Chyba')}"></head>
 <body>
 <main class="card narrow">
-    <h1 th:text="${status == 404} ? 'Nenájdené' : 'Niečo sa pokazilo'">Chyba</h1>
-    <p class="muted" th:text="${status == 404} ? 'Stránka alebo doklad neexistuje.' : 'Skúste to znova. Ak chyba pretrváva, pozrite logy servera.'"></p>
+    <h1 th:text="${status == 404} ? 'Nenájdené' : (${status == 403} ? 'Bez oprávnenia' : 'Niečo sa pokazilo')">Chyba</h1>
+    <p class="muted" th:text="${status == 404} ? 'Stránka alebo doklad neexistuje.' : (${status == 403} ? 'Na túto akciu potrebujete rolu editora (pokladník, predseda).' : 'Skúste to znova. Ak chyba pretrváva, pozrite logy servera.')"></p>
     <a class="button" th:href="@{/}">Späť na faktúry</a>
 </main>
 </body>
