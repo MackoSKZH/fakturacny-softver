@@ -141,6 +141,12 @@ class ActivityController {
         model.addAttribute("canSeeBudget", acc.canSeeActivityBudget(id));
         model.addAttribute("canSeeTeam", acc.canSeeTeamContacts(id));
         model.addAttribute("owners", this.access.ownersOf(id));
+        if (acc.canEditActivity(id)) {
+            model.addAttribute("shiftInvites", this.access.shiftInvites(id));
+            model.addAttribute("inviteRoles", this.access.roles().stream()
+                    .filter(r -> !r.isSensitive() && acc.permissions().containsAll(r.permissionList())).toList());
+            model.addAttribute("now", java.time.OffsetDateTime.now(this.clock));
+        }
         model.addAttribute("users", acc.isActivitiesWrite() ? this.access.users().stream()
                 .filter(AccessRepository.User::active).toList() : List.of());
         model.addAttribute("uploadUrl", "/aktivity/" + id + "/prilohy");
@@ -218,6 +224,38 @@ class ActivityController {
         }
         this.accessService.removeOwner(userId, id, CurrentUser.name(auth));
         return "redirect:/aktivity/" + id + "#vlastnici";
+    }
+
+    // ---------- pozvanky na smeny (aj pre vlastnika aktivity) ----------
+
+    @PostMapping("/{id}/pozvanky")
+    String createInvite(@PathVariable long id, @RequestParam(required = false) Long shiftId,
+                        @RequestParam(required = false) String email, @RequestParam(required = false) Long roleId,
+                        @RequestParam(required = false) String note, @RequestParam(required = false) Integer days,
+                        @RequestParam(required = false) Integer maxUses, HttpServletRequest request,
+                        RedirectAttributes redirect) {
+        this.activities.findById(id, this.today()).orElseThrow(NotFound::new);
+        try {
+            AccessService.CreatedInvite i = this.accessService.createShiftInvite(id, shiftId, email, roleId, note, days,
+                    maxUses, AccessFilter.of(request));
+            redirect.addFlashAttribute("inviteLink", ServletUriComponentsBuilder.fromCurrentContextPath()
+                    .path("/pozvanka/" + i.token()).toUriString());
+            redirect.addFlashAttribute("message", "Pozvánka je vytvorená. Odkaz skopírujte teraz - neskôr sa už zobraziť nedá.");
+        } catch (AccessException e) {
+            redirect.addFlashAttribute("errors", e.errors());
+        }
+        return "redirect:/aktivity/" + id + "#pozvanky";
+    }
+
+    @PostMapping("/{id}/pozvanky/{inviteId}/zrusit")
+    String revokeInvite(@PathVariable long id, @PathVariable long inviteId, Authentication auth,
+                        RedirectAttributes redirect) {
+        if (this.access.shiftInvites(id).stream().noneMatch(i -> i.id() == inviteId)) {
+            throw new NotFound();
+        }
+        this.accessService.revokeInvite(inviteId, CurrentUser.name(auth));
+        redirect.addFlashAttribute("message", "Pozvánka je zrušená.");
+        return "redirect:/aktivity/" + id + "#pozvanky";
     }
 
     // ---------- roly a obsadenie ----------

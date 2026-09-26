@@ -201,7 +201,8 @@ public class AccessRepository {
 
     public record Invite(long id, String email, List<Long> roleIds, Long projectId, String projectCode, String note,
                          int maxUses, int usedCount, OffsetDateTime expiresAt, OffsetDateTime revokedAt,
-                         String createdBy, OffsetDateTime createdAt) {
+                         String createdBy, OffsetDateTime createdAt, Long shiftId, Long shiftProjectId,
+                         String shiftName, String shiftActivity, java.time.LocalDateTime shiftStartsAt) {
         public boolean isUsable(OffsetDateTime now) {
             return this.revokedAt == null && this.usedCount < this.maxUses && this.expiresAt.isAfter(now);
         }
@@ -219,15 +220,19 @@ public class AccessRepository {
 
     private static final String INVITE_SELECT = """
             SELECT i.id, i.email, i.role_ids, i.project_id, pr.code AS project_code, i.note, i.max_uses, i.used_count,
-                   i.expires_at, i.revoked_at, i.created_by, i.created_at
+                   i.expires_at, i.revoked_at, i.created_by, i.created_at, i.shift_id, sr.project_id AS shift_project_id,
+                   sr.name AS shift_name, sp.code || ' ' || sp.name AS shift_activity, sr.starts_at AS shift_starts_at
             FROM invite i LEFT JOIN project pr ON pr.id = i.project_id
+                 LEFT JOIN activity_role sr ON sr.id = i.shift_id LEFT JOIN project sp ON sp.id = sr.project_id
             """;
 
     private static final RowMapper<Invite> INVITE = (rs, n) -> new Invite(rs.getLong("id"), rs.getString("email"),
             longs(rs.getArray("role_ids")), nullableLong(rs, "project_id"), rs.getString("project_code"),
             rs.getString("note"), rs.getInt("max_uses"), rs.getInt("used_count"),
             rs.getObject("expires_at", OffsetDateTime.class), rs.getObject("revoked_at", OffsetDateTime.class),
-            rs.getString("created_by"), rs.getObject("created_at", OffsetDateTime.class));
+            rs.getString("created_by"), rs.getObject("created_at", OffsetDateTime.class), nullableLong(rs, "shift_id"),
+            nullableLong(rs, "shift_project_id"), rs.getString("shift_name"), rs.getString("shift_activity"),
+            rs.getObject("shift_starts_at", java.time.LocalDateTime.class));
 
     public List<Invite> invites() {
         return this.jdbc.sql(INVITE_SELECT + "ORDER BY i.created_at DESC LIMIT 200").query(INVITE).list();
@@ -237,14 +242,53 @@ public class AccessRepository {
         return this.jdbc.sql(INVITE_SELECT + "WHERE i.token_hash = :h").param("h", hash).query(INVITE).optional();
     }
 
-    public long insertInvite(String hash, String email, List<Long> roleIds, Long projectId, String note, int maxUses,
-                             OffsetDateTime expiresAt, String actor) {
+    public long insertInvite(String hash, String email, List<Long> roleIds, Long projectId, Long shiftId, String note,
+                             int maxUses, OffsetDateTime expiresAt, String actor) {
         return this.jdbc.sql("""
-                        INSERT INTO invite (token_hash, email, role_ids, project_id, note, max_uses, expires_at, created_by)
-                        VALUES (:h, :e, :roles, :p, :note, :max, :exp, :actor) RETURNING id""")
+                        INSERT INTO invite (token_hash, email, role_ids, project_id, shift_id, note, max_uses, expires_at,
+                                            created_by)
+                        VALUES (:h, :e, :roles, :p, :shift, :note, :max, :exp, :actor) RETURNING id""")
                 .param("h", hash).param("e", email).param("roles", roleIds.toArray(Long[]::new)).param("p", projectId)
-                .param("note", note).param("max", maxUses).param("exp", expiresAt).param("actor", actor)
-                .query(Long.class).single();
+                .param("shift", shiftId).param("note", note).param("max", maxUses).param("exp", expiresAt)
+                .param("actor", actor).query(Long.class).single();
+    }
+
+    /** Pozvanky na smeny jednej aktivity (pre jej vlastnika). */
+    public List<Invite> shiftInvites(long projectId) {
+        return this.jdbc.sql(INVITE_SELECT + "WHERE sr.project_id = :p ORDER BY i.created_at DESC LIMIT 100")
+                .param("p", projectId).query(INVITE).list();
+    }
+
+    /** Smena/rola aktivity: kedy zacina a kedy konci cela aktivita - pozvanka nesmie platit dlhsie. */
+    public record Shift(long id, long projectId, String name, java.time.LocalDateTime startsAt,
+                        java.time.LocalDate activityEndsOn, String activityStatus) {
+    }
+
+    public Optional<Shift> shift(long shiftId) {
+        return this.jdbc.sql("""
+                        SELECT r.id, r.project_id, r.name, r.starts_at, COALESCE(p.ends_on, p.starts_on) AS activity_ends_on,
+                               p.status AS activity_status
+                        FROM activity_role r JOIN project p ON p.id = r.project_id WHERE r.id = :r""")
+                .param("r", shiftId).query(Shift.class).optional();
+    }
+
+    /**
+     * Zapise cloveka na smenu. Riadok smeny sa zamkne, aby dvaja naraz nepretiahli kapacitu: kym je miesto, je
+     * potvrdeny, potom len prihlaseny (koordinator ho potvrdi alebo odmietne). Vrati novy stav, alebo null,
+     * ak na smene uz bol.
+     */
+    public String joinShift(long shiftId, long personId) {
+        int needed = this.jdbc.sql("SELECT needed FROM activity_role WHERE id = :r FOR UPDATE")
+                .param("r", shiftId).query(Integer.class).single();
+        long confirmed = this.jdbc.sql("""
+                        SELECT count(*) FROM assignment WHERE role_id = :r AND status IN ('POTVRDENY', 'ZUCASTNIL_SA')""")
+                .param("r", shiftId).query(Long.class).single();
+        String status = confirmed < needed ? "POTVRDENY" : "POZVANY";
+        int inserted = this.jdbc.sql("""
+                        INSERT INTO assignment (role_id, person_id, status) VALUES (:r, :person, :status)
+                        ON CONFLICT (role_id, person_id) DO NOTHING""")
+                .param("r", shiftId).param("person", personId).param("status", status).update();
+        return inserted == 1 ? status : null;
     }
 
     /** Atomicky: pouzitie sa zapocita len ak je pozvanka stale platna (dvaja naraz neprejdu cez limit). */

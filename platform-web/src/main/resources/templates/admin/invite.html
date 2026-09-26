@@ -12,6 +12,10 @@
     <section class="card">
         <dl class="pay">
             <dt>Roly</dt><dd th:text="${roleNames.isEmpty()} ? '-' : ${#strings.listJoin(roleNames, ', ')}"></dd>
+            <th:block th:if="${i.shiftId() != null}">
+                <dt>Aktivita</dt><dd th:text="${i.shiftActivity()}"></dd>
+                <dt>Rola / smena</dt><dd th:text="${i.shiftName()} + (${i.shiftStartsAt() != null} ? ', ' + ${#temporals.format(i.shiftStartsAt(), 'd. M. yyyy HH:mm')} : '')"></dd>
+            </th:block>
             <dt th:if="${i.projectCode() != null}">Vlastník aktivity</dt><dd th:if="${i.projectCode() != null}" th:text="${i.projectCode()}"></dd>
             <dt th:if="${maskedEmail != null}">Pre</dt><dd th:if="${maskedEmail != null}" th:text="${maskedEmail}"></dd>
             <dt>Platí do</dt><dd th:text="${#temporals.format(i.expiresAt(), 'd. M. yyyy HH:mm')}"></dd>

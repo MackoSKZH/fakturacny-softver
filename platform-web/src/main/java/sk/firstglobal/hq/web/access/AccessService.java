@@ -246,13 +246,53 @@ public class AccessService {
     public CreatedInvite createInvite(String email, List<Long> roleIds, Long projectId, String note, Integer days,
                                       Integer maxUses, String actor) {
         List<String> errors = new ArrayList<>();
-        String e = blank(email) == null ? null : email.trim().toLowerCase(Locale.ROOT);
-        if (e != null && !e.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
-            errors.add("E-mail pozvaného nie je platný.");
-        }
         List<Long> roles = this.validRoles(roleIds, errors);
         if (roles.isEmpty() && projectId == null) {
             errors.add("Pozvánka musí dať aspoň jednu rolu alebo vlastníctvo aktivity.");
+        }
+        return this.create(email, roles, projectId, null, note, days, maxUses, null, errors, actor);
+    }
+
+    /**
+     * Pozvanka na smenu aktivity - smie ju vytvorit aj jej vlastnik (projektovy manazer). Moze dat len rolu, ktora
+     * neotvara financie, ludi ani spravu, a ktoru ma sam; vlastnictvo nikdy. Plati najdlhsie do zaciatku smeny.
+     */
+    public CreatedInvite createShiftInvite(long projectId, Long shiftId, String email, Long roleId, String note,
+                                           Integer days, Integer maxUses, AccessInfo actor) {
+        List<String> errors = new ArrayList<>();
+        if (!actor.canEditActivity(projectId)) {
+            throw new AccessException(List.of("Pozývať na túto aktivitu môže len jej vlastník alebo koordinátor."));
+        }
+        AccessRepository.Shift shift = shiftId == null ? null
+                : this.repo.shift(shiftId).filter(x -> x.projectId() == projectId).orElse(null);
+        if (shift == null) {
+            throw new AccessException(List.of("Vyberte rolu/smenu tejto aktivity, na ktorú pozývate."));
+        }
+        AccessRepository.Role role = (roleId == null ? this.repo.roleByCode("DOBROVOLNIK") : this.repo.role(roleId))
+                .orElse(null);
+        if (role == null) {
+            errors.add("Neznáma rola.");
+        } else if (role.isSensitive() || !actor.permissions().containsAll(role.permissionList())) {
+            errors.add("Z aktivity sa dá pozvať len s rolou na čítanie (napr. Dobrovoľník, Mentor). "
+                    + "Iné roly dáva admin v Správe.");
+        }
+        OffsetDateTime deadline = shift.startsAt() != null ? shift.startsAt().atZone(this.clock.getZone()).toOffsetDateTime()
+                : shift.activityEndsOn() != null ? shift.activityEndsOn().plusDays(1).atStartOfDay(this.clock.getZone()).toOffsetDateTime()
+                : null;
+        if ("ZRUSENA".equals(shift.activityStatus()) || "UKONCENA".equals(shift.activityStatus())) {
+            errors.add("Aktivita je ukončená alebo zrušená - pozvánka by nemala zmysel.");
+        } else if (deadline != null && !deadline.isAfter(OffsetDateTime.now(this.clock))) {
+            errors.add("Smena „" + shift.name() + "“ už začala.");
+        }
+        return this.create(email, role == null ? List.of() : List.of(role.id()), null, shift.id(), note, days, maxUses,
+                deadline, errors, actor.email());
+    }
+
+    private CreatedInvite create(String email, List<Long> roles, Long projectId, Long shiftId, String note, Integer days,
+                                 Integer maxUses, OffsetDateTime deadline, List<String> errors, String actor) {
+        String e = blank(email) == null ? null : email.trim().toLowerCase(Locale.ROOT);
+        if (e != null && !e.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
+            errors.add("E-mail pozvaného nie je platný.");
         }
         boolean sensitive = roles.stream().anyMatch(r -> this.repo.role(r).orElseThrow().isSensitive()) || projectId != null;
         if (e == null && sensitive) {
@@ -273,10 +313,14 @@ public class AccessService {
         byte[] b = new byte[32];
         RANDOM.nextBytes(b);
         String token = Base64.getUrlEncoder().withoutPadding().encodeToString(b);
-        long id = this.repo.insertInvite(hash(token), e, roles, projectId, blank(note), uses,
-                OffsetDateTime.now(this.clock).plusDays(d), actor);
+        OffsetDateTime expires = OffsetDateTime.now(this.clock).plusDays(d);
+        if (deadline != null && deadline.isBefore(expires)) {
+            expires = deadline;
+        }
+        long id = this.repo.insertInvite(hash(token), e, roles, projectId, shiftId, blank(note), uses, expires, actor);
         this.audit.record(actor, "POZVANKA", "pozvanka", id, (e == null ? "otvorený odkaz x" + uses : e) + " "
-                + this.roleCodes(roles) + (projectId == null ? "" : " vlastník aktivity " + projectId));
+                + this.roleCodes(roles) + (projectId == null ? "" : " vlastník aktivity " + projectId)
+                + (shiftId == null ? "" : " smena " + shiftId));
         return new CreatedInvite(id, token);
     }
 
@@ -291,8 +335,23 @@ public class AccessService {
                 .isPresent();
     }
 
+    /** Co sa stalo pri prijati - pre privitaciu hlasku. shiftStatus je null, ak pozvanka nebola na smenu. */
+    public record Accepted(String shiftName, String shiftStatus) {
+        public String message() {
+            if (this.shiftStatus == null) {
+                return "Vitajte! Pozvánka je prijatá a prístup je nastavený.";
+            }
+            if ("UZ_V_TIME".equals(this.shiftStatus)) {
+                return "Vitajte! Na „" + this.shiftName + "“ ste už zapísaný.";
+            }
+            return "POTVRDENY".equals(this.shiftStatus)
+                    ? "Vitajte! Ste zapísaný na „" + this.shiftName + "“. Program nájdete v Mojom programe."
+                    : "Vitajte! „" + this.shiftName + "“ je už obsadená - ste na zozname a koordinátor sa vám ozve.";
+        }
+    }
+
     @Transactional
-    public void accept(String token, String email, String displayName) {
+    public Accepted accept(String token, String email, String displayName) {
         AccessRepository.Invite i = this.invite(token)
                 .orElseThrow(() -> new AccessException(List.of("Pozvánka neexistuje.")));
         String e = email.trim().toLowerCase(Locale.ROOT);
@@ -309,7 +368,7 @@ public class AccessService {
         }
         long userId = existing != null ? existing.id() : this.repo.insertUser(e, blank(displayName), null, "pozvánka " + i.id());
         if (!this.repo.recordUse(i.id(), userId)) {
-            return;
+            return new Accepted(null, null);
         }
         if (!this.repo.consume(i.id(), now)) {
             throw new AccessException(List.of("Pozvánka sa medzitým minula."));
@@ -318,12 +377,22 @@ public class AccessService {
         if (i.projectId() != null) {
             this.repo.addOwner(userId, i.projectId(), "pozvánka " + i.id());
         }
-        this.linkPerson(userId, e, displayName, i.roleIds());
+        long personId = this.linkPerson(userId, e, displayName, i.roleIds());
+        String shiftStatus = null;
+        if (i.shiftId() != null) {
+            String joined = this.repo.joinShift(i.shiftId(), personId);
+            shiftStatus = joined == null ? "UZ_V_TIME" : joined;
+            if (joined != null) {
+                this.audit.record(e, "PRIHLASENIE", "aktivita", i.shiftProjectId(), i.shiftName() + " - "
+                        + ("POTVRDENY".equals(joined) ? "potvrdený" : "nad kapacitu, čaká"));
+            }
+        }
         this.audit.record(e, "PRIJATIE", "pozvanka", i.id(), this.roleCodes(i.roleIds()));
+        return new Accepted(i.shiftName(), shiftStatus);
     }
 
     /** Kazdy pozvany ma kartu v adresari ludi - aby sa dal priradit do timu a aby sa videlo, ze chyba suhlas. */
-    private void linkPerson(long userId, String email, String displayName, List<Long> roleIds) {
+    private long linkPerson(long userId, String email, String displayName, List<Long> roleIds) {
         Set<String> personRoles = new LinkedHashSet<>();
         roleIds.forEach(r -> this.repo.role(r).map(AccessRepository.Role::personRole).ifPresent(personRoles::add));
         Person p = this.people.findByEmail(email).orElse(null);
@@ -332,7 +401,7 @@ public class AccessService {
             long id = this.people.insert(new Person(null, name, email, null, null, List.copyOf(personRoles), false, null,
                     null, null, false, false, "Pridaný cez pozvánku - doplňte súhlas so spracovaním údajov."));
             this.repo.setPerson(userId, id);
-            return;
+            return id;
         }
         this.repo.setPerson(userId, p.id());
         if (!p.roles().containsAll(personRoles)) {
@@ -342,6 +411,7 @@ public class AccessService {
                     List.copyOf(merged), p.minor(), p.guardianName(), p.guardianContact(), p.dataConsentOn(),
                     p.consentByGuardian(), p.photoConsent(), p.note()));
         }
+        return p.id();
     }
 
     public void revokeInvite(long id, String actor) {

@@ -65,6 +65,9 @@ Používatelia a roly sa spravujú v aplikácii (**Správa**), nie v `.env`:
   `APP_DEFAULT_ROLE` (predvolene Dobrovoľník - najmenej práv) a admin mu ju zvýši.
 - Roly: Admin, Financie, Koordinátor, Projektový manažér, Vedenie, Mentor, Dobrovoľník - plus vlastné, poskladané
   z oprávnení. **Vlastník aktivity** (projektový manažér) upravuje len svoju aktivitu a vidí len jej rozpočet.
+- **Nábor do tímu:** vlastník aktivity (projektový manažér) vytvorí na stránke aktivity pozvánku na konkrétnu
+  rolu/smenu. Kto ju prijme, zapíše sa do tímu - kým je miesto ako potvrdený, potom ako čakajúci. Odkaz platí
+  najdlhšie do začiatku smeny a dáva len rolu na čítanie (Dobrovoľník, Mentor), nikdy financie, ľudí ani správu.
 - Zmena rolí a deaktivácia platia hneď, nie až po odhlásení. Sebe admina zobrať ani seba deaktivovať nejde.
 
 Po prvom prihlásení: **Nastavenia** (údaje OZ, IBAN, DIČ) -> **Aktivity** -> **Ľudia** -> **Partneri**.

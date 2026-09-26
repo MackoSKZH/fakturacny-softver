@@ -100,6 +100,50 @@
         <p class="muted" th:if="${canEditActivity and people.isEmpty()}">Najprv pridajte ľudí v <a th:href="@{/ludia}">adresári</a>.</p>
     </section>
 
+    <!-- POZVANKY NA SMENY -->
+    <section class="card" id="pozvanky" th:if="${canEditActivity and !roles.isEmpty()}">
+        <h2>Pozvať do tímu</h2>
+        <div class="highlight" th:if="${inviteLink != null}">
+            <p><input class="copy" readonly th:value="${inviteLink}" aria-label="Odkaz na pozvánku"></p>
+            <p class="muted">Skopírujte ho teraz a pošlite (e-mail, WhatsApp, skupina). Uložený je len jeho odtlačok - znova ho
+                zobraziť nevieme. Ak sa stratí, pozvánku zrušte a vytvorte novú.</p>
+        </div>
+        <p class="muted">Kto pozvánku prijme, prihlási sa, dostane rolu a zapíše sa na vybranú smenu - kým je miesto, rovno
+            ako potvrdený, potom ako čakajúci. Odkaz platí najdlhšie do začiatku smeny. Financie, ľudí ani správu takto dať nejde.</p>
+        <form th:action="@{/aktivity/{id}/pozvanky(id=${a.id()})}" method="post" class="grid">
+            <label>Rola / smena <select name="shiftId" required>
+                <option th:each="r : ${roles}" th:value="${r.id()}"
+                        th:text="${r.name()} + ' (' + ${r.confirmed()} + '/' + ${r.needed()} + ')'"></option>
+            </select></label>
+            <label>Prístup <select name="roleId">
+                <option th:each="r : ${inviteRoles}" th:value="${r.id()}" th:text="${r.name()}"
+                        th:selected="${r.code() == 'DOBROVOLNIK'}"></option>
+            </select></label>
+            <label>E-mail (nepovinné) <input type="email" name="email" placeholder="prázdne = odkaz pre viac ľudí"></label>
+            <label>Počet použití (len odkaz) <input type="number" name="maxUses" min="1" max="200" value="10"></label>
+            <label>Platí dní <input type="number" name="days" min="1" max="30" value="14"></label>
+            <label>Poznámka <input name="note" placeholder="napr. nábor cez školu"></label>
+            <div><button type="submit" class="primary">Vytvoriť pozvánku</button></div>
+        </form>
+        <div class="table-wrap" th:unless="${shiftInvites.isEmpty()}">
+            <table>
+                <thead><tr><th>Pre koho</th><th>Smena</th><th>Použitia</th><th>Platí do</th><th>Stav</th><th>Vytvoril</th><th></th></tr></thead>
+                <tbody>
+                <tr th:each="i : ${shiftInvites}">
+                    <td th:text="${i.email() ?: 'odkaz'}"></td>
+                    <td><span th:text="${i.shiftName()}"></span><small class="muted" th:if="${i.note() != null}" th:text="${i.note()}"></small></td>
+                    <td th:text="${i.usedCount()} + ' / ' + ${i.maxUses()}"></td>
+                    <td th:text="${#temporals.format(i.expiresAt(), 'd. M. HH:mm')}"></td>
+                    <td><span class="badge" th:classappend="${i.state(now) == 'platná'} ? 'ok'" th:text="${i.state(now)}"></span></td>
+                    <td class="muted" th:text="${i.createdBy()}"></td>
+                    <td><form th:if="${i.isUsable(now)}" th:action="@{/aktivity/{id}/pozvanky/{iid}/zrusit(id=${a.id()},iid=${i.id()})}" method="post">
+                        <button type="submit" class="link danger">Zrušiť</button></form></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
     <!-- VLASTNICI -->
     <section class="card" id="vlastnici">
         <h2>Vlastníci aktivity</h2>

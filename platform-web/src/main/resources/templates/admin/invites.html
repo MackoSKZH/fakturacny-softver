@@ -46,7 +46,8 @@
                 <td th:text="${i.email() ?: 'otvorený odkaz'}"></td>
                 <td><span class="chips"><span class="chip" th:each="rid : ${i.roleIds()}" th:text="${roleNamesById[rid]}"></span></span>
                     <small class="muted" th:if="${i.note() != null}" th:text="${i.note()}"></small></td>
-                <td th:text="${i.projectCode()}"></td>
+                <td><span th:text="${i.projectCode()}"></span><small class="muted" th:if="${i.shiftId() != null}"
+                        th:text="'smena: ' + ${i.shiftActivity()} + ' - ' + ${i.shiftName()}"></small></td>
                 <td th:text="${i.usedCount()} + ' / ' + ${i.maxUses()}"></td>
                 <td th:text="${#temporals.format(i.expiresAt(), 'd. M. yyyy HH:mm')}"></td>
                 <td><span class="badge" th:classappend="${i.state(now) == 'platná'} ? 'ok'" th:text="${i.state(now)}"></span></td>

@@ -71,9 +71,9 @@ class InviteController {
     String accept(@PathVariable String token, Authentication auth, HttpSession session, RedirectAttributes redirect) {
         String name = auth.getPrincipal() instanceof OidcUser o ? o.getFullName() : null;
         try {
-            this.service.accept(token, CurrentUser.name(auth), name);
+            AccessService.Accepted done = this.service.accept(token, CurrentUser.name(auth), name);
             session.removeAttribute(SecurityConfig.PENDING_INVITE);
-            redirect.addFlashAttribute("message", "Vitajte! Pozvánka je prijatá a prístup je nastavený.");
+            redirect.addFlashAttribute("message", done.message());
             // rovno na cielovu stranku - pri dvoch presmerovaniach by sa privitanie stratilo
             return this.service.resolve(CurrentUser.name(auth), name).access().isActivitiesRead() ? "redirect:/aktivity"
                     : "redirect:/moj-program";
