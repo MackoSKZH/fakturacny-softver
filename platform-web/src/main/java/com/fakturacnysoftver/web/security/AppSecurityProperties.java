@@ -17,7 +17,8 @@ public record AppSecurityProperties(
         String localUsername,
         String localPassword,
         List<String> editorEmails,
-        List<String> localReaders) {
+        List<String> localReaders,
+        String defaultRole) {
 
     public static final int MIN_PASSWORD_LENGTH = 12;
 

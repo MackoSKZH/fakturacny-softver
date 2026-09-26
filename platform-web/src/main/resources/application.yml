@@ -47,5 +47,7 @@ app:
     local-password: ${APP_LOCAL_PASSWORD:}
     # len lokalny rezim: ciarkou oddeleni pouzivatelia na citanie (rovnake heslo), napr. eva@demo.example
     local-readers: ${APP_LOCAL_READERS:}
+    # rola pre ucet, ktory sa prihlasi prvy raz bez pozvanky (povoleny e-mailom/domenou); najmenej prav = DOBROVOLNIK
+    default-role: ${APP_DEFAULT_ROLE:DOBROVOLNIK}
     # ucty, ktore smu vystavovat doklady a menit udaje; ostatni povoleni len citaju
     editor-emails: ${APP_EDITOR_EMAILS:}
