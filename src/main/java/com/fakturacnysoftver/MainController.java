@@ -197,6 +197,7 @@ public class MainController {
         faktura.setOdberatelEmail(this.tfCustomerEmail.getText());
 
         faktura.setDatumDodania(this.dpDatumDodania.getValue());
+        faktura.setVariabilnySymbol(this.tfVarSymbol.getText());
 
         return faktura;
     }

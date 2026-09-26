@@ -1,0 +1,33 @@
+plugins {
+    id 'java-library'
+}
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.13.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Oficialne OpenPeppol + EN 16931 Schematron pravidla - pouzite len v testoch,
+    // aby kazdy vygenerovany UBL presiel rovnakou validaciou ako u digitalneho postara.
+    testImplementation 'com.helger.phive.rules:phive-rules-peppol:4.6.1'
+    testImplementation 'com.helger.phive:phive-xml:12.1.0'
+    testRuntimeOnly 'org.glassfish.jaxb:jaxb-runtime:4.0.6'
+    testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.17'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+test {
+    useJUnitPlatform()
+}
