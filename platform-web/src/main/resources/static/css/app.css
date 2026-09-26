@@ -272,3 +272,4 @@ td.expense { font-weight: 600; }
 #platba .qr { width: 180px; max-width: 100%; }
 #platba .qr svg { width: 100%; height: auto; display: block; }
 .nowrap { white-space: nowrap; }
+button.danger:not(.link) { background: var(--bad); border-color: var(--bad); color: #fff; }

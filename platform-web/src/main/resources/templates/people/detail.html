@@ -79,6 +79,24 @@
             <div class="span2"><button type="submit" class="primary">Uložiť</button></div>
         </form>
     </section>
+
+    <section class="card" id="gdpr">
+        <div class="page-head"><h2>Ochrana údajov (GDPR)</h2>
+            <span th:replace="~{fragments :: exports('/ludia/' + ${p.id()} + '/udaje', '')}"></span></div>
+        <p class="muted">Keď osoba požiada o svoje údaje, pošlite jej tento výpis (do 1 mesiaca od žiadosti).</p>
+        <p class="warning" th:if="${privacy.anonymized()}"
+           th:text="'Anonymizované ' + ${#temporals.format(privacy.anonymizedAt(), 'd. M. yyyy')} + (${privacy.nameRetained()} ? ' - meno ostalo kvôli mzdovým podkladom.' : '.')"></p>
+        <details th:if="${acc.admin and !privacy.anonymized()}">
+            <summary>Anonymizovať (výmaz na žiadosť)</summary>
+            <ul class="warning" th:unless="${privacy.blockers().isEmpty()}"><li th:each="b : ${privacy.blockers()}" th:text="${b}"></li></ul>
+            <p>Čo sa stane:</p>
+            <ul><li th:each="e : ${privacy.effects()}" th:text="${e}"></li></ul>
+            <form th:if="${privacy.possible()}" th:action="@{/ludia/{id}/anonymizovat(id=${p.id()})}" method="post" class="toolbar">
+                <label>Na potvrdenie napíšte meno <input name="confirmName" required autocomplete="off" th:placeholder="${p.fullName()}"></label>
+                <button type="submit" class="danger">Anonymizovať natrvalo</button>
+            </form>
+        </details>
+    </section>
 </main>
 </body>
 </html>

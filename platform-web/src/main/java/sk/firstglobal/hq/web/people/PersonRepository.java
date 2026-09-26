@@ -37,7 +37,8 @@ public class PersonRepository {
     }
 
     public List<Person> findAll() {
-        return this.jdbc.sql(SELECT + " ORDER BY lower(full_name)").query(MAPPER).list();
+        // anonymizovane karty ostavaju len kvoli statistikam - v adresari a vo vyberoch nemaju co robit
+        return this.jdbc.sql(SELECT + " WHERE anonymized_at IS NULL ORDER BY lower(full_name)").query(MAPPER).list();
     }
 
     public Optional<Person> findById(long id) {

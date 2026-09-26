@@ -34,9 +34,11 @@ class PeopleController {
     private final VolunteerConfirmation confirmations;
     private final AuditLog audit;
     private final Clock clock;
+    private final PersonPrivacy privacy;
 
     PeopleController(PersonRepository people, ScheduleService schedule, AssetRepository assets,
-                     VolunteerConfirmation confirmations, AuditLog audit, Clock clock) {
+                     VolunteerConfirmation confirmations, AuditLog audit, Clock clock, PersonPrivacy privacy) {
+        this.privacy = privacy;
         this.confirmations = confirmations;
         this.people = people;
         this.schedule = schedule;
@@ -98,7 +100,31 @@ class PeopleController {
         model.addAttribute("lent", this.assets.lentTo(id));
         model.addAttribute("confirmationYears", this.confirmations.years(id));
         model.addAttribute("today", LocalDate.now(this.clock));
+        model.addAttribute("privacy", this.privacy.assess(id));
         return "people/detail";
+    }
+
+    /** Vypis vsetkych udajov o osobe - odpoved na ziadost podla cl. 15 GDPR. */
+    @GetMapping("/{id}/udaje.{format:csv|xlsx|pdf}")
+    ResponseEntity<byte[]> personalData(@PathVariable long id, @PathVariable String format, Authentication auth) {
+        this.people.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        ResponseEntity<byte[]> r = this.privacy.export(id).response(format, "udaje-osoby-" + id);
+        this.audit.record(CurrentUser.name(auth), "EXPORT", "osoba", id, "výpis údajov (" + format + ")");
+        return r;
+    }
+
+    @PostMapping("/{id}/anonymizovat")
+    String anonymize(@PathVariable long id, @RequestParam(required = false) String confirmName,
+                     jakarta.servlet.http.HttpServletRequest request, RedirectAttributes redirect) {
+        this.people.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        try {
+            this.privacy.anonymize(id, confirmName, sk.firstglobal.hq.web.access.AccessFilter.of(request));
+            redirect.addFlashAttribute("message", "Osoba je anonymizovaná. Údaje sa nedajú obnoviť (okrem záloh - "
+                    + "tie sa prepíšu podľa rotácie záloh).");
+        } catch (sk.firstglobal.hq.web.access.AccessException e) {
+            redirect.addFlashAttribute("errors", e.errors());
+        }
+        return "redirect:/ludia/" + id;
     }
 
     @PostMapping("/{id}")

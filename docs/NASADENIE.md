@@ -125,6 +125,17 @@ docker compose exec -T db pg_restore -U fgs -d fgs_hq --clean < backups/fgs-hq-2
 - **Kto spravuje server**: aspoň dvaja ľudia s prístupom (SSH kľúč, heslo k zálohám), inak je to jeden bod zlyhania.
 - Aktualizácie systému: na serveri zapnite `unattended-upgrades`.
 
+### Žiadosti ľudí o ich údaje
+
+- **Prístup / kópia (čl. 15, 20):** karta osoby -> Ochrana údajov -> Excel/PDF. Odpovedzte do 1 mesiaca.
+- **Výmaz (čl. 17):** karta osoby -> Anonymizovať (len admin, potvrdenie menom). Meno, kontakty, zástupca, súhlasy
+  a poznámka zmiznú, budúce smeny sa zrušia, účet sa deaktivuje, v audit logu sa meno a e-mail nahradia.
+  Minulé účasti ostanú v štatistikách bez mena. Ak má osoba dohody a výkazy, **meno ostane** (mzdové podklady sa
+  musia uchovať) - vymažú sa len kontakty a súhlasy. Požičaný majetok treba najprv vrátiť.
+- **Čo anonymizácia nezmení:** účtovné doklady a položky (povinnosť uchovávať 10 rokov) a **zálohy** - tie sa
+  prepíšu až rotáciou (30 dní). Pri obnove zo zálohy anonymizáciu zopakujte (je v audit logu).
+- Audit log sa inak meniť ani mazať nedá; jediná výnimka je práve anonymizácia a ide len cez aplikáciu.
+
 ## 4. Aktualizácia
 
 ```sh
