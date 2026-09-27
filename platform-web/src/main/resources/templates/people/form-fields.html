@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<body>
+<th:block th:fragment="fields(p, roles)">
+    <label class="span2">Meno a priezvisko <input name="fullName" required th:value="${p.fullName()}"></label>
+    <label>E-mail <input name="email" type="email" th:value="${p.email()}"></label>
+    <label>Telefón <input name="phone" th:value="${p.phone()}"></label>
+    <label class="span2">Organizácia / škola / firma <input name="organization" th:value="${p.organization()}"></label>
+    <fieldset class="span2 roles-pick">
+        <legend>Roly</legend>
+        <label class="check" th:each="r : ${roles}">
+            <input type="checkbox" name="roles" th:value="${r.name()}" th:checked="${p.roles().contains(r.name())}">
+            <span th:text="${r.label()}"></span></label>
+    </fieldset>
+    <fieldset class="span2 consent">
+        <legend>Súhlasy (GDPR, zákon 18/2018)</legend>
+        <label class="check"><input type="checkbox" name="minor" value="true" th:checked="${p.minor()}"> Maloletý (pod 18 rokov)</label>
+        <label>Zákonný zástupca <input name="guardianName" th:value="${p.guardianName()}"></label>
+        <label>Kontakt na zástupcu <input name="guardianContact" th:value="${p.guardianContact()}"></label>
+        <label>Súhlas so spracovaním údajov udelený dňa <input type="date" name="dataConsentOn" th:value="${p.dataConsentOn()}"></label>
+        <label class="check"><input type="checkbox" name="consentByGuardian" value="true" th:checked="${p.consentByGuardian()}"> Súhlas udelil zákonný zástupca</label>
+        <label class="check"><input type="checkbox" name="photoConsent" value="true" th:checked="${p.photoConsent()}"> Súhlas s fotografiami a videom</label>
+        <small class="span2">Do 16 rokov súhlas dáva zákonný zástupca. Zmluvu o dobrovoľníckej činnosti s maloletým uzatvára zákonný zástupca (zákon 406/2011).
+            Zdravotné údaje (alergie) sem nepíšte - patria len do podkladov konkrétnej akcie a po nej sa mažú.</small>
+    </fieldset>
+    <label class="span2">Poznámka <textarea name="note" rows="2" th:text="${p.note()}"></textarea></label>
+</th:block>
+</body>
+</html>

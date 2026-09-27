@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title=${a.name()})}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='aktivity')}"></header>
+<main class="wide">
+    <p><a th:href="@{/aktivity}">&larr; Aktivity</a></p>
+    <div class="page-head">
+        <div>
+            <span class="kind" th:text="${a.kindLabel()}"></span>
+            <h1 th:text="${a.name()}"></h1>
+            <p class="muted">
+                <span class="mono" th:text="${a.code()}"></span> · <span th:text="${a.statusLabel()}"></span>
+                <span th:if="${a.startsOn() != null}"> · <span th:text="${#temporals.format(a.startsOn(), 'd. M. yyyy')}"></span></span>
+                <span th:if="${a.location() != null}"> · <span th:text="${a.location()}"></span></span>
+            </p>
+        </div>
+        <div class="row">
+            <a class="button primary" th:href="@{/aktivity/{id}/harmonogram(id=${a.id()})}">Harmonogram</a>
+            <th:block th:if="${acc.financeRead}">
+            <a class="button" th:href="@{/financovanie(aktivita=${a.id()})}">Financovanie</a>
+            <a class="button" th:href="@{/polozky(projekt=${a.id()})}">Položky a rozpočet</a>
+            <a class="button" th:href="@{/api/polozky/export.xlsx(projekt=${a.id()})}" title="Vyúčtovanie aktivity v Exceli">Vyúčtovanie (Excel)</a>
+            <a class="button" th:href="@{/api/polozky/export.pdf(projekt=${a.id()})}" title="Vyúčtovanie aktivity v PDF">PDF</a>
+            </th:block>
+        </div>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+
+    <section class="kpis">
+        <div><small>Tím</small><strong th:text="${a.seatsFilled()} + ' / ' + ${a.seatsNeeded()}"></strong><small>potvrdených miest</small></div>
+        <div><small>Úlohy</small><strong th:text="${a.tasksDone()} + ' / ' + ${a.tasksTotal()}"></strong>
+            <small th:classappend="${a.tasksOverdue() > 0} ? 'over'" th:text="${a.tasksOverdue()} + ' po termíne'"></small></div>
+        <div th:if="${canSeeBudget}"><small>Čerpanie</small><strong th:text="${#numbers.formatDecimal(a.spent(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></strong>
+            <small th:text="'z rozpočtu ' + ${#numbers.formatDecimal(a.budget(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></small></div>
+        <div th:if="${canSeeBudget}"><small>Príjmy</small><strong th:text="${#numbers.formatDecimal(a.income(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></strong>
+            <small>na túto aktivitu</small></div>
+    </section>
+
+    <!-- TIM -->
+    <section class="card" id="tim">
+        <div class="page-head"><h2>Tím a roly</h2>
+            <a class="button" th:if="${canSeeTeam and attendees > 0}" th:href="@{/aktivity/{id}/potvrdenia.zip(id=${a.id()})}"
+               th:text="'Potvrdenia dobrovoľníkom (' + ${attendees} + ', ZIP)'"></a>
+            <a class="button" th:if="${canSeeTeam and !roles.isEmpty()}" th:href="@{/aktivity/{id}/zmluvy.zip(id=${a.id()})}"
+               title="Zmluvy o dobrovoľníckej činnosti pre celý tím - na podpis pred akciou">Zmluvy tímu (ZIP)</a></div>
+        <p class="empty" th:if="${roles.isEmpty()}">Zatiaľ žiadne roly. Pridajte napríklad rozhodcov, hodnotiteľov NTE alebo registráciu.</p>
+        <div class="roles">
+            <article class="role" th:each="r : ${roles}">
+                <div class="row between">
+                    <div>
+                        <h3 th:text="${r.name()}"></h3>
+                        <small th:if="${r.startsAt() != null}" th:text="${#temporals.format(r.startsAt(), 'd. M. HH:mm')} + (${r.endsAt() != null} ? ' - ' + ${#temporals.format(r.endsAt(), 'HH:mm')} : '')"></small>
+                        <small th:if="${r.description() != null}" th:text="${r.description()}"></small>
+                    </div>
+                    <span class="badge" th:classappend="${r.isFull()} ? 'ok' : 'bad'" th:text="${r.confirmed()} + ' / ' + ${r.needed()}"></span>
+                </div>
+                <ul class="seats">
+                    <li th:each="s : ${r.seats()}">
+                        <a th:if="${acc.people}" th:href="@{/ludia/{id}(id=${s.personId()})}" th:text="${s.personName()}"></a>
+                        <span th:unless="${acc.people}" th:text="${s.personName()}"></span>
+                        <span class="badge bad" th:if="${s.consentMissing()}" title="Doplňte súhlas v karte osoby">chýba súhlas</span>
+                        <form th:if="${canEditActivity}" class="inline" th:action="@{/aktivity/{id}/obsadenie/{aid}(id=${a.id()},aid=${s.assignmentId()})}" method="post">
+                            <select name="status" aria-label="Stav">
+                                <option value="POZVANY" th:selected="${s.status() == 'POZVANY'}">pozvaný</option>
+                                <option value="POTVRDENY" th:selected="${s.status() == 'POTVRDENY'}">potvrdený</option>
+                                <option value="ODMIETOL" th:selected="${s.status() == 'ODMIETOL'}">odmietol</option>
+                                <option value="ZUCASTNIL_SA" th:selected="${s.status() == 'ZUCASTNIL_SA'}">zúčastnil sa</option>
+                            </select>
+                            <input name="hours" class="hours" inputmode="decimal" placeholder="hod." aria-label="Odpracované hodiny"
+                                   th:value="${s.hours()}">
+                            <button type="submit" class="small">Uložiť</button>
+                        </form>
+                        <span th:unless="${canEditActivity}" class="muted" th:text="${s.statusLabel()}"></span>
+                        <form th:if="${canEditActivity}" class="inline" th:action="@{/aktivity/{id}/obsadenie/{aid}/odobrat(id=${a.id()},aid=${s.assignmentId()})}" method="post">
+                            <button type="submit" class="link danger" aria-label="Odobrať z roly">×</button>
+                        </form>
+                    </li>
+                </ul>
+                <div class="row" th:if="${canEditActivity}">
+                    <form class="inline" th:action="@{/aktivity/{id}/roly/{rid}/priradit(id=${a.id()},rid=${r.id()})}" method="post">
+                        <select name="personId" aria-label="Pridať osobu">
+                            <option value="">+ pridať osobu…</option>
+                            <option th:each="p : ${people}" th:value="${p.id()}" th:text="${p.fullName()} + (${p.roles().isEmpty()} ? '' : ' (' + ${#strings.listJoin(p.roleLabels(), ', ')} + ')')"></option>
+                        </select>
+                        <button type="submit" class="small">Pridať</button>
+                    </form>
+                    <form class="inline" th:action="@{/aktivity/{id}/roly/{rid}/zmazat(id=${a.id()},rid=${r.id()})}" method="post">
+                        <button type="submit" class="link danger">Zmazať rolu</button>
+                    </form>
+                </div>
+            </article>
+        </div>
+        <form th:if="${canEditActivity}" th:action="@{/aktivity/{id}/roly(id=${a.id()})}" method="post" class="grid add-role">
+            <label>Rola <input name="name" required placeholder="Rozhodca, Hodnotiteľ NTE, Registrácia…"></label>
+            <label>Počet ľudí <input name="needed" type="number" min="1" max="500" value="1"></label>
+            <label>Od <input name="startsAt" type="datetime-local"></label>
+            <label>Do <input name="endsAt" type="datetime-local"></label>
+            <label class="span2">Popis <input name="description" placeholder="čo robí, kde sa hlási"></label>
+            <div><button type="submit" class="primary">Pridať rolu</button></div>
+        </form>
+        <p class="muted" th:if="${canEditActivity and people.isEmpty()}">Najprv pridajte ľudí v <a th:href="@{/ludia}">adresári</a>.</p>
+    </section>
+
+    <!-- POZVANKY NA SMENY -->
+    <section class="card" id="pozvanky" th:if="${canEditActivity and !roles.isEmpty()}">
+        <h2>Pozvať do tímu</h2>
+        <div class="highlight" th:if="${inviteLink != null}">
+            <p><input class="copy" readonly th:value="${inviteLink}" aria-label="Odkaz na pozvánku"></p>
+            <p class="muted">Skopírujte ho teraz a pošlite (e-mail, WhatsApp, skupina). Uložený je len jeho odtlačok - znova ho
+                zobraziť nevieme. Ak sa stratí, pozvánku zrušte a vytvorte novú.</p>
+        </div>
+        <p class="muted">Kto pozvánku prijme, prihlási sa, dostane rolu a zapíše sa na vybranú smenu - kým je miesto, rovno
+            ako potvrdený, potom ako čakajúci. Odkaz platí najdlhšie do začiatku smeny. Financie, ľudí ani správu takto dať nejde.</p>
+        <form th:action="@{/aktivity/{id}/pozvanky(id=${a.id()})}" method="post" class="grid">
+            <label>Rola / smena <select name="shiftId" required>
+                <option th:each="r : ${roles}" th:value="${r.id()}"
+                        th:text="${r.name()} + ' (' + ${r.confirmed()} + '/' + ${r.needed()} + (${r.isFull()} ? ', plná - len čakajúci' : '') + ')'"></option>
+            </select></label>
+            <label>Prístup <select name="roleId">
+                <option th:each="r : ${inviteRoles}" th:value="${r.id()}" th:text="${r.name()}"
+                        th:selected="${r.code() == 'DOBROVOLNIK'}"></option>
+            </select></label>
+            <label>E-mail (nepovinné) <input type="email" name="email" placeholder="prázdne = odkaz pre viac ľudí"></label>
+            <label>Počet použití (len odkaz) <input type="number" name="maxUses" min="1" max="200" value="10"></label>
+            <label>Platí dní <input type="number" name="days" min="1" max="30" value="14"></label>
+            <label>Poznámka <input name="note" placeholder="napr. nábor cez školu"></label>
+            <div><button type="submit" class="primary">Vytvoriť pozvánku</button></div>
+        </form>
+        <div class="table-wrap" th:unless="${shiftInvites.isEmpty()}">
+            <table>
+                <thead><tr><th>Pre koho</th><th>Smena</th><th>Použitia</th><th>Platí do</th><th>Stav</th><th>Vytvoril</th><th></th></tr></thead>
+                <tbody>
+                <tr th:each="i : ${shiftInvites}">
+                    <td th:text="${i.email() ?: 'odkaz'}"></td>
+                    <td><span th:text="${i.shiftName()}"></span><small class="muted" th:if="${i.note() != null}" th:text="${i.note()}"></small></td>
+                    <td th:text="${i.usedCount()} + ' / ' + ${i.maxUses()}"></td>
+                    <td th:text="${#temporals.format(i.expiresAt(), 'd. M. HH:mm')}"></td>
+                    <td><span class="badge" th:classappend="${i.state(now) == 'platná'} ? 'ok'" th:text="${i.state(now)}"></span></td>
+                    <td class="muted" th:text="${i.createdBy()}"></td>
+                    <td><form th:if="${i.isUsable(now)}" th:action="@{/aktivity/{id}/pozvanky/{iid}/zrusit(id=${a.id()},iid=${i.id()})}" method="post">
+                        <button type="submit" class="link danger">Zrušiť</button></form></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- VLASTNICI -->
+    <section class="card" id="vlastnici">
+        <h2>Vlastníci aktivity</h2>
+        <p class="muted">Vlastník (projektový manažér) upravuje túto aktivitu, jej tím, harmonogram a podklady a vidí jej rozpočet - aj keď nemá prístup k ostatným aktivitám a financiám.</p>
+        <p class="empty" th:if="${owners.isEmpty()}">Zatiaľ nikto.</p>
+        <ul class="tasks" th:unless="${owners.isEmpty()}">
+            <li th:each="o : ${owners}">
+                <span class="title" th:text="${o.displayName() ?: o.email()}"></span><small class="muted" th:text="${o.email()}"></small>
+                <form th:if="${acc.activitiesWrite}" class="inline" th:action="@{/aktivity/{id}/vlastnici/{u}/odobrat(id=${a.id()},u=${o.userId()})}" method="post">
+                    <button type="submit" class="link danger" aria-label="Odobrať vlastníka">×</button>
+                </form>
+            </li>
+        </ul>
+        <form th:if="${acc.activitiesWrite and !users.isEmpty()}" th:action="@{/aktivity/{id}/vlastnici(id=${a.id()})}" method="post" class="toolbar">
+            <select name="userId" aria-label="Používateľ">
+                <option value="">+ pridať vlastníka…</option>
+                <option th:each="u : ${users}" th:value="${u.id()}" th:text="${u.displayName() ?: u.email()} + ' (' + ${#strings.listJoin(u.roleNames(), ', ')} + ')'"></option>
+            </select>
+            <button type="submit">Pridať</button>
+        </form>
+        <p class="muted" th:if="${acc.admin}">Nového človeka pozvete v <a th:href="@{/sprava/pozvanky}">Správe - pozvánky</a> (môžete mu rovno dať vlastníctvo tejto aktivity).</p>
+    </section>
+
+    <!-- ULOHY -->
+    <section class="card" id="ulohy">
+        <div class="page-head">
+            <h2>Úlohy a checklist</h2>
+            <form th:if="${canEditActivity and templateSize > 0}" th:action="@{/aktivity/{id}/sablona(id=${a.id()})}" method="post">
+                <button type="submit" class="small" th:text="'Doplniť šablónu (' + ${templateSize} + ' krokov)'"></button>
+            </form>
+        </div>
+        <p class="empty" th:if="${openTasks.isEmpty() and doneTasks.isEmpty()}">Zatiaľ žiadne úlohy.</p>
+        <div th:each="entry : ${openTasks}" class="task-group">
+            <h3 th:text="${entry.key}"></h3>
+            <ul class="tasks">
+                <li th:each="t : ${entry.value}" th:classappend="${t.isOverdue(today)} ? 'overdue'">
+                    <form th:if="${canEditActivity}" class="inline" th:action="@{/aktivity/{id}/ulohy/{tid}/hotovo(id=${a.id()},tid=${t.id()})}" method="post">
+                        <button type="submit" class="check-btn" aria-label="Označiť ako hotové">☐</button>
+                    </form>
+                    <span class="title" th:text="${t.title()}"></span>
+                    <span class="due" th:if="${t.dueOn() != null}" th:text="${#temporals.format(t.dueOn(), 'd. M. yyyy')}"></span>
+                    <span class="who" th:if="${t.assigneeName() != null}" th:text="${t.assigneeName()}"></span>
+                    <form th:if="${canEditActivity}" class="inline" th:action="@{/aktivity/{id}/ulohy/{tid}/zmazat(id=${a.id()},tid=${t.id()})}" method="post">
+                        <button type="submit" class="link danger" aria-label="Zmazať úlohu">×</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+        <details th:unless="${doneTasks.isEmpty()}">
+            <summary th:text="'Hotové (' + ${doneTasks.size()} + ')'"></summary>
+            <ul class="tasks done">
+                <li th:each="t : ${doneTasks}">
+                    <form th:if="${canEditActivity}" class="inline" th:action="@{/aktivity/{id}/ulohy/{tid}/hotovo(id=${a.id()},tid=${t.id()})}" method="post">
+                        <button type="submit" class="check-btn" aria-label="Vrátiť medzi otvorené">☑</button>
+                    </form>
+                    <span class="title" th:text="${t.title()}"></span>
+                    <small th:if="${t.doneBy() != null}" th:text="${t.doneBy()}"></small>
+                </li>
+            </ul>
+        </details>
+        <form th:if="${canEditActivity}" th:action="@{/aktivity/{id}/ulohy(id=${a.id()})}" method="post" class="grid add-task">
+            <label class="span2">Nová úloha <input name="title" required placeholder="Čo treba urobiť"></label>
+            <label>Sekcia <input name="section" placeholder="Logistika" list="sections"></label>
+            <label>Termín <input name="dueOn" type="date"></label>
+            <label>Zodpovedný <select name="assigneeId">
+                <option value="">-</option>
+                <option th:each="p : ${people}" th:value="${p.id()}" th:text="${p.fullName()}"></option>
+            </select></label>
+            <div><button type="submit" class="primary">Pridať úlohu</button></div>
+            <datalist id="sections"><option th:each="entry : ${openTasks}" th:value="${entry.key}"></option></datalist>
+        </form>
+    </section>
+
+    <section class="card" id="podpora" th:if="${canEditActivity}">
+        <div class="page-head">
+            <h2>Podpora od verejnosti</h2>
+            <span class="badge" th:classappend="${donation.enabled()} ? 'ok'" th:text="${donation.enabled()} ? 'verejná stránka zapnutá' : 'vypnutá'"></span>
+        </div>
+        <p class="muted">Ktokoľvek môže prispieť QR platbou z banky na účet združenia s variabilným symbolom
+            <strong class="mono" th:text="${donation.variableSymbol()}"></strong>. Pri zápise príjmu z výpisu vložte tento VS do poľa
+            „Doklad“ - suma sa započíta do zbierky.</p>
+        <p th:if="${donation.enabled()}">Odkaz na zdieľanie: <a th:href="${donationUrl}" th:text="${donationUrl}"></a></p>
+        <p th:if="${donation.collected().signum() > 0}" th:text="'Vyzbierané: ' + ${#numbers.formatDecimal(donation.collected(), 1, 'WHITESPACE', 2, 'COMMA')} + ' € (' + ${donation.donors()} + ' platieb)'"></p>
+        <form th:action="@{/aktivity/{id}/podpora(id=${a.id()})}" method="post" class="grid">
+            <label class="check span2"><input type="checkbox" name="enabled" value="true" th:checked="${donation.enabled()}"> zverejniť stránku /podpora/<span th:text="${a.code()}"></span></label>
+            <label class="span2">Text pre verejnosť <textarea name="text" rows="3" maxlength="1500" th:text="${donation.text()}"
+                placeholder="Na čo peniaze pôjdu - napr. letenky pre 5 študentov na svetové finále v Singapure."></textarea></label>
+            <label>Cieľ zbierky (€, nepovinné) <input name="goal" inputmode="decimal" th:value="${donation.goal()}"></label>
+            <p class="muted span2">Na verejnej stránke je len názov aktivity, tento text, cieľ s vyzbieranou sumou a údaje na platbu. Nič z interných dát.</p>
+            <div class="span2"><button type="submit" class="primary">Uložiť</button></div>
+        </form>
+    </section>
+
+    <section th:replace="~{fragments :: attachments(${attachments}, ${uploadUrl}, false, ${canEditActivity})}"></section>
+
+    <!-- UPRAVA -->
+    <details class="card" th:if="${canEditActivity}">
+        <summary><h2 class="inline">Upraviť aktivitu</h2></summary>
+        <form th:action="@{/aktivity/{id}(id=${a.id()})}" method="post" class="grid">
+            <label class="span2">Názov <input name="name" required th:value="${a.name()}"></label>
+            <label>Typ <select name="kind"><option th:each="k : ${kinds}" th:value="${k.name()}" th:text="${k.label()}" th:selected="${k.name() == a.kind()}"></option></select></label>
+            <label>Stav <select name="status">
+                <option value="PRIPRAVA" th:selected="${a.status() == 'PRIPRAVA'}">Príprava</option>
+                <option value="PREBIEHA" th:selected="${a.status() == 'PREBIEHA'}">Prebieha</option>
+                <option value="UKONCENA" th:selected="${a.status() == 'UKONCENA'}">Ukončená</option>
+                <option value="ZRUSENA" th:selected="${a.status() == 'ZRUSENA'}">Zrušená</option>
+            </select></label>
+            <label>Začiatok <input type="date" name="startsOn" th:value="${a.startsOn()}"></label>
+            <label>Koniec <input type="date" name="endsOn" th:value="${a.endsOn()}"></label>
+            <label>Miesto <input name="location" th:value="${a.location()}"></label>
+            <label>Rozpočet výdavkov (€) <input name="budget" inputmode="decimal" th:value="${a.budget()}"></label>
+            <label class="span2">Popis <textarea name="description" rows="3" th:text="${a.description()}"></textarea></label>
+            <div class="span2"><button type="submit" class="primary">Uložiť</button></div>
+        </form>
+    </details>
+</main>
+</body>
+</html>

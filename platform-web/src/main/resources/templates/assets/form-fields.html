@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<body>
+<th:block th:fragment="fields(a)">
+    <label>Inventárne číslo <input name="inventoryNo" th:value="${a?.inventoryNo()}" th:placeholder="${nextNo != null} ? ${nextNo} + ' (automaticky)' : ''"></label>
+    <label>Kategória <select name="category">
+        <option th:each="c : ${categories}" th:value="${c.name()}" th:text="${c.label()}" th:selected="${a != null and c.name() == a.category()}"></option>
+    </select></label>
+    <label class="span2">Názov <input name="name" required maxlength="200" th:value="${a?.name()}" placeholder="REV Control Hub, notebook Lenovo T14, akumulátorová vŕtačka"></label>
+    <label>Sériové číslo <input name="serialNo" th:value="${a?.serialNo()}"></label>
+    <label>Kde je <input name="location" th:value="${a?.location()}" placeholder="dielňa, sklad, škola X"></label>
+    <label>Kúpené <input type="date" name="purchasedOn" th:value="${a?.purchasedOn()}"></label>
+    <label>Cena (€) <input name="price" inputmode="decimal" th:value="${a?.price()}"></label>
+    <label class="span2">Doklad o kúpe (položka) <select name="ledgerEntryId">
+        <option value="">-</option>
+        <option th:each="o : ${expenses}" th:value="${o.id()}" th:text="${o.label()}" th:selected="${a != null and o.id() == a.ledgerEntryId()}"></option>
+    </select></label>
+    <label>Kúpené z grantu <select name="dealId">
+        <option value="">-</option>
+        <option th:each="o : ${grants}" th:value="${o.id()}" th:text="${o.label()}" th:selected="${a != null and o.id() == a.dealId()}"></option>
+    </select></label>
+    <label>Udržať do (podmienka grantu) <input type="date" name="keepUntil" th:value="${a?.keepUntil()}"></label>
+    <label class="span2">Poznámka <textarea name="note" rows="2" th:text="${a?.note()}"></textarea></label>
+</th:block>
+</body>
+</html>

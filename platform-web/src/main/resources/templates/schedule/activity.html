@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Harmonogram - ' + ${a.name()})}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='aktivity')}"></header>
+<main class="wide">
+    <p><a th:href="@{/aktivity/{id}(id=${a.id()})}" th:text="'← ' + ${a.name()}"></a></p>
+    <div class="page-head">
+        <div>
+            <h1>Harmonogram</h1>
+            <p class="muted"><span th:text="${a.name()}"></span>
+                <span th:if="${a.location() != null}" th:text="' · ' + ${a.location()}"></span></p>
+        </div>
+        <div class="row">
+            <span th:replace="~{fragments :: exports(${exportBase}, ${exportQuery})}"></span>
+            <a class="button" th:href="@{${exportBase + '.ics' + exportQuery}}" title="Import do Google Kalendára, Outlooku alebo iPhonu">Do kalendára</a>
+        </div>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+
+    <form class="filters card" method="get" th:action="@{/aktivity/{id}/harmonogram(id=${a.id()})}">
+        <label>Pre koho <select name="pre">
+            <option value="">všetky body</option>
+            <option th:each="x : ${audiences}" th:value="${x}" th:text="${x}" th:selected="${x == filter.audience()}"></option>
+        </select></label>
+        <label>Osoba (jej program) <select name="osoba">
+            <option value="">-</option>
+            <option th:each="m : ${members}" th:value="${m.personId()}" th:text="${m.fullName()}" th:selected="${m.personId() == filter.personId()}"></option>
+        </select></label>
+        <label>Zodpovedá <select name="owner">
+            <option value="">-</option>
+            <option th:each="m : ${members}" th:value="${m.personId()}" th:text="${m.fullName()}" th:selected="${m.personId() == filter.ownerId()}"></option>
+        </select></label>
+        <div class="row">
+            <button type="submit">Filtrovať</button>
+            <a th:unless="${filter.isEmpty()}" th:href="@{/aktivity/{id}/harmonogram(id=${a.id()})}">zrušiť filter</a>
+        </div>
+    </form>
+    <p class="muted" th:unless="${filter.isEmpty()}">Exporty vyššie obsahujú len to, čo práve vidíte (podľa filtra).</p>
+
+    <p class="empty" th:if="${days.isEmpty()}">Zatiaľ žiadny program. Pridajte body programu nižšie; smeny z rolí (s časom) sa sem doplnia samy.</p>
+    <section class="card day" th:each="d : ${days}">
+        <h2 th:text="${#temporals.format(d.key, 'EEEE d. M. yyyy', new java.util.Locale('sk'))}"></h2>
+        <table class="agenda">
+            <tbody>
+            <tr th:each="e : ${d.value}" th:classappend="${e.kind().name() == 'SMENA'} ? 'shift'">
+                <td class="time">
+                    <span th:unless="${e.allDay()}" th:text="${#temporals.format(e.startsAt(), 'HH:mm')} + (${e.endsAt() != null} ? ' - ' + ${#temporals.format(e.endsAt(), 'HH:mm')} : '')"></span>
+                    <span th:if="${e.allDay()}">celý deň</span>
+                </td>
+                <td>
+                    <strong th:text="${e.title()}"></strong>
+                    <span class="badge" th:unless="${e.kind().name() == 'PROGRAM'}" th:text="${e.kind().label()}"></span>
+                    <div class="muted" th:if="${e.location() != null}" th:text="${e.location()}"></div>
+                    <div class="muted" th:if="${e.people() != null}" th:text="${e.people()}"></div>
+                    <div class="note" th:if="${e.note() != null}" th:text="${e.note()}"></div>
+                    <details th:if="${canEditActivity and e.kind().name() == 'PROGRAM'}" class="edit">
+                        <summary>upraviť</summary>
+                        <form th:action="@{/aktivity/{id}/program/{iid}(id=${a.id()},iid=${e.sourceId()})}" method="post" class="grid">
+                            <label>Začiatok <input type="datetime-local" name="startsAt" required th:value="${#temporals.format(e.startsAt(), 'yyyy-MM-dd''T''HH:mm')}"></label>
+                            <label>Koniec <input type="datetime-local" name="endsAt" th:value="${e.endsAt() == null} ? '' : ${#temporals.format(e.endsAt(), 'yyyy-MM-dd''T''HH:mm')}"></label>
+                            <label class="span2">Názov <input name="title" required maxlength="200" th:value="${e.title()}"></label>
+                            <label>Miesto <input name="location" th:value="${e.location()}"></label>
+                            <label>Zodpovedá <select name="ownerId">
+                                <option value="">-</option>
+                                <option th:each="p : ${people}" th:value="${p.id()}" th:text="${p.fullName()}" th:selected="${p.id() == e.ownerId()}"></option>
+                            </select></label>
+                            <label class="span2">Pre (roly a tagy oddelené čiarkou) <input name="tags" th:value="${#strings.listJoin(e.tags(), ', ')}"></label>
+                            <label class="span2">Poznámka <textarea name="note" rows="2" th:text="${e.note()}"></textarea></label>
+                            <div class="row span2"><button type="submit" class="primary">Uložiť</button></div>
+                        </form>
+                        <form th:action="@{/aktivity/{id}/program/{iid}/zmazat(id=${a.id()},iid=${e.sourceId()})}" method="post">
+                            <button type="submit" class="link danger">Zmazať bod programu</button>
+                        </form>
+                    </details>
+                </td>
+                <td class="who"><span th:if="${e.ownerName() != null}" th:text="${e.ownerName()}"></span></td>
+                <td class="tags"><span class="chips"><span class="chip" th:each="t : ${e.tags()}" th:unless="${e.kind().name() == 'TERMIN'}" th:text="${t}"></span></span></td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card" th:if="${canEditActivity}">
+        <h2>Pridať bod programu</h2>
+        <form th:action="@{/aktivity/{id}/program(id=${a.id()})}" method="post" class="grid">
+            <label>Začiatok <input type="datetime-local" name="startsAt" required th:value="${defaultDay} + 'T09:00'"></label>
+            <label>Koniec <input type="datetime-local" name="endsAt"></label>
+            <label class="span2">Názov <input name="title" required maxlength="200" placeholder="Registrácia tímov, Školenie rozhodcov, Zápasy 1. kolo…"></label>
+            <label>Miesto <input name="location" placeholder="ak iné než miesto akcie"></label>
+            <label>Zodpovedá <select name="ownerId">
+                <option value="">-</option>
+                <option th:each="p : ${people}" th:value="${p.id()}" th:text="${p.fullName()}"></option>
+            </select></label>
+            <label class="span2">Pre koho (roly a tagy oddelené čiarkou) <input name="tags" th:placeholder="${everyone} + ', Rozhodca, Hodnotiteľ NTE'"></label>
+            <p class="muted span2">Bod sa zobrazí v osobnom programe každého, kto má na tejto akcii rolu s rovnakým názvom.
+                „<span th:text="${everyone}"></span>“ = celý tím akcie. Existujúce:
+                <span th:each="x, st : ${audiences}" th:text="${x} + (${st.last} ? '' : ', ')"></span></p>
+            <label class="span2">Poznámka <textarea name="note" rows="2" placeholder="čo si vziať, kde sa hlásiť"></textarea></label>
+            <div class="span2"><button type="submit" class="primary">Pridať</button></div>
+        </form>
+    </section>
+
+    <section class="card" th:if="${canSeeTeam}">
+        <h2>Rozpis pre každého</h2>
+        <p class="muted">Jeden riadok = jedna osoba a jej bod programu, s e-mailom. Hodí sa na hromadný e-mail alebo vytlačenie po ľuďoch.</p>
+        <span th:replace="~{fragments :: exports('/aktivity/' + ${a.id()} + '/rozpis', '')}"></span>
+    </section>
+</main>
+</body>
+</html>

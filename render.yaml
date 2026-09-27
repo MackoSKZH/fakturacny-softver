@@ -1,0 +1,47 @@
+# Render blueprint: Dashboard -> New -> Blueprint -> vyber tento repozitar. Navod: docs/NASADENIE.md, cast "Render".
+# Vsetko bezi vo Frankfurte (EU). Aplikacia je bezstavova (aj prilohy su v databaze), takze netreba disk.
+databases:
+  - name: fgs-hq-db
+    region: frankfurt
+    # "free" databaza sa po 30 dnoch zmaze - na ostre data len platena (ma aj denne zalohy)
+    plan: basic-256mb
+    databaseName: fgs_hq
+    user: fgs
+    postgresMajorVersion: "16"
+    ipAllowList: []   # databaza nie je dostupna z internetu, len z Renderu
+
+services:
+  - type: web
+    name: fgs-hq
+    runtime: docker
+    region: frankfurt
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /actuator/health
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_HOST
+        fromDatabase: { name: fgs-hq-db, property: host }
+      - key: DATABASE_PORT
+        fromDatabase: { name: fgs-hq-db, property: port }
+      - key: DATABASE_NAME
+        fromDatabase: { name: fgs-hq-db, property: database }
+      - key: DATABASE_USER
+        fromDatabase: { name: fgs-hq-db, property: user }
+      - key: DATABASE_PASSWORD
+        fromDatabase: { name: fgs-hq-db, property: password }
+      - key: SPRING_PROFILES_ACTIVE
+        value: google
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: TZ
+        value: Europe/Bratislava
+      # tajne hodnoty sa zadaju pri vytvoreni blueprintu v dashboarde, v gite nie su
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: APP_EDITOR_EMAILS
+        sync: false
+      - key: APP_ALLOWED_DOMAINS
+        sync: false

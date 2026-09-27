@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Ľudia')}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='ludia')}"></header>
+<main class="wide">
+    <h1>Ľudia</h1>
+    <p class="muted">Dobrovoľníci, hodnotitelia, rozhodcovia, mentori, študenti, rodičia, partneri a investori - jedna karta pre každého naprieč všetkými akciami.</p>
+    <div th:replace="~{fragments :: messages}"></div>
+    <form class="toolbar" method="get" th:action="@{/ludia}">
+        <input type="search" name="q" th:value="${q}" placeholder="Hľadať meno, e-mail, organizáciu" aria-label="Hľadať">
+        <select name="role" aria-label="Rola">
+            <option value="">Všetky roly</option>
+            <option th:each="r : ${roles}" th:value="${r.name()}" th:text="${r.label()}" th:selected="${r.name() == role}"></option>
+        </select>
+        <button type="submit">Filtrovať</button>
+    </form>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Meno</th><th>Roly</th><th>Organizácia</th><th>Kontakt</th><th>Súhlasy</th></tr></thead>
+            <tbody>
+            <tr th:each="x : ${people}">
+                <td><a th:href="@{/ludia/{id}(id=${x.id()})}" th:text="${x.fullName()}"></a>
+                    <span class="badge" th:if="${x.minor()}">maloletý</span></td>
+                <td><span class="chips"><span class="chip" th:each="l : ${x.roleLabels()}" th:text="${l}"></span></span></td>
+                <td th:text="${x.organization()}"></td>
+                <td th:text="${x.email() ?: x.phone()}"></td>
+                <td><span th:if="${x.consentIssue() == null}" class="badge ok">v poriadku</span>
+                    <span th:unless="${x.consentIssue() == null}" class="badge bad" th:text="${x.consentIssue()}"></span></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="empty" th:if="${people.isEmpty()}">Nikto nezodpovedá filtru.</p>
+
+    <section class="card">
+        <h2>Nová osoba</h2>
+        <form th:action="@{/ludia}" method="post" class="grid">
+            <th:block th:replace="~{people/form-fields :: fields(${p}, ${roles})}"></th:block>
+            <div class="span2"><button type="submit" class="primary">Pridať osobu</button></div>
+        </form>
+    </section>
+</main>
+</body>
+</html>

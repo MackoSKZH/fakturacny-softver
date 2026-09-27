@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Majetok')}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='majetok')}"></header>
+<main class="wide">
+    <div class="page-head">
+        <div>
+            <h1>Majetok a hardvér</h1>
+            <p class="muted">Robotické sady, počítače, náradie a vybavenie: kde to je, kto to má požičané a z čoho sme to kúpili.</p>
+        </div>
+        <th:block th:if="${acc.exports}"><span th:replace="~{fragments :: exports('/exporty/majetok', '')}"></span></th:block>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+    <form class="toolbar" method="get" th:action="@{/majetok}">
+        <input type="search" name="q" th:value="${q}" placeholder="Hľadať číslo, názov, sériové číslo, kto to má" aria-label="Hľadať">
+        <select name="kategoria" aria-label="Kategória">
+            <option value="">Všetky kategórie</option>
+            <option th:each="c : ${categories}" th:value="${c.name()}" th:text="${c.label()}" th:selected="${c.name() == kategoria}"></option>
+        </select>
+        <select name="stav" aria-label="Stav">
+            <option value="aktivne" th:selected="${stav == 'aktivne'}">Aktívne</option>
+            <option value="pozicane" th:selected="${stav == 'pozicane'}">Požičané</option>
+            <option value="vyradene" th:selected="${stav == 'vyradene'}">Vyradené</option>
+            <option value="vsetko" th:selected="${stav == 'vsetko'}">Všetko</option>
+        </select>
+        <button type="submit">Filtrovať</button>
+    </form>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Číslo</th><th>Názov</th><th>Kategória</th><th>Stav</th><th>Kde / kto</th><th class="num">Cena</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="a : ${assets}">
+                <td class="mono"><a th:href="@{/majetok/{id}(id=${a.id()})}" th:text="${a.inventoryNo()}"></a></td>
+                <td th:text="${a.name()}"></td>
+                <td th:text="${a.categoryLabel()}"></td>
+                <td><span class="badge" th:classappend="${a.isLoanOverdue(today)} ? 'bad' : (${a.isLent()} ? '' : 'ok')" th:text="${a.statusLabel()}"></span></td>
+                <td><span th:if="${a.isLent()}" th:text="${a.borrowerName()} + (${a.loanDueOn() != null} ? ' do ' + ${#temporals.format(a.loanDueOn(), 'd. M.')} : '')"></span>
+                    <span th:unless="${a.isLent()}" th:text="${a.location()}"></span></td>
+                <td class="num" th:text="${a.price() == null} ? '' : ${#numbers.formatDecimal(a.price(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                <td><span class="badge bad" th:unless="${a.warnings(today).isEmpty()}" th:title="${#strings.listJoin(a.warnings(today), ' ')}" th:text="${a.warnings(today).size()}"></span></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="empty" th:if="${assets.isEmpty()}">Nič nezodpovedá filtru.</p>
+
+    <section class="card" th:if="${acc.assets}">
+        <h2>Nová vec</h2>
+        <form th:action="@{/majetok}" method="post" class="grid">
+            <th:block th:replace="~{assets/form-fields :: fields(null)}"></th:block>
+            <div class="span2"><button type="submit" class="primary">Zapísať</button></div>
+        </form>
+    </section>
+</main>
+</body>
+</html>

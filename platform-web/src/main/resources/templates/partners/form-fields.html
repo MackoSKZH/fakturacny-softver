@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<body>
+<th:block th:fragment="fields(p)">
+    <label class="span2">Názov <input name="name" required maxlength="200" th:value="${p?.name()}" placeholder="Firma, nadácia, škola alebo meno darcu"></label>
+    <label>Typ <select name="kind">
+        <option th:each="k : ${kinds}" th:value="${k.name()}" th:text="${k.label()}" th:selected="${p != null and k.name() == p.kind()}"></option>
+    </select></label>
+    <label>IČO <input name="ico" inputmode="numeric" th:value="${p?.ico()}"></label>
+    <label>Kontaktná osoba <input name="contactName" th:value="${p?.contactName()}"></label>
+    <label>E-mail <input name="contactEmail" type="email" th:value="${p?.contactEmail()}"></label>
+    <label>Telefón <input name="contactPhone" th:value="${p?.contactPhone()}"></label>
+    <label>Web <input name="web" th:value="${p?.web()}"></label>
+    <label>Vzťah vedie <select name="ownerPersonId">
+        <option value="">-</option>
+        <option th:each="x : ${people}" th:value="${x.id()}" th:text="${x.fullName()}" th:selected="${p != null and x.id() == p.ownerPersonId()}"></option>
+    </select></label>
+    <label>Odberateľ pre faktúry <select name="customerId">
+        <option value="">- (nefakturujeme)</option>
+        <option th:each="c : ${customers}" th:value="${c.id()}" th:text="${c.name()}" th:selected="${p != null and c.id() == p.customerId()}"></option>
+    </select></label>
+    <label class="span2">Tagy (oddelené čiarkou) <input name="tags" th:value="${p == null} ? '' : ${#strings.listJoin(p.tags(), ', ')}" placeholder="tech, Poprad, generálny partner"></label>
+    <label class="span2">Poznámka <textarea name="note" rows="2" th:text="${p?.note()}" placeholder="čo ich zaujíma, čo nechcú, kto rozhoduje"></textarea></label>
+</th:block>
+</body>
+</html>

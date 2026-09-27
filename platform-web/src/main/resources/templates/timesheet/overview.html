@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Dochádzka')}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='dochadzka')}"></header>
+<main class="wide">
+    <div class="page-head">
+        <h1>Dochádzka <small class="inline" th:text="${#temporals.format(month.atDay(1), 'MMMM yyyy', new java.util.Locale('sk'))}"></small></h1>
+        <div class="row">
+            <a class="button" th:href="@{/dochadzka(mesiac=${month.minusMonths(1)})}">&larr;</a>
+            <a class="button" th:href="@{/dochadzka(mesiac=${month.plusMonths(1)})}">&rarr;</a>
+            <span class="muted">Podklad pre účtovníka:</span>
+            <span th:replace="~{fragments :: exports('/dochadzka/export', '?mesiac=' + ${month})}"></span>
+        </div>
+    </div>
+    <p class="muted">Evidencia odpracovaného času a hrubej odmeny (hodiny × hodinovka). Odvody, daň a výplatu počíta účtovník z uzavretého výkazu.</p>
+    <div th:replace="~{fragments :: messages}"></div>
+
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Meno</th><th>Pozícia</th><th>Zmluva</th><th class="num">Hodinovka</th><th class="num">Hodiny</th>
+                <th class="num">Hrubá odmena</th><th>Mesiac</th></tr></thead>
+            <tbody>
+            <tr th:each="r : ${rows}">
+                <td><a th:href="@{/dochadzka/{id}(id=${r.contract().id()},mesiac=${month})}" th:text="${r.contract().personName()}"></a></td>
+                <td th:text="${r.contract().title()}"></td>
+                <td><span th:text="${r.contract().kindLabel()}"></span><br>
+                    <small th:text="${#temporals.format(r.contract().validFrom(), 'd. M. yyyy')} + ' - ' + ${#temporals.format(r.contract().validTo(), 'd. M. yyyy')}"></small></td>
+                <td class="num" th:text="${#numbers.formatDecimal(r.contract().hourlyRate(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(r.hours(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(r.reward(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></td>
+                <td><span class="badge ok" th:if="${r.closed()}">uzavretý</span><span class="badge" th:unless="${r.closed()}">otvorený</span></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="empty" th:if="${rows.isEmpty()}">Zatiaľ žiadne zmluvy.</p>
+
+    <section class="card">
+        <h2>Nová zmluva</h2>
+        <p class="muted" th:if="${paid.isEmpty()}">Najprv v <a th:href="@{/ludia}">Ľuďoch</a> označte osobu rolou „Platený spolupracovník“.</p>
+        <form th:action="@{/dochadzka/zmluvy}" method="post" class="grid">
+            <label>Osoba <select name="personId" required>
+                <option value="">- vyberte -</option>
+                <option th:each="p : ${paid}" th:value="${p.id()}" th:text="${p.fullName()}"></option>
+            </select></label>
+            <label>Typ zmluvy <select name="kind">
+                <option th:each="k : ${kinds}" th:value="${k.name()}" th:text="${k.label()}"></option>
+            </select></label>
+            <label>Pozícia <input name="title" required placeholder="Koordinátor národného kola"></label>
+            <label>Hodinovka (€) <input name="hourlyRate" required inputmode="decimal" placeholder="12,00">
+                <small th:text="'minimálna mzda 2026: ' + ${minWage} + ' €/h'"></small></label>
+            <label>Platná od <input type="date" name="validFrom" required></label>
+            <label>Platná do <input type="date" name="validTo" required><small>dohody najviac 12 mesiacov</small></label>
+            <label>Predvolený projekt <select name="projectId">
+                <option value="">-</option>
+                <option th:each="p : ${projects}" th:value="${p.id()}" th:text="${p.code()}"></option>
+            </select></label>
+            <label class="span2">Náplň práce <textarea name="jobDescription" rows="3" placeholder="Čo presne robí, komu sa zodpovedá"></textarea></label>
+            <label class="span2">Poznámka <input name="note" placeholder="napr. číslo zmluvy, kde je podpísaný originál"></label>
+            <div class="span2"><button type="submit" class="primary">Uložiť zmluvu</button></div>
+        </form>
+        <p class="muted">Limity kontrolované pri zápise: najviac 12 h za deň; DoVP 350 h/rok (za všetky dohody osoby); DoPČ 10 h/týždeň;
+            brigáda študenta priemerne 20 h/týždeň; hodinovka nie nižšia než minimálna mzda.</p>
+    </section>
+</main>
+</body>
+</html>

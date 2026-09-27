@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title=${p.name()})}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='partneri')}"></header>
+<main class="wide">
+    <p><a th:href="@{/partneri}">&larr; Partneri</a></p>
+    <div class="page-head">
+        <div>
+            <span class="kind" th:text="${p.kindLabel()}"></span>
+            <h1 th:text="${p.name()}"></h1>
+            <p class="muted">
+                <span th:if="${p.contactName() != null}" th:text="${p.contactName()}"></span>
+                <a th:if="${p.contactEmail() != null}" th:href="'mailto:' + ${p.contactEmail()}" th:text="${p.contactEmail()}"></a>
+                <span th:if="${p.contactPhone() != null}" th:text="${p.contactPhone()}"></span>
+                <span th:if="${p.ownerName() != null}" th:text="'· vzťah vedie ' + ${p.ownerName()}"></span>
+            </p>
+            <span class="chips"><span class="chip" th:each="t : ${p.tags()}" th:text="${t}"></span></span>
+        </div>
+        <div class="kpis compact">
+            <div><small>Dohodnuté</small><strong th:text="${#numbers.formatDecimal(p.secured(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></strong>
+                <small th:text="'v jednaní ' + ${#numbers.formatDecimal(p.negotiating(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></small></div>
+            <div><small>Prijaté</small><strong th:text="${#numbers.formatDecimal(p.received(), 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></strong>
+                <small>z priradených položiek</small></div>
+        </div>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+    <p class="warning" th:if="${p.isNeglected(today)}">S partnerom nie je zapísaný kontakt za posledné 4 mesiace. Pošlite aspoň novinky alebo fotky z akcie.</p>
+
+    <section class="card" id="dohody">
+        <h2>Dohody a financovanie</h2>
+        <p class="empty" th:if="${deals.isEmpty()}">Zatiaľ žiadna dohoda.</p>
+        <div class="table-wrap" th:unless="${deals.isEmpty()}">
+            <table>
+                <thead><tr><th>Dohoda</th><th>Typ</th><th>Aktivita</th><th>Stav</th><th class="num">Suma</th><th class="num">Prijaté</th>
+                    <th>Protiplnenia</th><th>Upozornenia</th></tr></thead>
+                <tbody>
+                <tr th:each="d : ${deals}">
+                    <td><a th:href="@{/financovanie/{id}(id=${d.id()})}" th:text="${d.title()}"></a></td>
+                    <td th:text="${d.kindLabel()}"></td>
+                    <td th:text="${d.projectCode()}"></td>
+                    <td><span class="badge" th:classappend="${d.stage() == 'ZAPLATENE'} ? 'ok' : (${d.stage() == 'ODMIETNUTE'} ? 'bad' : '')" th:text="${d.stageLabel()}"></span></td>
+                    <td class="num" th:text="${#numbers.formatDecimal(d.amount(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                    <td class="num" th:text="${#numbers.formatDecimal(d.received(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                    <td th:text="${d.deliverablesTotal() == 0} ? '-' : ${d.deliverablesDone()} + ' / ' + ${d.deliverablesTotal()}"></td>
+                    <td><span class="badge bad" th:unless="${d.warnings(today).isEmpty()}" th:text="${d.warnings(today).size()}"></span></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <details>
+            <summary>+ Nová dohoda s týmto partnerom</summary>
+            <form th:action="@{/financovanie}" method="post" class="grid">
+                <input type="hidden" name="partnerId" th:value="${p.id()}">
+                <input type="hidden" name="back" th:value="'/partneri/' + ${p.id()}">
+                <th:block th:replace="~{funding/deal-fields :: fields(null)}"></th:block>
+                <div class="span2"><button type="submit" class="primary">Zapísať dohodu</button></div>
+            </form>
+        </details>
+    </section>
+
+    <section class="card" id="komunikacia">
+        <h2>História komunikácie</h2>
+        <form th:action="@{/partneri/{id}/komunikacia(id=${p.id()})}" method="post" class="grid">
+            <label>Dátum <input type="date" name="happenedOn" th:value="${today}"></label>
+            <label class="span2">Čo sa udialo <textarea name="text" rows="2" required placeholder="Stretnutie s CEO, súhlasia s 3 000 €, chcú logo na robote a report po akcii"></textarea></label>
+            <div><button type="submit" class="primary">Zapísať</button></div>
+        </form>
+        <ul class="timeline">
+            <li th:each="n : ${notes}">
+                <strong th:text="${#temporals.format(n.happenedOn(), 'd. M. yyyy')}"></strong>
+                <span class="muted" th:text="${n.author()}"></span>
+                <form class="inline" th:action="@{/partneri/{id}/komunikacia/{nid}/zmazat(id=${p.id()},nid=${n.id()})}" method="post">
+                    <button type="submit" class="link danger" aria-label="Zmazať záznam">×</button>
+                </form>
+                <div class="note" th:text="${n.text()}"></div>
+            </li>
+        </ul>
+        <p class="empty" th:if="${notes.isEmpty()}">Zatiaľ nič. Zapisujte každý hovor a stretnutie - keď človek, čo vzťah vedie, odíde, história ostane.</p>
+    </section>
+
+    <section class="card" th:if="${p.customerId() != null}">
+        <h2>Faktúry</h2>
+        <p class="empty" th:if="${invoices.isEmpty()}">Zatiaľ žiadna faktúra.</p>
+        <table th:unless="${invoices.isEmpty()}">
+            <thead><tr><th>Číslo</th><th>Vystavená</th><th class="num">Suma</th><th>Uhradená</th></tr></thead>
+            <tbody>
+            <tr th:each="i : ${invoices}">
+                <td><a th:href="@{/faktury/{id}(id=${i.id()})}" th:text="${i.number()} + (${i.docType() == 'DOBROPIS'} ? ' (dobropis)' : '')"></a></td>
+                <td th:text="${#temporals.format(i.issueDate(), 'd. M. yyyy')}"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(i.totalPayable(), 1, 'WHITESPACE', 2, 'COMMA')}"></td>
+                <td th:text="${i.paidOn() == null} ? 'neuhradená' : ${#temporals.format(i.paidOn(), 'd. M. yyyy')}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section th:replace="~{fragments :: attachments(${attachments}, ${uploadUrl}, true, true)}"></section>
+
+    <details class="card">
+        <summary><h2 class="inline">Upraviť údaje partnera</h2></summary>
+        <form th:action="@{/partneri/{id}(id=${p.id()})}" method="post" class="grid">
+            <th:block th:replace="~{partners/form-fields :: fields(${p})}"></th:block>
+            <div class="span2"><button type="submit" class="primary">Uložiť</button></div>
+        </form>
+    </details>
+</main>
+</body>
+</html>

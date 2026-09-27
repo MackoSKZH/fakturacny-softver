@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Používatelia')}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='sprava')}"></header>
+<main class="wide">
+    <h1>Správa</h1>
+    <nav th:replace="~{admin/tabs :: tabs(${tab})}"></nav>
+    <div th:replace="~{fragments :: messages}"></div>
+    <p class="muted">Kto sa môže prihlásiť a čo smie. Zmena rolí platí hneď, deaktivovaný účet sa odhlási pri ďalšom kliknutí.
+        Prihlasuje sa Google účtom - heslá tu nie sú.</p>
+
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Používateľ</th><th>Roly</th><th>Vlastní aktivity</th><th>Karta osoby</th><th>Naposledy</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="u : ${users}" th:id="'u' + ${u.id()}" th:classappend="${!u.active()} ? 'inactive'">
+                <td><strong th:text="${u.displayName() ?: u.email()}"></strong><br><small class="muted" th:text="${u.email()}"></small>
+                    <span class="badge bad" th:unless="${u.active()}">deaktivovaný</span></td>
+                <td><span class="chips"><span class="chip" th:each="r : ${u.roleNames()}" th:text="${r}"></span></span>
+                    <span class="muted" th:if="${u.roleNames().isEmpty()}">bez roly - len svoj program</span></td>
+                <td><span class="chips"><span class="chip project" th:each="c : ${u.ownedCodes()}" th:text="${c}"></span></span></td>
+                <td><a th:if="${u.personId() != null}" th:href="@{/ludia/{id}(id=${u.personId()})}" th:text="${u.personName()}"></a></td>
+                <td class="muted" th:text="${u.lastSeenAt() == null} ? 'ešte nie' : ${#temporals.format(u.lastSeenAt(), 'd. M. yyyy HH:mm')}"></td>
+                <td>
+                    <details class="edit">
+                        <summary>upraviť</summary>
+                        <form th:action="@{/sprava/pouzivatelia/{id}/roly(id=${u.id()})}" method="post">
+                            <fieldset>
+                                <legend>Roly</legend>
+                                <label class="check" th:each="r : ${roles}" th:title="${r.description()}">
+                                    <input type="checkbox" name="roleIds" th:value="${r.id()}" th:checked="${u.roleCodes().contains(r.code())}"> <span th:text="${r.name()}"></span>
+                                </label>
+                            </fieldset>
+                            <button type="submit" class="primary small">Uložiť roly</button>
+                        </form>
+                        <div class="row">
+                            <form th:each="c, st : ${u.ownedCodes()}" class="inline" method="post"
+                                  th:action="@{/sprava/pouzivatelia/{id}/vlastnictvo/{p}/odobrat(id=${u.id()},p=${u.ownedIds()[st.index]})}">
+                                <button type="submit" class="link danger" th:text="'odobrať ' + ${c}"></button>
+                            </form>
+                        </div>
+                        <form th:action="@{/sprava/pouzivatelia/{id}/vlastnictvo(id=${u.id()})}" method="post" class="toolbar">
+                            <select name="projectId" aria-label="Aktivita">
+                                <option value="">+ vlastník aktivity…</option>
+                                <option th:each="a : ${activities}" th:value="${a.id()}" th:text="${a.code()} + ' ' + ${a.name()}"></option>
+                            </select>
+                            <button type="submit" class="small">Pridať</button>
+                        </form>
+                        <form th:action="@{/sprava/pouzivatelia/{id}/aktivny(id=${u.id()})}" method="post">
+                            <input type="hidden" name="active" th:value="${!u.active()}">
+                            <button type="submit" th:class="${u.active()} ? 'link danger' : 'small'" th:text="${u.active()} ? 'Deaktivovať účet' : 'Znova aktivovať'"></button>
+                        </form>
+                    </details>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <section class="card">
+        <h2>Pridať používateľa</h2>
+        <p class="muted">Keď poznáte e-mail, stačí ho pridať - človek sa prihlási Googlom. Pre viac ľudí naraz alebo keď e-mail neviete, použite <a th:href="@{/sprava/pozvanky}">pozvánku</a>.</p>
+        <form th:action="@{/sprava/pouzivatelia}" method="post" class="grid">
+            <label>E-mail (Google účet) <input type="email" name="email" required></label>
+            <label>Meno <input name="displayName"></label>
+            <fieldset class="span2">
+                <legend>Roly</legend>
+                <label class="check" th:each="r : ${roles}" th:title="${r.description()}">
+                    <input type="checkbox" name="roleIds" th:value="${r.id()}"> <span th:text="${r.name()}"></span>
+                </label>
+            </fieldset>
+            <div class="span2"><button type="submit" class="primary">Pridať</button></div>
+        </form>
+    </section>
+</main>
+</body>
+</html>

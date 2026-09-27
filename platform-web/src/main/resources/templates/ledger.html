@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Položky')}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='polozky')}"></header>
+<main id="ledger" class="wide" th:data-can-edit="${acc.financeWrite}">
+    <div class="page-head">
+        <h1>Položky <small class="inline">príjmy a výdavky</small></h1>
+        <div class="row">
+            <button type="button" class="primary" id="new-entry" th:if="${acc.financeWrite}">+ Nová položka</button>
+            <a class="button" th:if="${acc.financeWrite}" th:href="@{/polozky/banka}">Výpis z banky (XML)</a>
+            <button type="button" id="open-import" th:if="${acc.financeWrite}">Import z Excelu</button>
+            <span th:replace="~{fragments :: exports('/api/polozky/export', '')}"></span>
+        </div>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+    <section class="toolbar" aria-label="Filtre">
+        <input type="search" id="f-search" placeholder="Hľadať v popise, protistrane, doklade, tagoch" aria-label="Hľadať">
+        <select id="f-project" aria-label="Projekt">
+            <option value="">Všetky projekty</option>
+            <option value="none">Bez projektu</option>
+            <option th:each="p : ${projects}" th:value="${p.id()}" th:text="${p.code()}"></option>
+        </select>
+        <select id="f-tag" aria-label="Tag"><option value="">Všetky tagy</option></select>
+        <select id="f-direction" aria-label="Typ">
+            <option value="">Príjmy aj výdavky</option>
+            <option value="PRIJEM">Len príjmy</option>
+            <option value="VYDAVOK">Len výdavky</option>
+        </select>
+        <input type="month" id="f-month" aria-label="Mesiac">
+        <button type="button" class="link" id="f-clear">Zrušiť filtre</button>
+    </section>
+
+    <section class="bulkbar" id="bulkbar" hidden aria-label="Hromadné úpravy">
+        <strong id="bulk-count"></strong>
+        <select id="bulk-project" aria-label="Projekt pre vybrané">
+            <option value="">bez projektu</option>
+            <option th:each="p : ${projects}" th:value="${p.id()}" th:text="${p.code()}"></option>
+        </select>
+        <button type="button" id="bulk-set-project">Priradiť projekt</button>
+        <input id="bulk-tag" list="tag-list" placeholder="tag" aria-label="Tag pre vybrané">
+        <button type="button" id="bulk-add-tag">Pridať tag</button>
+        <button type="button" id="bulk-remove-tag">Odobrať tag</button>
+        <button type="button" class="link" id="bulk-clear">Zrušiť výber</button>
+    </section>
+
+    <section class="card import" id="import" hidden>
+        <h2>Import položiek</h2>
+        <p class="muted">Skopírujte riadky z Excelu alebo bankového výpisu (CSV). Stĺpce v tomto poradí:
+            <b>Dátum, Popis, Suma</b>, voliteľne <b>Protistrana, Projekt (kód), Tagy</b> (oddelené čiarkou).
+            Záporná suma = výdavok. Hlavičku môžete nechať, preskočí sa.</p>
+        <textarea id="import-text" rows="7" spellcheck="false" placeholder="15.1.2027;Hliníkové profily;-245,90;Alza.sk;FGC-2027;hardvér, robot"></textarea>
+        <div class="row">
+            <button type="button" id="import-preview">Skontrolovať</button>
+            <button type="button" class="primary" id="import-confirm" hidden>Importovať</button>
+            <button type="button" class="link" id="import-close">Zavrieť</button>
+        </div>
+        <div id="import-result"></div>
+    </section>
+
+    <div class="grid-wrap">
+        <table class="sheet" id="sheet">
+            <thead>
+            <tr>
+                <th class="sel"><input type="checkbox" id="select-all" aria-label="Vybrať všetko"></th>
+                <th data-sort="entryDate">Dátum</th>
+                <th data-sort="description" class="w-desc">Popis</th>
+                <th data-sort="direction">Typ</th>
+                <th data-sort="amount" class="num">Suma</th>
+                <th data-sort="projectCode">Projekt</th>
+                <th>Tagy</th>
+                <th data-sort="category">Kategória</th>
+                <th data-sort="counterparty">Protistrana</th>
+                <th data-sort="documentRef">Doklad</th>
+                <th data-sort="paymentMethod">Úhrada</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+            <tfoot>
+            <tr>
+                <td colspan="4" id="sum-count"></td>
+                <td class="num" colspan="8" id="sum-line"></td>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+    <p class="empty" id="empty" hidden>Žiadne položky. Pridajte prvú cez „+ Nová položka“ alebo importujte výpis z banky.</p>
+
+    <aside class="card history" id="history" hidden>
+        <div class="page-head"><h2>História zmien</h2><button type="button" class="link" id="history-close">Zavrieť</button></div>
+        <ol id="history-list"></ol>
+    </aside>
+
+    <datalist id="tag-list"></datalist>
+    <datalist id="category-list">
+        <option th:each="c : ${categories}" th:value="${c}"></option>
+    </datalist>
+    <select id="project-options" hidden>
+        <option value="">-</option>
+        <option th:each="p : ${projects}" th:value="${p.id()}" th:text="${p.code()}"></option>
+    </select>
+</main>
+<script th:src="@{/js/ledger.js}"></script>
+</body>
+</html>

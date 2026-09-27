@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<body>
+<th:block th:fragment="fields(d)">
+    <label class="span2">Názov dohody <input name="title" required maxlength="200" th:value="${d?.title()}" placeholder="Hlavný partner NK 2027, Grant Nadácie XY na cestu na FGC"></label>
+    <label>Typ <select name="kind">
+        <option th:each="k : ${dealKinds}" th:value="${k.name()}" th:text="${k.label()}" th:title="${k.hint()}" th:selected="${d != null and k.name() == d.kind()}"></option>
+    </select></label>
+    <label>Stav <select name="stage">
+        <option th:each="s : ${stages}" th:value="${s.name()}" th:text="${s.label()}" th:selected="${d != null and s.name() == d.stage()}"></option>
+    </select></label>
+    <label>Suma (€) <input name="amount" inputmode="decimal" th:value="${d?.amount()}" placeholder="0"></label>
+    <label>Aktivita <select name="projectId">
+        <option value="">- (celoročne)</option>
+        <option th:each="x : ${projects}" th:value="${x.id()}" th:text="${x.code()} + ' ' + ${x.name()}" th:selected="${d != null and x.id() == d.projectId()}"></option>
+    </select></label>
+    <label>Vlastný variabilný symbol <input name="paymentVs" inputmode="numeric" maxlength="10" th:value="${d?.customVs()}"
+            th:placeholder="${d == null} ? 'prázdne = pridelí sa automaticky' : 'prázdne = ' + ${d.paymentVs()}"
+            title="Len keď partner platí so svojím číslom (napr. číslo zmluvy grantora)"></label>
+    <label>Platba očakávaná do <input type="date" name="expectedOn" th:value="${d?.expectedOn()}"></label>
+    <label>Ďalší krok <input name="nextStep" th:value="${d?.nextStep()}" placeholder="poslať ponuku, stretnutie, podpis zmluvy"></label>
+    <label>Termín ďalšieho kroku <input type="date" name="nextStepOn" th:value="${d?.nextStepOn()}"></label>
+    <fieldset class="span2">
+        <legend>Len pre grant</legend>
+        <label>Program / výzva <input name="program" th:value="${d?.program()}"></label>
+        <label>Podané <input type="date" name="appliedOn" th:value="${d?.appliedOn()}"></label>
+        <label>Oprávnené obdobie od <input type="date" name="periodFrom" th:value="${d?.periodFrom()}"></label>
+        <label>do <input type="date" name="periodTo" th:value="${d?.periodTo()}"></label>
+        <label>Termín vyúčtovania <input type="date" name="reportDueOn" th:value="${d?.reportDueOn()}"></label>
+        <label>Vyúčtovanie odovzdané <input type="date" name="reportedOn" th:value="${d?.reportedOn()}"></label>
+    </fieldset>
+    <label class="span2">Poznámka <textarea name="note" rows="2" th:text="${d?.note()}"></textarea></label>
+</th:block>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Dobropis k ' + ${original.number()})}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='faktury')}"></header>
+<main>
+    <p><a th:href="@{/faktury/{id}(id=${original.id()})}">&larr; Faktúra <span th:text="${original.number()}"></span></a></p>
+    <h1>Dobropis k faktúre <span th:text="${original.number()}"></span></h1>
+    <p class="muted">Upravte položky na sumu, ktorú vraciate odberateľovi. Ceny zadávajte kladné.
+        Zostatok faktúry, ktorý ešte možno dobropisovať:
+        <strong th:text="${#numbers.formatDecimal(remaining, 1, 'WHITESPACE', 2, 'COMMA')} + ' €'"></strong></p>
+    <div th:replace="~{fragments :: messages}"></div>
+
+    <form th:action="@{/faktury/{id}/dobropis(id=${original.id()})}" method="post" class="stack" id="invoice-form">
+        <div class="grid">
+            <label class="span2">Dôvod opravy (povinný, tlačí sa na doklade)
+                <input name="reason" required maxlength="300" th:value="${form.reason}"
+                       placeholder="napr. Reklama sa neuskutočnila v dohodnutom rozsahu"></label>
+            <label>Dátum vyhotovenia <input type="date" name="issueDate" th:value="${form.issueDate}">
+                <small>prázdne = dnes</small></label>
+        </div>
+        <table id="lines">
+            <thead>
+            <tr>
+                <th>Popis</th><th class="num">Množstvo</th><th>MJ</th><th class="num">Cena/MJ</th>
+                <th th:if="${vatPayer}">DPH</th><th class="num">Spolu</th><th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr class="line" th:each="l, i : ${form.lines}">
+                <td><input data-field="description" placeholder="Popis položky" th:name="|lines[${i.index}].description|" th:value="${l.description}"></td>
+                <td><input data-field="quantity" class="num" inputmode="decimal" placeholder="Množstvo" th:name="|lines[${i.index}].quantity|" th:value="${l.quantity}"></td>
+                <td><select data-field="unit" th:name="|lines[${i.index}].unit|">
+                    <option value="C62" th:selected="${l.unit == 'C62'}">ks</option>
+                    <option value="HUR" th:selected="${l.unit == 'HUR'}">hod</option>
+                    <option value="DAY" th:selected="${l.unit == 'DAY'}">deň</option>
+                    <option value="LS" th:selected="${l.unit == 'LS'}">paušál</option>
+                </select></td>
+                <td><input data-field="unitPrice" class="num" inputmode="decimal" placeholder="Cena/MJ" th:name="|lines[${i.index}].unitPrice|" th:value="${l.unitPrice}"></td>
+                <td th:if="${vatPayer}"><select data-field="vat" th:name="|lines[${i.index}].vat|">
+                    <option value="23" th:selected="${l.vat == '23'}">23 %</option>
+                    <option value="19" th:selected="${l.vat == '19'}">19 %</option>
+                    <option value="5" th:selected="${l.vat == '5'}">5 %</option>
+                    <option value="E" th:selected="${l.vat == 'E'}">oslobodené</option>
+                </select></td>
+                <td class="num line-total"></td>
+                <td><button type="button" class="link remove-line" title="Odstrániť">×</button></td>
+            </tr>
+            </tbody>
+        </table>
+        <template id="line-template">
+            <tr class="line">
+                <td><input data-field="description" placeholder="Popis položky"></td>
+                <td><input data-field="quantity" class="num" inputmode="decimal" placeholder="Množstvo" value="1"></td>
+                <td><select data-field="unit">
+                    <option value="C62">ks</option><option value="HUR">hod</option>
+                    <option value="DAY">deň</option><option value="LS">paušál</option>
+                </select></td>
+                <td><input data-field="unitPrice" class="num" inputmode="decimal" placeholder="Cena/MJ"></td>
+                <td th:if="${vatPayer}"><select data-field="vat">
+                    <option value="23">23 %</option><option value="19">19 %</option>
+                    <option value="5">5 %</option><option value="E">oslobodené</option>
+                </select></td>
+                <td class="num line-total"></td>
+                <td><button type="button" class="link remove-line" title="Odstrániť">×</button></td>
+            </tr>
+        </template>
+        <div class="row">
+            <button type="button" id="add-line">+ Pridať položku</button>
+            <dl class="sums">
+                <dt>Bez DPH</dt><dd id="sum-net">0,00 €</dd>
+                <th:block th:if="${vatPayer}"><dt>DPH (orientačne)</dt><dd id="sum-vat">0,00 €</dd></th:block>
+                <dt>Spolu</dt><dd id="sum-total">0,00 €</dd>
+            </dl>
+        </div>
+        <div class="row">
+            <button type="submit" class="primary">Vystaviť dobropis</button>
+            <span class="muted">Dobropis dostane vlastné číslo z radu D a nedá sa zmeniť ani zmazať.</span>
+        </div>
+    </form>
+</main>
+<script th:src="@{/js/invoice-form.js}"></script>
+</body>
+</html>

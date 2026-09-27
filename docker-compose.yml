@@ -1,0 +1,71 @@
+# Produkcne nasadenie na jeden server (VPS v EU). Navod: docs/NASADENIE.md
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: fgs_hq
+      POSTGRES_USER: fgs
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?Nastavte DATABASE_PASSWORD v subore .env}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fgs -d fgs_hq"]
+      interval: 10s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/fgs_hq
+      DATABASE_USER: fgs
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-google}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      APP_ALLOWED_EMAILS: ${APP_ALLOWED_EMAILS:-}
+      APP_ALLOWED_DOMAINS: ${APP_ALLOWED_DOMAINS:-}
+      APP_EDITOR_EMAILS: ${APP_EDITOR_EMAILS:-}
+      APP_LOCAL_PASSWORD: ${APP_LOCAL_PASSWORD:-}
+
+  # HTTPS certifikat od Let's Encrypt automaticky; aplikacia nie je priamo vystavena na internet.
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [app]
+    ports:
+      - "80:80"
+      - "443:443"
+    command: caddy reverse-proxy --from ${DOMAIN:?Nastavte DOMAIN v subore .env} --to app:8080
+    volumes:
+      - caddy-data:/data
+
+  # Denna zaloha databazy, 30 dni dozadu. Zalohy z ./backups MUSIA ist aj mimo servera!
+  backup:
+    image: postgres:16
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - ./backups:/backups
+    entrypoint:
+      - sh
+      - -c
+      - |
+        while true; do
+          pg_dump -h db -U fgs -Fc fgs_hq > /backups/fgs-hq-$$(date +%F).dump.tmp &&
+            mv /backups/fgs-hq-$$(date +%F).dump.tmp /backups/fgs-hq-$$(date +%F).dump
+          find /backups -name 'fgs-hq-*.dump' -mtime +30 -delete
+          sleep 86400
+        done
+
+volumes:
+  db-data:
+  caddy-data:

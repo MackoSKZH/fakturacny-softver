@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Aktivity')}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='aktivity')}"></header>
+<main class="wide">
+    <div class="page-head">
+        <h1>Aktivity</h1>
+        <a class="button" th:href="@{/projekty}">Rozpočty</a>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+
+    <p class="empty" th:if="${activities.isEmpty()}">Zatiaľ žiadne aktivity. Založte prvú - napríklad národné kolo alebo sústredenie.</p>
+    <div class="cards">
+        <a class="activity" th:each="a : ${activities}" th:href="@{/aktivity/{id}(id=${a.id()})}">
+            <div class="row between">
+                <span class="kind" th:text="${a.kindLabel()}"></span>
+                <span class="badge" th:classappend="${a.status() == 'PREBIEHA'} ? 'ok'" th:text="${a.statusLabel()}"></span>
+            </div>
+            <h2 th:text="${a.name()}"></h2>
+            <p class="muted">
+                <span class="mono" th:text="${a.code()}"></span>
+                <span th:if="${a.startsOn() != null}"> · <span th:text="${#temporals.format(a.startsOn(), 'd. M. yyyy')}"></span></span>
+                <span th:if="${a.endsOn() != null and a.endsOn() != a.startsOn()}"> - <span th:text="${#temporals.format(a.endsOn(), 'd. M. yyyy')}"></span></span>
+                <span th:if="${a.location() != null}"> · <span th:text="${a.location()}"></span></span>
+            </p>
+            <dl class="meters">
+                <dt>Tím</dt>
+                <dd><progress th:value="${a.seatsFilled()}" th:max="${a.seatsNeeded() > 0 ? a.seatsNeeded() : 1}"></progress>
+                    <span th:text="${a.seatsFilled()} + ' / ' + ${a.seatsNeeded()}"></span></dd>
+                <dt>Úlohy</dt>
+                <dd><progress th:value="${a.tasksDone()}" th:max="${a.tasksTotal() > 0 ? a.tasksTotal() : 1}"></progress>
+                    <span th:text="${a.tasksDone()} + ' / ' + ${a.tasksTotal()}"></span>
+                    <span class="over" th:if="${a.tasksOverdue() > 0}" th:text="${a.tasksOverdue()} + ' po termíne'"></span></dd>
+                <dt th:if="${acc.canSeeActivityBudget(a.id())}">Rozpočet</dt>
+                <dd th:if="${acc.canSeeActivityBudget(a.id())}"><span th:text="${#numbers.formatDecimal(a.spent(), 1, 'WHITESPACE', 2, 'COMMA')}"></span> z
+                    <span th:text="${#numbers.formatDecimal(a.budget(), 1, 'WHITESPACE', 0, 'COMMA')} + ' €'"></span></dd>
+            </dl>
+        </a>
+    </div>
+
+    <section class="card" th:if="${acc.activitiesWrite}">
+        <h2>Nová aktivita</h2>
+        <form th:action="@{/aktivity}" method="post" class="grid">
+            <label>Kód <input name="code" required placeholder="FGS-2027" maxlength="30"></label>
+            <label class="span2">Názov <input name="name" required placeholder="FIRST Global Slovensko 2027 - národné kolo"></label>
+            <label>Typ <select name="kind">
+                <option th:each="k : ${kinds}" th:value="${k.name()}" th:text="${k.label()}"></option>
+            </select></label>
+            <label>Začiatok <input type="date" name="startsOn"></label>
+            <label>Koniec <input type="date" name="endsOn"></label>
+            <label>Miesto <input name="location" placeholder="Bratislava"></label>
+            <label>Rozpočet výdavkov (€) <input name="budget" inputmode="decimal" value="0"></label>
+            <label class="check span2"><input type="checkbox" name="useTemplate" value="true" checked>
+                Pridať úlohy zo šablóny pre tento typ (termíny podľa dátumu začiatku)</label>
+            <div class="span2"><button type="submit" class="primary">Vytvoriť aktivitu</button></div>
+        </form>
+    </section>
+</main>
+</body>
+</html>

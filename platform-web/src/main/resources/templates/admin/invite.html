@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Pozvánka')}"></head>
+<body class="public">
+<header class="topbar">
+    <span class="brand">FIRST Global <span>Slovakia</span></span>
+</header>
+<main class="narrow">
+    <p class="kind">Pozvánka</p>
+    <h1>Pridajte sa k FIRST Global Slovakia HQ</h1>
+    <div th:replace="~{fragments :: messages}"></div>
+    <section class="card">
+        <dl class="pay">
+            <dt>Roly</dt><dd th:text="${roleNames.isEmpty()} ? '-' : ${#strings.listJoin(roleNames, ', ')}"></dd>
+            <th:block th:if="${i.shiftId() != null}">
+                <dt>Aktivita</dt><dd th:text="${i.shiftActivity()}"></dd>
+                <dt>Rola / smena</dt><dd th:text="${i.shiftName()} + (${i.shiftStartsAt() != null} ? ', ' + ${#temporals.format(i.shiftStartsAt(), 'd. M. yyyy HH:mm')} : '')"></dd>
+            </th:block>
+            <dt th:if="${i.projectCode() != null}">Vlastník aktivity</dt><dd th:if="${i.projectCode() != null}" th:text="${i.projectCode()}"></dd>
+            <dt th:if="${maskedEmail != null}">Pre</dt><dd th:if="${maskedEmail != null}" th:text="${maskedEmail}"></dd>
+            <dt>Platí do</dt><dd th:text="${#temporals.format(i.expiresAt(), 'd. M. yyyy HH:mm')}"></dd>
+        </dl>
+    </section>
+    <p class="warning" th:unless="${usable}" th:text="'Pozvánka je ' + ${state} + '. Požiadajte toho, kto vás pozval, o novú.'"></p>
+    <th:block th:if="${usable}">
+        <th:block th:unless="${loggedIn}">
+            <p>Prihláste sa Google účtom<span th:if="${maskedEmail != null}" th:text="' ' + ${maskedEmail}"></span> a potom pozvánku prijmite.</p>
+            <p><a class="button primary" th:href="@{${loginUrl}}">Prihlásiť sa</a></p>
+        </th:block>
+        <form th:if="${loggedIn}" th:action="@{/pozvanka/{t}/prijat(t=${token})}" method="post">
+            <p>Ste prihlásený ako <strong th:text="${me}"></strong>.</p>
+            <button type="submit" class="primary">Prijať pozvánku</button>
+        </form>
+    </th:block>
+    <p class="muted small">Po prijatí vás zapíšeme do adresára ľudí združenia (meno a e-mail). Súhlas so spracovaním údajov doplníte s koordinátorom.</p>
+</main>
+</body>
+</html>

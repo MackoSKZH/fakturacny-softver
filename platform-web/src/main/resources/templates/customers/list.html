@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Odberatelia')}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='faktury')}"></header>
+<main>
+    <h1>Odberatelia</h1>
+    <div th:replace="~{fragments :: messages}"></div>
+    <table th:unless="${customers.isEmpty()}">
+        <thead><tr><th>Názov</th><th>Obec</th><th>IČO</th><th>DIČ</th><th>IČ DPH</th><th>Peppol</th></tr></thead>
+        <tbody>
+        <tr th:each="c : ${customers}">
+            <td th:text="${c.name()}"></td>
+            <td th:text="${c.city()}"></td>
+            <td th:text="${c.ico()}"></td>
+            <td th:text="${c.dic()}"></td>
+            <td th:text="${c.icDph()}"></td>
+            <td th:text="${c.dic() != null and !c.dic().isBlank()} ? ${'0245:' + c.dic()} : 'len PDF'"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <section class="card" th:if="${acc.financeWrite}">
+        <h2>Nový odberateľ</h2>
+        <form th:action="@{/odberatelia}" method="post" class="grid">
+            <label class="span2">Názov / meno <input name="name" required th:value="${c.name()}"></label>
+            <label>Ulica a číslo <input name="street" th:value="${c.street()}"></label>
+            <label>Obec <input name="city" th:value="${c.city()}"></label>
+            <label>PSČ <input name="postalCode" th:value="${c.postalCode()}"></label>
+            <label>Krajina (ISO) <input name="country" maxlength="2" th:value="${c.country()}"></label>
+            <label>IČO <input name="ico" inputmode="numeric" th:value="${c.ico()}"></label>
+            <label>DIČ <input name="dic" inputmode="numeric" th:value="${c.dic()}">
+                <small>potrebné na doručenie e-faktúry</small></label>
+            <label>IČ DPH <input name="icDph" th:value="${c.icDph()}"></label>
+            <label>E-mail <input name="email" type="email" th:value="${c.email()}"></label>
+            <label>Telefón <input name="phone" th:value="${c.phone()}"></label>
+            <div class="span2"><button type="submit" class="primary">Pridať odberateľa</button></div>
+        </form>
+    </section>
+</main>
+</body>
+</html>

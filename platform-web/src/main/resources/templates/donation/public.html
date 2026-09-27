@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Podporte: ' + ${s.name()})}"></head>
+<body class="public">
+<header class="topbar">
+    <span class="brand">FIRST Global <span>Slovakia</span></span>
+</header>
+<main class="narrow">
+    <p class="kind">Podporte nás</p>
+    <h1 th:text="${s.name()}"></h1>
+    <p class="lead" th:if="${s.text() != null}" th:text="${s.text()}"></p>
+
+    <section class="card" th:if="${s.goal() != null}">
+        <div class="row between"><strong th:text="${#numbers.formatDecimal(s.collected(), 1, 'WHITESPACE', 0, 'COMMA')} + ' € z ' + ${#numbers.formatDecimal(s.goal(), 1, 'WHITESPACE', 0, 'COMMA')} + ' €'"></strong>
+            <span class="muted" th:text="${s.donorsLabel()}"></span></div>
+        <progress max="100" th:value="${s.percent()}" th:title="${s.percent()} + ' %'"></progress>
+    </section>
+
+    <section class="card donate" th:if="${qr != null}">
+        <div class="qr" th:utext="${qr}"></div>
+        <div>
+            <p><strong>Naskenujte v aplikácii svojej banky</strong> (PAY by square). Sumu si zvolíte sami, alebo vyberte:</p>
+            <p class="row">
+                <a class="button" th:each="p : ${presets}" th:href="@{/podpora/{c}(c=${s.code()},suma=${p})}" th:text="${p} + ' €'"
+                   th:classappend="${amount != null and amount.intValue() == p} ? 'primary'"></a>
+                <a class="button link" th:if="${amount != null}" th:href="@{/podpora/{c}(c=${s.code()})}">vlastná suma</a>
+            </p>
+            <dl class="pay">
+                <dt>Príjemca</dt><dd th:text="${org.name()}"></dd>
+                <dt>IBAN</dt><dd class="mono" th:text="${iban}"></dd>
+                <dt>Variabilný symbol</dt><dd class="mono" th:text="${s.variableSymbol()}"></dd>
+                <dt>Správa</dt><dd th:text="${message}"></dd>
+                <dt th:if="${amount != null}">Suma</dt><dd th:if="${amount != null}" th:text="${amount} + ' €'"></dd>
+            </dl>
+        </div>
+    </section>
+    <p class="warning" th:if="${qr == null}">Platobné údaje ešte nie sú nastavené. Skúste to prosím neskôr.</p>
+
+    <p class="muted small">Príspevok je dar občianskemu združeniu <span th:text="${org?.name() ?: 'FIRST Global Slovakia'}"></span><span th:if="${org != null and org.ico() != null and !org.ico().isBlank()}" th:text="', IČO ' + ${org.ico()}"></span>
+        a použije sa na túto aktivitu. Z výpisu vidíme len meno a účet platiteľa; používame ich výhradne na evidenciu darov a poďakovanie.
+        Potvrdenie o prijatí daru vám radi pošleme<span th:if="${org != null and org.email() != null and !org.email().isBlank()}" th:text="' - napíšte na ' + ${org.email()}"></span>.</p>
+</main>
+</body>
+</html>

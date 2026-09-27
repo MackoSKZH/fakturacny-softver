@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Roly a oprávnenia')}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='sprava')}"></header>
+<main class="wide">
+    <h1>Správa</h1>
+    <nav th:replace="~{admin/tabs :: tabs(${tab})}"></nav>
+    <div th:replace="~{fragments :: messages}"></div>
+    <p class="muted">Rola je balík oprávnení. Človek môže mať viac rolí - oprávnenia sa sčítajú. Každý prihlásený má navyše vždy
+        svoj program, dochádzku a potvrdenia. Úpravu konkrétnej aktivity dáva aj <strong>vlastníctvo</strong> (pri aktivite alebo používateľovi).</p>
+
+    <div class="table-wrap">
+        <table class="matrix">
+            <thead><tr><th>Rola</th><th th:each="p : ${permissions}" th:text="${p.label()}" th:title="${p.hint()}"></th><th>Ľudia</th></tr></thead>
+            <tbody>
+            <tr th:each="r : ${roles}">
+                <td><a th:href="'#r' + ${r.id()}" th:text="${r.name()}"></a></td>
+                <td th:each="p : ${permissions}" class="center" th:text="${r.permissions().contains(p.name()) or r.permissions().contains('ADMIN')} ? '●' : ''"></td>
+                <td class="num" th:text="${r.users()}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <section class="card" th:each="r : ${roles}" th:id="'r' + ${r.id()}">
+        <details>
+            <summary><h2 class="inline" th:text="${r.name()}"></h2> <span class="muted" th:text="${r.description()}"></span>
+                <span class="badge" th:if="${r.system()}">základná</span></summary>
+            <form th:action="@{/sprava/role/{id}(id=${r.id()})}" method="post" class="grid">
+                <label>Názov <input name="name" required th:value="${r.name()}"></label>
+                <label>Popis <input name="description" th:value="${r.description()}"></label>
+                <fieldset class="span2">
+                    <legend>Oprávnenia</legend>
+                    <label class="check" th:each="p : ${permissions}" th:title="${p.hint()}">
+                        <input type="checkbox" name="permissions" th:value="${p.name()}" th:checked="${r.permissions().contains(p.name())}">
+                        <span th:text="${p.label()}"></span></label>
+                </fieldset>
+                <label>Pri prijatí pozvánky pridať do adresára ako <select name="personRole">
+                    <option value="">-</option>
+                    <option th:each="x : ${personRoles}" th:value="${x.name()}" th:text="${x.label()}" th:selected="${x.name() == r.personRole()}"></option>
+                </select></label>
+                <div class="span2 row"><button type="submit" class="primary">Uložiť</button></div>
+            </form>
+            <form th:unless="${r.system()}" th:action="@{/sprava/role/{id}/zmazat(id=${r.id()})}" method="post">
+                <button type="submit" class="link danger">Zmazať rolu</button>
+            </form>
+        </details>
+    </section>
+
+    <section class="card">
+        <h2>Nová rola</h2>
+        <form th:action="@{/sprava/role}" method="post" class="grid">
+            <label>Názov <input name="name" required placeholder="Hodnotiteľ NTE, Technik, Rodič-organizátor"></label>
+            <label>Popis <input name="description"></label>
+            <fieldset class="span2">
+                <legend>Oprávnenia</legend>
+                <label class="check" th:each="p : ${permissions}" th:title="${p.hint()}">
+                    <input type="checkbox" name="permissions" th:value="${p.name()}"> <span th:text="${p.label()}"></span></label>
+            </fieldset>
+            <label>Pridať do adresára ako <select name="personRole">
+                <option value="">-</option>
+                <option th:each="x : ${personRoles}" th:value="${x.name()}" th:text="${x.label()}"></option>
+            </select></label>
+            <div class="span2"><button type="submit" class="primary">Vytvoriť</button></div>
+        </form>
+    </section>
+</main>
+</body>
+</html>

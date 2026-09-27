@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title=${r.supplierName()} + ' ' + ${r.number()})}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='faktury')}"></header>
+<main class="wide">
+    <p><a th:href="@{/prijate-faktury}">&larr; Prijaté faktúry</a></p>
+    <div class="page-head">
+        <div>
+            <span class="kind" th:text="${r.isCreditNote()} ? 'Dobropis od dodávateľa' : (${r.isEInvoice()} ? 'Prijatá e-faktúra' : 'Prijatá faktúra')"></span>
+            <h1 th:text="${r.supplierName()} + ' - ' + ${r.number()}"></h1>
+            <p class="muted"><span th:if="${r.supplierIco() != null}" th:text="'IČO ' + ${r.supplierIco()}"></span>
+                <span th:if="${r.supplierDic() != null}" th:text="' · ' + ${r.supplierDic()}"></span></p>
+        </div>
+        <a class="button" th:if="${r.isEInvoice()}" th:href="@{/prijate-faktury/{id}/xml(id=${r.id()})}">Stiahnuť XML</a>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+    <p class="warning" th:if="${r.isOverdue(today)}" th:text="'Po splatnosti od ' + ${#temporals.format(r.dueDate(), 'd. M. yyyy')} + '.'"></p>
+
+    <section class="kpis">
+        <div><small>Na úhradu</small><strong th:text="${#numbers.formatDecimal(r.totalPayable(), 1, 'WHITESPACE', 2, 'COMMA')} + ' ' + ${r.currency()}"></strong>
+            <small th:if="${r.totalVat() != null}" th:text="'z toho DPH ' + ${#numbers.formatDecimal(r.totalVat(), 1, 'WHITESPACE', 2, 'COMMA')}"></small></div>
+        <div><small>Vystavená / splatná</small><strong class="small" th:text="${#temporals.format(r.issueDate(), 'd. M. yyyy')} + (${r.dueDate() != null} ? ' / ' + ${#temporals.format(r.dueDate(), 'd. M. yyyy')} : '')"></strong></div>
+        <div><small>Platba</small><strong class="small mono" th:text="${r.supplierIban() ?: '-'}"></strong><small th:text="'VS ' + ${r.paymentRef() ?: '-'}"></small></div>
+        <div><small>Stav</small><strong class="small" th:text="${r.paidOn() == null} ? 'na úhradu' : 'uhradená ' + ${#temporals.format(r.paidOn(), 'd. M. yyyy')}"></strong></div>
+    </section>
+
+    <section class="card" th:if="${acc.financeWrite}">
+        <h2>Úhrada</h2>
+        <form th:if="${r.paidOn() == null}" th:action="@{/prijate-faktury/{id}/uhrada(id=${r.id()})}" method="post" class="toolbar">
+            <label>Uhradená dňa <input type="date" name="paidOn" th:value="${today}" required></label>
+            <button type="submit" class="primary">Označiť ako uhradenú</button>
+        </form>
+        <p class="muted" th:if="${r.paidOn() == null}">Úhradu označí aj import výpisu z banky, ak platba nesie tento VS alebo ide na IBAN dodávateľa s rovnakou sumou.</p>
+        <form th:if="${r.paidOn() != null}" th:action="@{/prijate-faktury/{id}/uhrada(id=${r.id()})}" method="post">
+            <button type="submit" class="link danger">Zrušiť úhradu</button>
+        </form>
+    </section>
+
+    <section class="card" th:if="${acc.financeWrite}">
+        <h2>Zaúčtovanie</h2>
+        <form th:action="@{/prijate-faktury/{id}(id=${r.id()})}" method="post" class="grid">
+            <label>Aktivita <select name="projectId"><option value="">-</option>
+                <option th:each="x : ${projects}" th:value="${x.id()}" th:text="${x.code()} + ' ' + ${x.name()}" th:selected="${x.id() == r.projectId()}"></option></select></label>
+            <label>Kategória <input name="category" th:value="${r.category()}"></label>
+            <label class="span2">Poznámka <input name="note" th:value="${r.note()}"></label>
+            <div class="span2"><button type="submit">Uložiť</button></div>
+        </form>
+        <p class="muted">Aktivita a kategória sa prenesú do položky pri úhrade.</p>
+    </section>
+
+    <section th:replace="~{fragments :: attachments(${attachments}, ${uploadUrl}, false, ${acc.financeWrite})}"></section>
+
+    <form th:if="${acc.financeWrite and r.paidOn() == null}" th:action="@{/prijate-faktury/{id}/zmazat(id=${r.id()})}" method="post">
+        <button type="submit" class="link danger">Zmazať z knihy (omylom zapísaná)</button>
+    </form>
+</main>
+</body>
+</html>

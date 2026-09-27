@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title=${p.fullName()})}"></head>
+<body>
+<header th:replace="~{fragments :: nav(active='ludia')}"></header>
+<main class="wide">
+    <p><a th:href="@{/ludia}">&larr; Ľudia</a></p>
+    <div class="page-head">
+        <div>
+            <h1 th:text="${p.fullName()}"></h1>
+            <span class="chips"><span class="chip" th:each="l : ${p.roleLabels()}" th:text="${l}"></span></span>
+        </div>
+        <div class="kpis compact">
+            <div><small>Odpracované hodiny</small><strong th:text="${hours}"></strong><small>na akciách, kde sa zúčastnil(a)</small></div>
+        </div>
+    </div>
+    <div th:replace="~{fragments :: messages}"></div>
+    <p class="warning" th:unless="${p.consentIssue() == null}" th:text="${p.consentIssue()}"></p>
+
+    <section class="card">
+        <div class="page-head">
+            <h2>Účasť na akciách</h2>
+            <div class="row" th:unless="${confirmationYears.isEmpty()}">
+                <span class="muted">Potvrdenie o dobrovoľníctve:</span>
+                <a class="button" th:each="y : ${confirmationYears}" th:href="@{/ludia/{id}/potvrdenie.pdf(id=${p.id()},rok=${y})}" th:text="${y}"></a>
+            </div>
+        </div>
+        <p class="muted" th:if="${confirmationYears.isEmpty() and !participation.isEmpty()}">Potvrdenie o dobrovoľníckej činnosti sa dá vydať, keď má účasť stav „zúčastnil sa“ a zapísané hodiny.</p>
+        <p class="empty" th:if="${participation.isEmpty()}">Zatiaľ na žiadnej akcii.</p>
+        <table th:unless="${participation.isEmpty()}">
+            <thead><tr><th>Aktivita</th><th>Rola</th><th>Kedy</th><th>Stav</th><th class="num">Hodiny</th></tr></thead>
+            <tbody>
+            <tr th:each="x : ${participation}">
+                <td><a th:href="@{/aktivity/{id}(id=${x.projectId()})}" th:text="${x.activityName()}"></a></td>
+                <td th:text="${x.roleName()}"></td>
+                <td th:text="${x.startsAt() == null} ? '-' : ${#temporals.format(x.startsAt(), 'd. M. yyyy HH:mm')}"></td>
+                <td th:text="${x.status()}"></td>
+                <td class="num" th:text="${x.hours()}"></td>
+            </tr>
+            </tbody>
+        </table>
+        <form th:action="@{/ludia/{id}/zmluva.pdf(id=${p.id()})}" method="get" class="toolbar">
+            <span class="muted">Zmluva o dobrovoľníckej činnosti:</span>
+            <select name="aktivita" aria-label="Aktivita">
+                <option value="">na obdobie (bez aktivity)</option>
+                <option th:each="e : ${contractActivities}" th:value="${e.key}" th:text="${e.value}"></option>
+            </select>
+            <label>od <input type="date" name="od"></label>
+            <label>do <input type="date" name="doDna"></label>
+            <button type="submit">PDF</button>
+        </form>
+    </section>
+
+    <section class="card" th:unless="${lent.isEmpty()}">
+        <h2>Má požičané</h2>
+        <ul class="tasks">
+            <li th:each="x : ${lent}" th:classappend="${x.isLoanOverdue(today)} ? 'overdue'">
+                <a class="title" th:href="@{/majetok/{id}(id=${x.id()})}" th:text="${x.inventoryNo()} + ' ' + ${x.name()}"></a>
+                <span class="due" th:text="${x.loanDueOn() == null} ? 'od ' + ${#temporals.format(x.lentOn(), 'd. M. yyyy')} : 'vrátiť do ' + ${#temporals.format(x.loanDueOn(), 'd. M. yyyy')}"></span>
+            </li>
+        </ul>
+    </section>
+
+    <section class="card" id="kalendar">
+        <div class="page-head">
+            <h2>Program a kalendár</h2>
+            <div class="row">
+                <span th:replace="~{fragments :: exports('/ludia/' + ${p.id()} + '/program', '')}"></span>
+                <a class="button" th:href="@{/ludia/{id}/program.ics(id=${p.id()})}">.ics</a>
+            </div>
+        </div>
+        <th:block th:if="${feedUrl == null}">
+            <p class="muted">Osobný odkaz na odber kalendára zatiaľ nie je. Človek si ho vie vytvoriť sám v „Môj program“, alebo ho vytvorte tu a pošlite mu ho.</p>
+            <form th:action="@{/ludia/{id}/kalendar(id=${p.id()})}" method="post"><button type="submit">Vytvoriť odkaz</button></form>
+        </th:block>
+        <th:block th:if="${feedUrl != null}">
+            <p><input class="copy" readonly th:value="${feedUrl}" aria-label="Odkaz na kalendár"></p>
+            <div class="row">
+                <form th:action="@{/ludia/{id}/kalendar(id=${p.id()})}" method="post"><button type="submit">Nový odkaz</button></form>
+                <form th:action="@{/ludia/{id}/kalendar/zrusit(id=${p.id()})}" method="post"><button type="submit" class="link danger">Zrušiť odkaz</button></form>
+            </div>
+        </th:block>
+    </section>
+
+    <section class="card">
+        <h2>Údaje a súhlasy</h2>
+        <form th:action="@{/ludia/{id}(id=${p.id()})}" method="post" class="grid">
+            <th:block th:replace="~{people/form-fields :: fields(${p}, ${roles})}"></th:block>
+            <div class="span2"><button type="submit" class="primary">Uložiť</button></div>
+        </form>
+    </section>
+
+    <section class="card" id="gdpr">
+        <div class="page-head"><h2>Ochrana údajov (GDPR)</h2>
+            <span th:replace="~{fragments :: exports('/ludia/' + ${p.id()} + '/udaje', '')}"></span></div>
+        <p class="muted">Keď osoba požiada o svoje údaje, pošlite jej tento výpis (do 1 mesiaca od žiadosti).</p>
+        <p class="warning" th:if="${privacy.anonymized()}"
+           th:text="'Anonymizované ' + ${#temporals.format(privacy.anonymizedAt(), 'd. M. yyyy')} + (${privacy.nameRetained()} ? ' - meno ostalo kvôli mzdovým podkladom.' : '.')"></p>
+        <details th:if="${acc.admin and !privacy.anonymized()}">
+            <summary>Anonymizovať (výmaz na žiadosť)</summary>
+            <ul class="warning" th:unless="${privacy.blockers().isEmpty()}"><li th:each="b : ${privacy.blockers()}" th:text="${b}"></li></ul>
+            <p>Čo sa stane:</p>
+            <ul><li th:each="e : ${privacy.effects()}" th:text="${e}"></li></ul>
+            <form th:if="${privacy.possible()}" th:action="@{/ludia/{id}/anonymizovat(id=${p.id()})}" method="post" class="toolbar">
+                <label>Na potvrdenie napíšte meno <input name="confirmName" required autocomplete="off" th:placeholder="${p.fullName()}"></label>
+                <button type="submit" class="danger">Anonymizovať natrvalo</button>
+            </form>
+        </details>
+    </section>
+</main>
+</body>
+</html>

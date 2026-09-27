@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sk">
+<head th:replace="~{fragments :: head(title='Chyba')}"></head>
+<body>
+<main class="card narrow">
+    <h1 th:text="${status == 404} ? 'Nenájdené' : (${status == 403} ? 'Bez oprávnenia' : (${status == 413} ? 'Súbor je príliš veľký' : 'Niečo sa pokazilo'))">Chyba</h1>
+    <p class="muted" th:text="${status == 404} ? 'Stránka alebo doklad neexistuje.' : (${status == 403} ? 'Na túto akciu potrebujete rolu editora (pokladník, predseda).' : (${status == 413} ? 'Podklady môžu mať najviac 10 MB. Veľké videá a fotky dajte na Drive a do poznámky vložte odkaz.' : 'Skúste to znova. Ak chyba pretrváva, pozrite logy servera.'))"></p>
+    <a class="button" th:href="@{/}">Späť na úvod</a>
+</main>
+</body>
+</html>
