@@ -4,6 +4,7 @@ import sk.firstglobal.hq.web.activity.ActivityRepository;
 import sk.firstglobal.hq.web.audit.AuditLog;
 import sk.firstglobal.hq.web.export.Table;
 import sk.firstglobal.hq.web.people.PersonRole;
+import sk.firstglobal.hq.web.security.AppSecurityProperties;
 import sk.firstglobal.hq.web.security.CurrentUser;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,10 +34,12 @@ class AdminController {
     private final AccessRepository repo;
     private final ActivityRepository activities;
     private final AuditLog audit;
+    private final AppSecurityProperties props;
     private final Clock clock;
 
     AdminController(AccessService service, AccessRepository repo, ActivityRepository activities, AuditLog audit,
-                    Clock clock) {
+                    AppSecurityProperties props, Clock clock) {
+        this.props = props;
         this.audit = audit;
         this.service = service;
         this.repo = repo;
@@ -64,7 +67,9 @@ class AdminController {
     String createUser(@RequestParam(required = false) String email, @RequestParam(required = false) String displayName,
                       @RequestParam(required = false) List<Long> roleIds, Authentication auth, RedirectAttributes redirect) {
         this.service.createUser(email, displayName, roleIds, CurrentUser.name(auth));
-        redirect.addFlashAttribute("message", "Používateľ je pridaný. Prihlási sa svojím Google účtom " + email.trim() + ".");
+        redirect.addFlashAttribute("message", "Používateľ je pridaný. " + (this.props.mode() == AppSecurityProperties.Mode.GOOGLE
+                ? "Prihlási sa svojím Google účtom " + email.trim() + "."
+                : "Prihlási sa e-mailom " + email.trim() + " a heslom admina (lokálny režim)."));
         return "redirect:/sprava/pouzivatelia";
     }
 

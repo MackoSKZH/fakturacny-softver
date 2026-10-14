@@ -1,0 +1,45 @@
+# CISTA lokalna instancia na testovanie: bez ukazkovych dat a bez demo uctov. Prihlasite sa ako admin so SVOJIM
+# heslom, v Sprave si vytvorite roly, pouzivatelov a pozvanky.
+#
+#   PowerShell:  $env:ADMIN_PASSWORD = "vase-dlhe-heslo-aspon-12-znakov"
+#                docker compose -f docker-compose.local.yml up --build
+#   Mac/Linux:   ADMIN_PASSWORD="vase-dlhe-heslo" docker compose -f docker-compose.local.yml up --build
+#   Potom:       http://localhost:8080   meno: admin   heslo: to, co ste nastavili
+#   (iny login: nastavte aj ADMIN_LOGIN, napr. $env:ADMIN_LOGIN = "martin" - malymi pismenami)
+#
+# Pozor: v lokalnom rezime maju VSETCI pouzivatelia to iste heslo (to admina) - na skusanie roli staci, na ostrú
+# prevadzku je Google prihlasenie (docker-compose.yml). Vypnutie: Ctrl+C. Zmazanie vsetkych dat:
+#   docker compose -f docker-compose.local.yml down -v
+# Demo s ukazkovymi datami (iny port nepotrebuje, ale nespustajte oba naraz): docker-compose.demo.yml
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: fgs_hq
+      POSTGRES_USER: fgs
+      POSTGRES_PASSWORD: local-db-heslo
+    volumes:
+      - local-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fgs -d fgs_hq"]
+      interval: 5s
+      retries: 20
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/fgs_hq
+      DATABASE_USER: fgs
+      DATABASE_PASSWORD: local-db-heslo
+      APP_SECURITY_MODE: local
+      APP_LOCAL_USERNAME: ${ADMIN_LOGIN:-admin}
+      APP_LOCAL_PASSWORD: ${ADMIN_PASSWORD:?Nastavte ADMIN_PASSWORD - heslo admina, aspon 12 znakov (pozri navod na zaciatku suboru)}
+      COOKIE_SECURE: "false"
+
+volumes:
+  local-db:

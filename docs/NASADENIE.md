@@ -27,6 +27,19 @@ Všetky účty majú heslo `demo-heslo-2027`:
 Pozvánku vyskúšate odkazom z logu (`docker compose -f docker-compose.demo.yml logs app | grep Pozvánka`):
 otvorte ho v anonymnom okne, prihláste sa ľubovoľným e-mailom a demo heslom a pozvánku prijmite.
 
+**Čistá inštancia bez demo účtov** (vlastný admin, vlastné roly a používatelia, bez ukážkových dát):
+
+```sh
+# PowerShell:
+$env:ADMIN_PASSWORD = "vase-dlhe-heslo-aspon-12-znakov"
+docker compose -f docker-compose.local.yml up --build
+```
+
+Prihlásenie na <http://localhost:8080>: meno `admin` (iné nastavíte cez `$env:ADMIN_LOGIN = "martin"`, malými písmenami), heslo
+je to, ktoré ste nastavili. Potom: **Nastavenia** (údaje OZ), **Správa -> Roly** (základné roly vrátane Organizátora sa dajú
+upraviť alebo pridať vlastné), **Správa -> Používatelia / Pozvánky**. V lokálnom režime majú všetci používatelia to isté heslo
+(admina) - na skúšanie rolí stačí, ostrá prevádzka používa Google prihlásenie. Spolu s demom nespúšťajte (rovnaký port).
+
 Ukážkové dáta: národné kolo o 45 dní (tím, harmonogram, checklist, verejná stránka `/podpora/NK-DEMO`), minulé sústredenie
 s potvrdeniami o dobrovoľníctve, grant s výdavkom mimo obdobia, sponzor, majetok, dochádzka. Dátumy sú vždy relatívne k dnešku.
 

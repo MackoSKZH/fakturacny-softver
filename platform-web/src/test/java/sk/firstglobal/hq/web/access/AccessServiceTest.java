@@ -164,4 +164,12 @@ class AccessServiceTest extends IntegrationTest {
         assertThrows(AccessException.class, () -> this.service.accept(again.token(), "zly@x.example", "Zlý"),
                 "deaktivovaný sa pozvánkou nevráti");
     }
+
+    @Test
+    void organizerRoleCanEditActivitiesButSeesNeitherFinanceNorPeople() {
+        this.service.createUser("org@fgs.example", "Organizátor", List.of(role("ORGANIZATOR")), "pokladnik");
+        AccessInfo a = this.service.resolve("org@fgs.example", null).access();
+        assertTrue(a.isActivitiesRead() && a.isActivitiesWrite() && a.canEditActivity(this.project));
+        assertFalse(a.isFinanceRead() || a.isPeople() || a.isAdmin() || a.isExports());
+    }
 }
